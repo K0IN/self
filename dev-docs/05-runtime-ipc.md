@@ -35,3 +35,4 @@
 - Must: engine exit during serve -> current request `runtime_crashed`, queue rejected, `self` exits non-zero.
 - Must: no engine process left after `self` exits (manual: "engine reaped" in e2e).
 - Must: no localhost HTTP between server and engine.
+[text](../internal)
