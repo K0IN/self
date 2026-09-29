@@ -1,0 +1,12 @@
+[submodule "engines/llama.cpp"]
+	path = engines/llama.cpp
+	url = https://github.com/ggml-org/llama.cpp.git
+[submodule "engines/audio.cpp"]
+	path = engines/audio.cpp
+	url = https://github.com/0xShug0/audio.cpp.git
+[submodule "engines/stable-diffusion.cpp"]
+	path = engines/stable-diffusion.cpp
+	url = https://github.com/leejet/stable-diffusion.cpp.git
+[submodule "engines/ggmlc"]
+	path = engines/ggmlc
+	url = https://github.com/monatis/ggmlc.git
