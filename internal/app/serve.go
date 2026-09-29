@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync/atomic"
@@ -33,6 +34,27 @@ import (
 // LoadRegistry loads the override file or the embedded registry.
 func LoadRegistry(path string) (*registry.Registry, error) {
 	if path != "" {
+		u, err := url.Parse(path)
+		if err == nil && (u.Scheme == "http" || u.Scheme == "https") {
+			client := http.Client{Timeout: 30 * time.Second}
+			resp, err := client.Get(path)
+			if err != nil {
+				return nil, fmt.Errorf("load registry %s: %w", path, err)
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+				return nil, fmt.Errorf("load registry %s: HTTP %s", path, resp.Status)
+			}
+			b, err := io.ReadAll(io.LimitReader(resp.Body, 16<<20))
+			if err != nil {
+				return nil, fmt.Errorf("read registry %s: %w", path, err)
+			}
+			r, err := registry.Parse(b)
+			if err != nil {
+				return nil, fmt.Errorf("%s: %w", path, err)
+			}
+			return r, nil
+		}
 		return registry.LoadFile(path)
 	}
 	return registry.Parse(bundled.Registry)
@@ -146,7 +168,7 @@ func serveDecision(ctx context.Context, cfg config.Serve, res registry.Resolved,
 	state := &runnerState{}
 	state.v.Store("ready")
 	srv := &http.Server{
-		Handler:           api.NewRouter(apidecision.New(svc), state, log),
+		Handler:           api.NewRouter(apidecision.New(svc).Mount, state, log),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       60 * time.Second,
 		IdleTimeout:       120 * time.Second,

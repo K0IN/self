@@ -32,18 +32,16 @@ type Health interface {
 	RunnerState() string
 }
 
-// Mode mounts routes for one model mode.
-type Mode interface {
-	Mount(r chi.Router)
-	Info() ModelInfo
-}
+// Mount registers one model type's routes and returns its metadata.
+type Mount func(r chi.Router) ModelInfo
 
 // NewRouter builds the router for a single loaded model.
-func NewRouter(mode Mode, health Health, log *slog.Logger) http.Handler {
+func NewRouter(mount Mount, health Health, log *slog.Logger) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RealIP)
 	r.Use(recoverer(log))
 	r.Use(requestLog(log))
+	info := mount(r)
 
 	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
 		state := health.RunnerState()
@@ -51,18 +49,20 @@ func NewRouter(mode Mode, health Health, log *slog.Logger) http.Handler {
 		if state != "ready" {
 			status, code = "unavailable", http.StatusServiceUnavailable
 		}
-		WriteJSON(w, code, map[string]string{"status": status, "model": mode.Info().ID, "runner": state})
+		WriteJSON(w, code, map[string]string{"status": status, "model": info.ID, "runner": state})
 	})
+
 	r.Get("/v1/model", func(w http.ResponseWriter, _ *http.Request) {
-		WriteJSON(w, http.StatusOK, mode.Info())
+		WriteJSON(w, http.StatusOK, info)
 	})
+
 	r.Get("/v1/models", func(w http.ResponseWriter, _ *http.Request) {
 		WriteJSON(w, http.StatusOK, struct {
 			Object string      `json:"object"`
 			Data   []ModelInfo `json:"data"`
-		}{"list", []ModelInfo{mode.Info()}})
+		}{"list", []ModelInfo{info}})
 	})
-	mode.Mount(r)
+
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, errs.New(errs.InvalidRequest, "no route for %s %s", r.Method, r.URL.Path))
 	})

@@ -10,7 +10,8 @@ HTTP infrastructure is split by ownership:
 - `internal/api/image/` is reserved for future image-model endpoints.
 
 Adding another model type should add its handlers under `internal/api/<type>/`
-and mount them through the shared `api.Mode` interface. Existing routes remain
+and pass one `api.Mount` function to the shared router. That function registers
+the type-specific routes and returns its metadata. Existing routes remain
 unchanged.
 
 ## Endpoints

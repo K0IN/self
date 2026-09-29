@@ -17,6 +17,8 @@ import (
 	"syscall"
 	"text/tabwriter"
 
+	"github.com/spf13/cobra"
+
 	"ai-server/internal/app"
 	"ai-server/internal/config"
 	"ai-server/internal/errs"
@@ -59,40 +61,42 @@ Example:
 `
 
 func main() {
-	os.Exit(run(os.Args[1:]))
+	os.Exit(run())
 }
 
-func run(args []string) int {
-	if len(args) == 0 {
-		fmt.Fprint(os.Stderr, usage)
-		return 2
-	}
+func run() int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	var err error
-	switch args[0] {
-	case "serve":
-		err = serve(ctx, args[1:], "")
-	case "decision":
-		err = serve(ctx, args[1:], registry.TypeDecision)
-	case "pull":
-		err = pull(ctx, args[1:])
-	case "list", "ls":
-		err = list(args[1:])
-	case "onboard":
-		err = onboardCmd(ctx, args[1:])
-	case "check":
-		err = checkCmd(ctx, args[1:])
-	case "settings":
-		err = settingsCmd(args[1:])
-	case "help", "-h", "--help":
-		fmt.Print(usage)
-		return 0
-	default:
-		fmt.Fprintf(os.Stderr, "unknown command %q\n\n%s", args[0], usage)
-		return 2
+	root := &cobra.Command{
+		Use:           "self",
+		Short:         "Local AI model server",
+		Long:          usage,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
+	listCommand := command("list", "List registry models", list)
+	listCommand.Aliases = []string{"ls"}
+	root.AddCommand(
+		command("serve", "Download (if needed) and serve a model", func(args []string) error { return serve(ctx, args, "") }),
+		command("decision", "Serve a decision model", func(args []string) error { return serve(ctx, args, registry.TypeDecision) }),
+		command("pull", "Only download a model", func(args []string) error { return pull(ctx, args) }),
+		listCommand,
+		command("onboard", "Inspect a Hugging Face GGUF repository", func(args []string) error { return onboardCmd(ctx, args) }),
+		command("check", "Download, start, and probe a model", func(args []string) error { return checkCmd(ctx, args) }),
+		command("settings", "Show effective engine settings", settingsCmd),
+		command("suggest", "Suggest models from the registry", suggest),
+	)
+	completion := &cobra.Command{Use: "completion", Short: "Generate shell completion scripts"}
+	completion.AddCommand(
+		&cobra.Command{Use: "bash", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, args []string) error { return root.GenBashCompletion(cmd.OutOrStdout()) }},
+		&cobra.Command{Use: "zsh", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, args []string) error { return root.GenZshCompletion(cmd.OutOrStdout()) }},
+		&cobra.Command{Use: "fish", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, args []string) error { return root.GenFishCompletion(cmd.OutOrStdout(), true) }},
+	)
+	root.AddCommand(completion)
+	root.SetOut(os.Stdout)
+	root.SetErr(os.Stderr)
+	err := root.Execute()
 	if err != nil {
 		if ctx.Err() != nil && errs.Is(err, errs.DownloadFailed) {
 			fmt.Fprintln(os.Stderr, "\nInterrupted. Partial downloads are kept and will resume next time.")
@@ -102,6 +106,17 @@ func run(args []string) int {
 		return 1
 	}
 	return 0
+}
+
+func command(name, short string, run func([]string) error) *cobra.Command {
+	return &cobra.Command{
+		Use:                name + " [flags]",
+		Short:              short,
+		DisableFlagParsing: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(args)
+		},
+	}
 }
 
 func isTTY(f *os.File) bool {
@@ -245,4 +260,22 @@ func list(args []string) error {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", id, m.Type, strings.Join(quants, ","), size, strings.Join(caps, ","), strings.Join(have, ","), m.Description)
 	}
 	return w.Flush()
+}
+
+func suggest(args []string) error {
+	args = append(args, "kev:0.5b")
+	cfg, err := config.ParseServe(args, os.Getenv, os.Stderr)
+	if err != nil {
+		return err
+	}
+	reg, err := app.LoadRegistry(cfg.Registry)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Suggested models:")
+	for _, id := range reg.IDs() {
+		m := reg.Models[id]
+		fmt.Printf("  %-20s %s\n", id, m.Description)
+	}
+	return nil
 }

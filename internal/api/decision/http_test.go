@@ -88,7 +88,7 @@ func setupSvc(t *testing.T, caps dom.Capabilities, geom *dom.ImageGeometry, queu
 	svc := dom.NewService(dom.ServiceConfig{
 		ModelID: "test:1b", Quant: "4bit", Capabilities: caps, ImageInput: geom, QueueSize: queue, PreprocessConcurrency: 4,
 	}, f, imageutil.NewPreprocessor(lim))
-	srv := httptest.NewServer(api.NewRouter(New(svc), healthy{}, slog.New(slog.NewTextHandler(io.Discard, nil))))
+	srv := httptest.NewServer(api.NewRouter(New(svc).Mount, healthy{}, slog.New(slog.NewTextHandler(io.Discard, nil))))
 	t.Cleanup(func() {
 		svc.Close()
 		srv.Close()

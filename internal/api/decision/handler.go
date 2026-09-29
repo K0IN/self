@@ -26,14 +26,10 @@ type Handler struct {
 // New creates a decision handler.
 func New(svc *dom.Service) *Handler { return &Handler{svc: svc} }
 
-// Mount registers routes.
-func (h *Handler) Mount(r chi.Router) {
+// Mount registers routes and returns model metadata.
+func (h *Handler) Mount(r chi.Router) api.ModelInfo {
 	r.Post("/v1/systemone", h.systemOne)
 	r.Post("/v1/decide", h.systemOne) // alias used by upstream Laya
-}
-
-// Info describes the loaded model.
-func (h *Handler) Info() api.ModelInfo {
 	return api.ModelInfo{
 		ID:           h.svc.ModelID(),
 		Object:       "model",

@@ -38,6 +38,8 @@ type Serve struct {
 	SettingsFileExplicit bool
 }
 
+const DefaultRegistry = "https://k0in.github.io/self/models.yml"
+
 // multiFlag collects repeated string flags.
 type multiFlag struct{ v *[]string }
 
@@ -77,6 +79,7 @@ func ParseServe(args []string, getenv func(string) string, stderr io.Writer) (Se
 		Host:                  "127.0.0.1",
 		Port:                  8080,
 		ModelsDir:             DefaultModelsDir(),
+		Registry:              DefaultRegistry,
 		Device:                "auto",
 		QueueSize:             64,
 		PreprocessConcurrency: 8,
@@ -100,6 +103,9 @@ func ParseServe(args []string, getenv func(string) string, stderr io.Writer) (Se
 	}
 	if v := getenv("AI_SERVER_SETTINGS"); v != "" {
 		s.SettingsFile = v
+	}
+	if v := getenv("AI_SERVER_REGISTRY"); v != "" {
+		s.Registry = v
 	}
 
 	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
