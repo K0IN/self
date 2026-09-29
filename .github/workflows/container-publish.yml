@@ -53,8 +53,8 @@ jobs:
         run: |
           go test ./...
           go build -trimpath -o bin/self ./cmd/self
-          just engine laya fetch vulkan v0.9.6
-          just engine build "${{ matrix.engine_variant }}"
+          just --unstable engine laya fetch vulkan v0.9.6
+          just --unstable engine build "${{ matrix.engine_variant }}"
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
