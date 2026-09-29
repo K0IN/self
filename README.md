@@ -68,6 +68,10 @@ Podman uses the same image names and tags. Every build also publishes an
 immutable variant tag containing the commit, such as
 `cuda-13-0123456789abcdef`; `latest` points to the CUDA 13 image from `main`.
 
+The CUDA 13 image uses the Vulkan Laya runtime and Vulkan custom Decider engine
+to avoid linking CUDA 12 libraries into a CUDA 13 image. CUDA 12 uses the CUDA
+12.8 engine build, and CPU uses the CPU build.
+
 ### All `just` recipes
 
 | Recipe | What it does |
