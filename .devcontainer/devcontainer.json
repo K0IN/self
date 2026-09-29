@@ -1,0 +1,10 @@
+{
+    "name": "Go",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "runArgs": [
+        "--gpus=all"
+    ]
+}

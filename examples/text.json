@@ -1,0 +1,9 @@
+{
+  "state": "I was charged twice.",
+  "questions": {
+    "refund": {
+      "type": "noul",
+      "instructions": "Does this likely require a refund?"
+    }
+  }
+}

@@ -1,0 +1,95 @@
+# ggmlc-custom-decider engine build.
+#
+# Links the prebuilt llama.cpp release libraries (libllama, libmtmd, ggml
+# backends); nothing from llama.cpp is compiled and no CUDA toolkit is needed.
+#
+#   just engine build                      # default: cuda-12.8, installs into ../../bin/libexec/ai-server
+#   just engine build vulkan               # or: cpu
+#   just engine deps cuda-12.8 b11300      # other llama.cpp release
+#   just engine clean
+#
+# Recipes run in this directory (engines/ggmlc-custom-decider).
+
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+tag       := env_var_or_default("LLAMA_CPP_TAG", "b11256")
+deps      := "deps"
+build_dir := "build"
+dest      := "../../bin/libexec/ai-server"
+raw       := "https://raw.githubusercontent.com/ggml-org/llama.cpp/" + tag
+
+default:
+    @just --list
+
+# Download prebuilt llama.cpp libraries + matching headers into deps/ (variant: cuda-12.8 | vulkan | cpu)
+deps variant="cuda-12.8": (libs variant) headers
+
+# Prebuilt runtime libraries (skipped when deps/ already has this tag+variant)
+[private]
+libs variant:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{variant}}" in
+      cuda-12.8) asset="llama-{{tag}}-bin-ubuntu-cuda-12.8-x64.tar.gz" ;;
+      vulkan)    asset="llama-{{tag}}-bin-ubuntu-vulkan-x64.tar.gz" ;;
+      cpu)       asset="llama-{{tag}}-bin-ubuntu-x64.tar.gz" ;;
+      *) echo "unknown variant {{variant}} (cuda-12.8 | vulkan | cpu)" >&2; exit 1 ;;
+    esac
+    if [[ -f {{deps}}/.tag && "$(cat {{deps}}/.tag)" == "{{tag}}-{{variant}}" ]]; then
+      echo "deps/lib up to date ({{tag}}, {{variant}})"; exit 0
+    fi
+    tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+    echo "Fetching $asset"
+    curl -fL --progress-bar -o "$tmp/l.tgz" "https://github.com/ggml-org/llama.cpp/releases/download/{{tag}}/$asset"
+    tar -xzf "$tmp/l.tgz" -C "$tmp"
+    src=$(find "$tmp" -maxdepth 2 -name 'libllama.so*' -printf '%h\n' | head -1)
+    rm -rf {{deps}}/lib && mkdir -p {{deps}}/lib
+    cp -P "$src"/libllama.so* "$src"/libmtmd.so* "$src"/libggml*.so* {{deps}}/lib/
+    echo "{{tag}}-{{variant}}" > {{deps}}/.tag
+    echo "deps/lib ready: $(ls {{deps}}/lib | wc -l) files"
+
+# Public headers of the same llama.cpp tag + nlohmann/json
+[private]
+headers:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p {{deps}}/include/nlohmann
+    for f in include/llama.h \
+             ggml/include/ggml.h ggml/include/ggml-backend.h ggml/include/ggml-alloc.h \
+             ggml/include/ggml-cpu.h ggml/include/ggml-opt.h ggml/include/gguf.h \
+             tools/mtmd/mtmd.h tools/mtmd/mtmd-helper.h; do
+      out={{deps}}/include/$(basename "$f")
+      [[ -s "$out" ]] || curl -fsSL -o "$out" "{{raw}}/$f"
+    done
+    out={{deps}}/include/nlohmann/json.hpp
+    [[ -s "$out" ]] || curl -fsSL -o "$out" "{{raw}}/vendor/nlohmann/json.hpp"
+
+# Compile main.cpp against deps/ (Release, Ninja)
+compile variant="cuda-12.8": (deps variant)
+    cmake -S . -B {{build_dir}} -G Ninja -DCMAKE_BUILD_TYPE=Release > /dev/null
+    cmake --build {{build_dir}}
+
+# Build and install the engine + libraries into the bundle (default: bin/libexec/ai-server)
+build variant="cuda-12.8" target=dest: (compile variant) && (verify target)
+    mkdir -p {{target}}/lib
+    install -m 0755 {{build_dir}}/ggmlc-custom-decider {{target}}/ggmlc-custom-decider
+    cp -P {{deps}}/lib/*.so* {{target}}/lib/
+    @echo "Installed {{target}}/ggmlc-custom-decider"
+
+# Warn about missing shared libraries (libcudart/libcublas come from `just runtime`)
+verify target=dest:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    cd {{target}}
+    missing=$(LD_LIBRARY_PATH=lib ldd ggmlc-custom-decider lib/libggml-cuda.so 2>/dev/null | grep 'not found' | sort -u || true)
+    if [[ -n "$missing" ]]; then
+      echo "WARNING: missing shared libraries:" >&2
+      echo "$missing" >&2
+      echo "Run 'just runtime' in the repo root to bundle the CUDA 12 runtime into $(pwd)/lib" >&2
+    else
+      echo "All shared libraries resolved"
+    fi
+
+# Remove build output and downloaded deps
+clean:
+    rm -rf {{build_dir}} {{deps}}

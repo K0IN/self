@@ -1,0 +1,34 @@
+# Engine dispatcher. Each engine owns its build recipe in a child justfile.
+
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+mod decider "ggmlc-custom-decider"
+mod laya "laya"
+
+default:
+    @just --list
+
+# Build the custom Decider engine.
+build variant="cuda-12.8" target="":
+    #!/usr/bin/env bash
+    if [[ -n "{{target}}" ]]; then
+      just decider build "{{variant}}" "{{target}}"
+    else
+      just decider build "{{variant}}"
+    fi
+
+deps variant="cuda-12.8":
+    just decider deps "{{variant}}"
+
+compile variant="cuda-12.8":
+    just decider compile "{{variant}}"
+
+verify target="../../bin/libexec/ai-server":
+    just decider verify "{{target}}"
+
+clean:
+    just decider clean
+
+# Fetch the upstream Laya runtime.
+runtime variant="auto" version="v0.9.6":
+    just laya fetch "{{variant}}" "{{version}}"

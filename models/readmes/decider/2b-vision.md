@@ -1,0 +1,13 @@
+# Decider 2b-vision
+
+[Mapika/decider](https://github.com/Mapika/decider) one-pass decision model
+on a Qwen3.5 2b-vision base (Apache-2.0). Reads calibrated letter probabilities
+at the answer slot for `choice`, `score` and `noul` questions.
+
+- Engine: `ggmlc-custom-decider` (llama.cpp based, built with `just engine-decider`)
+- Up to 10 options per question
+- Vision: one image per request (`images`), via the Qwen-VL projector (mmproj)
+
+```bash
+self serve decider:2b-vision
+```

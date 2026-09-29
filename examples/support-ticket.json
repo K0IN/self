@@ -1,0 +1,30 @@
+{
+  "state": {
+    "channel": "email",
+    "message": "I was charged twice for my subscription this month and nobody answers my emails."
+  },
+  "questions": {
+    "department": {
+      "type": "choice",
+      "instructions": "Which department should handle this?",
+      "criteria": {
+        "billing": "Payments and refunds",
+        "technical": "Technical problems",
+        "sales": "New purchases and upgrades"
+      }
+    },
+    "urgency": {
+      "type": "score",
+      "instructions": "How urgent is this ticket?",
+      "criteria": ["not urgent", "somewhat urgent", "urgent", "critical"]
+    },
+    "refund": {
+      "type": "noul",
+      "instructions": "Does this customer likely need a refund?"
+    },
+    "angry": {
+      "type": "noul",
+      "instructions": "Is the customer frustrated or angry?"
+    }
+  }
+}

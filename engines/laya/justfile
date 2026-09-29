@@ -1,0 +1,109 @@
+# Upstream ggmlc Laya runtime.
+
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+dest := "../../bin/libexec/ai-server"
+
+default:
+    @just --list
+
+# Download and install Laya (auto | cuda-sm80 | cuda-sm86 | cuda-sm89 | vulkan | metal).
+fetch variant="auto" version="v0.9.6":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    case "$(uname -s)" in
+      Linux) platform=linux-x86_64 ;;
+      Darwin) platform=macos-arm64 ;;
+      *) echo "unsupported OS: $(uname -s)" >&2; exit 1 ;;
+    esac
+
+    selected="{{variant}}"
+    if [[ "$platform" == macos-arm64 ]]; then
+      selected=metal
+    fi
+    if [[ "$selected" == auto ]]; then
+      cap=""
+      if command -v nvidia-smi >/dev/null 2>&1; then
+        cap=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader 2>/dev/null | head -1 | tr -d '. ' || true)
+      fi
+      case "$cap" in
+        80|87)       selected=cuda-sm80 ;;
+        86)          selected=cuda-sm86 ;;
+        89|90)       selected=cuda-sm89 ;;
+        120)         echo "GPU sm120 has no matching Laya CUDA release; using Vulkan" >&2; selected=vulkan ;;
+        *)           selected=vulkan ;;
+      esac
+      if [[ "$selected" == cuda-* ]] && { ! ldconfig -p 2>/dev/null | grep -q 'libcudart\.so\.12' ||
+        ! ldconfig -p 2>/dev/null | grep -q 'libcublas\.so\.12'; } &&
+         [[ -z "${CUDA_LIB_DIRS:-}" ]]; then
+        echo "Laya CUDA builds require CUDA 12 runtime libraries; using Vulkan" >&2
+        selected=vulkan
+      fi
+      if [[ "$selected" == vulkan ]] && ! ldconfig -p 2>/dev/null | grep -q 'libvulkan\.so\.1'; then
+        echo "automatic runtime selection requires CUDA 12 or Vulkan runtime libraries" >&2
+        echo "install libcudart/libcublas or libvulkan, then rerun 'just serve'" >&2
+        exit 1
+      fi
+    fi
+
+    case "$selected" in
+      cuda-sm80|cuda-sm86|cuda-sm89|vulkan|metal) ;;
+      *) echo "unknown Laya variant: $selected" >&2; exit 1 ;;
+    esac
+
+    asset="laya-${platform}-${selected}.tar.gz"
+    url="https://github.com/monatis/ggmlc/releases/download/{{version}}/${asset}"
+    mkdir -p "{{dest}}"
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+
+    echo "Fetching $asset ({{version}})"
+    curl -fL --progress-bar -o "$tmp/$asset" "$url"
+    tar -xzf "$tmp/$asset" -C "$tmp"
+    install -m 0755 "$tmp/laya" "{{dest}}/laya"
+    echo "Installed {{dest}}/laya"
+
+    if [[ "$selected" == cuda-* && "$platform" == linux-x86_64 ]]; then
+      mkdir -p "{{dest}}/lib"
+      missing=$(LD_LIBRARY_PATH="{{dest}}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" ldd "{{dest}}/laya" | awk '/not found/{print $1}')
+      for lib in $missing; do
+        found=""
+        for dir in ${CUDA_LIB_DIRS:-} /usr/local/cuda/lib64 /usr/lib/x86_64-linux-gnu \
+                   "$HOME"/.local/lib/python3*/site-packages/nvidia/*/lib \
+                   /usr/lib/python3*/site-packages/nvidia/*/lib; do
+          for file in "$dir/$lib"*; do
+            [[ -e "$file" ]] || continue
+            found=$file
+            break 2
+          done
+        done
+        if [[ -n "$found" ]]; then
+          cp -L "$found" "{{dest}}/lib/$lib"
+          echo "Bundled $lib from $found"
+        else
+          echo "WARNING: $lib not found; install the CUDA 12 runtime or set CUDA_LIB_DIRS" >&2
+        fi
+      done
+      if [[ -e "{{dest}}/lib/libcublas.so.12" ]]; then
+        for dep in $(LD_LIBRARY_PATH="{{dest}}/lib" ldd "{{dest}}/lib/libcublas.so.12" | awk '/not found/{print $1}'); do
+          found=""
+          for file in "$HOME"/.local/lib/python3*/site-packages/nvidia/cublas/lib/"$dep"* \
+                      /usr/lib/python3*/site-packages/nvidia/cublas/lib/"$dep"*; do
+            [[ -e "$file" ]] || continue
+            found=$file
+            break
+          done
+          if [[ -n "$found" ]]; then
+            cp -L "$found" "{{dest}}/lib/$dep"
+            echo "Bundled $dep from $found"
+          fi
+        done
+      fi
+    fi
+
+    if LD_LIBRARY_PATH="{{dest}}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" "{{dest}}/laya" help >/dev/null 2>&1; then
+      echo "Engine OK"
+    else
+      echo "WARNING: engine does not start; run: LD_LIBRARY_PATH={{dest}}/lib ldd {{dest}}/laya" >&2
+    fi

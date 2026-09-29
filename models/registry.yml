@@ -1,0 +1,334 @@
+# self model registry.
+#
+# Public, human-edited list of the models `self` can serve. Every entry:
+#
+#   <name>:<tag>:
+#     description:   one line (shown by `self list` and on the overview page)
+#     readme:        model card, Markdown file relative to this file (readmes/<name>/<tag>.md)
+#     type:          decision            (only mode in this milestone)
+#     default:       quant used when --quant is not given
+#     capabilities:  text | vision | multi-image | choice | score | noul
+#     info:          descriptive metadata (family, parameters, architecture,
+#                    base_model, source, license, languages, context_length,
+#                    max_options, homepage). max_options also caps requests.
+#     settings:      engine parameters for the adapter, e.g. context_size,
+#                    threads, temperature (see docs/ONBOARDING.md). Can be
+#                    overridden per quant (`settings:` under the quant) and
+#                    at run time with `self serve <id> --set key=value`.
+#     <quant>:
+#       adapter:     engine adapter (ggmlc-laya | ggmlc-custom-decider)
+#       repo:        Hugging Face repo (owner/name)
+#       files:       - {file, size, sha256[, role: model|mmproj]}
+#       settings:    optional per-quant settings (override the model's)
+#
+# size (bytes) and sha256 pin the exact upstream file. A download that does
+# not match is deleted and never used; if the upstream file changes, `self`
+# refuses to download it until this file is updated. `self onboard <repo>`
+# prints a complete entry including size and sha256.
+version: 1
+
+models:
+  # --- Kev (Qwen-based System One decision models, compiled with ggmlc) ---
+  kev:0.5b:
+    description: "Kev 0.5b: Qwen2.5-0.5B-based System One decision model (ggmlc)"
+    readme: readmes/kev/0.5b.md
+    type: decision
+    default: 4bit
+    capabilities:
+      input: [text]
+      output: [choice, score, noul]
+    info:
+      family: kev
+      parameters: 0.5B
+      architecture: qwen2.5
+      base_model: Qwen/Qwen2.5-0.5B
+      source: jaredpalmer/kev-0.5b
+      license: apache-2.0
+      languages: [en]
+      context_length: 2048
+      max_options: 16
+    settings:
+      threads: 4
+    4bit:
+      adapter: ggmlc-laya
+      repo: mys/kev-0.5b-GGUF
+      files:
+        - {file: kev_0.5b_ud_q4_k_m.gguf, size: 570955168, sha256: 154db89455fb1871b93e4343a2954331c2469d718426c893b4d1bd6f0e1b40bf}
+    8bit:
+      adapter: ggmlc-laya
+      repo: mys/kev-0.5b-GGUF
+      files:
+        - {file: kev_0.5b_q8_0.gguf, size: 548153728, sha256: 5c747e0da78745e49609d6989a0964ce1688fa4741a49ae13f17256acda13280}
+    f16:
+      adapter: ggmlc-laya
+      repo: mys/kev-0.5b-GGUF
+      files:
+        - {file: kev_0.5b_f16.gguf, size: 1011668480, sha256: 06d9735d7adfa71b0bad812a712f18d56fc6e8c0b1761d9898561d5110c2470d}
+
+  kev:0.8b:
+    description: "Kev 0.8b: Qwen3.5-0.8B-based System One decision model (ggmlc)"
+    readme: readmes/kev/0.8b.md
+    type: decision
+    default: 4bit
+    capabilities:
+      input: [text]
+      output: [choice, score, noul]
+    info:
+      family: kev
+      parameters: 0.8B
+      architecture: qwen3.5
+      base_model: Qwen/Qwen3.5-0.8B-Base
+      source: jaredpalmer/kev-0.8b
+      license: apache-2.0
+      languages: [en]
+      context_length: 2048
+      max_options: 16
+    settings:
+      threads: 4
+    4bit:
+      adapter: ggmlc-laya
+      repo: mys/kev-0.8b-GGUF
+      files:
+        - {file: kev_0.8b_ud_q4_k_m.gguf, size: 958685280, sha256: 410d9c071a72435d5579b88af98b53fe520260ae61e4154c234e6a28a4ae9623}
+    8bit:
+      adapter: ggmlc-laya
+      repo: mys/kev-0.8b-GGUF
+      files:
+        - {file: kev_0.8b_q8_0.gguf, size: 827809856, sha256: 12f77506dbfaa3c1d12f7e3f8da04feceda276f2d5aa322cd0858a8ce11e6c6c}
+    f16:
+      adapter: ggmlc-laya
+      repo: mys/kev-0.8b-GGUF
+      files:
+        - {file: kev_0.8b_f16.gguf, size: 1533202496, sha256: 6b15f6bd031e1f0f3b751692aaff75b99d1dbb5362f4cda207b3d4d26e5e11eb}
+
+  kev:4b:
+    description: "Kev 4b: Qwen3.5-4B-based System One decision model (ggmlc)"
+    readme: readmes/kev/4b.md
+    type: decision
+    default: 4bit
+    capabilities:
+      input: [text]
+      output: [choice, score, noul]
+    info:
+      family: kev
+      parameters: 4B
+      architecture: qwen3.5
+      base_model: Qwen/Qwen3.5-4B-Base
+      source: jaredpalmer/kev-4b
+      license: apache-2.0
+      languages: [en]
+      context_length: 2048
+      max_options: 16
+    settings:
+      threads: 4
+    4bit:
+      adapter: ggmlc-laya
+      repo: mys/kev-4b-GGUF
+      files:
+        - {file: kev_4b_ud_q4_k_m.gguf, size: 4211035872, sha256: f2b31aa5a3c0f75f22f034f0452a8d7553d583c77b2783926f3ba1682143b92b}
+    8bit:
+      adapter: ggmlc-laya
+      repo: mys/kev-4b-GGUF
+      files:
+        - {file: kev_4b_q8_0.gguf, size: 4498493152, sha256: 51c9353a5ff0b8e2f7cd7262359c0b26ea54b327214fe26a5da52b505b2978e8}
+    f16:
+      adapter: ggmlc-laya
+      repo: mys/kev-4b-GGUF
+      files:
+        - {file: kev_4b_f16.gguf, size: 8441712352, sha256: 72fa1c764c99b9683d82333943224fceba094a3bce2426a651f2e23c34a9127e}
+
+  # --- Laya (ModernBERT / mmBERT encoders, compiled with ggmlc) ---
+  laya:english:
+    description: "Laya English: ModernBERT encoder, English (ggmlc)"
+    readme: readmes/laya/english.md
+    type: decision
+    default: 4bit
+    capabilities:
+      input: [text]
+      output: [choice, score, noul]
+    info:
+      family: laya
+      architecture: modernbert
+      source: convaiinnovations/laya
+      license: apache-2.0
+      languages: [en]
+      context_length: 512
+      max_options: 16
+    settings:
+      threads: 4
+    4bit:
+      adapter: ggmlc-laya
+      repo: mys/laya-GGUF
+      files:
+        - {file: laya_english_ud_q4_k_m.gguf, size: 419907712, sha256: e504de8fcac28e5dae1cf531fe1e1c0912703de5b82719ad84bd616e1257d835}
+    8bit:
+      adapter: ggmlc-laya
+      repo: mys/laya-GGUF
+      files:
+        - {file: laya_english_q8_0.gguf, size: 451505440, sha256: 6243305fb16cf22e53b932c220bd029be2adbfbec6ce120356517b8ae2f38382}
+    f16:
+      adapter: ggmlc-laya
+      repo: mys/laya-GGUF
+      files:
+        - {file: laya_english_f16.gguf, size: 846137888, sha256: ebeb7c65a3284bc07729179a4c5f19dfa2c3181b7519fd2beb02f4b0d37e8b5c}
+
+  laya:multilingual:
+    description: "Laya Multilingual: mmBERT encoder, multilingual (ggmlc)"
+    readme: readmes/laya/multilingual.md
+    type: decision
+    default: 8bit
+    capabilities:
+      input: [text]
+      output: [choice, score, noul]
+    info:
+      family: laya
+      architecture: mmbert
+      source: convaiinnovations/laya-multilingual
+      license: apache-2.0
+      languages: [multilingual]
+      context_length: 1024
+      max_options: 16
+    settings:
+      threads: 4
+    4bit:
+      adapter: ggmlc-laya
+      repo: mys/laya-multilingual-GGUF
+      files:
+        - {file: laya_multilingual_ud_q4_k_m.gguf, size: 523916512, sha256: 7c0e47f3dfaf1242929d69e91afb8868fcc5ee78092e7784e1aa2ee85adc9840}
+    8bit:
+      adapter: ggmlc-laya
+      repo: mys/laya-multilingual-GGUF
+      files:
+        - {file: laya_multilingual_q8_0.gguf, size: 361712736, sha256: 757c1a4b1f0f41824113dde76d6cd06b0881d37b796103a338de77f9f9b935c3}
+
+  laya:typed-decisions:
+    description: "Laya Typed Decisions: encoder tuned for typed decisions (ggmlc)"
+    readme: readmes/laya/typed-decisions.md
+    type: decision
+    default: 4bit
+    capabilities:
+      input: [text]
+      output: [choice, score, noul]
+    info:
+      family: laya
+      source: convaiinnovations/laya-typed-decisions
+      license: apache-2.0
+      languages: [en]
+      context_length: 1024
+      max_options: 16
+    settings:
+      threads: 4
+    4bit:
+      adapter: ggmlc-laya
+      repo: mys/laya-typed-decisions-GGUF
+      files:
+        - {file: laya_typed_decisions_ud_q4_k_m.gguf, size: 423581888, sha256: 42919cae9c11f744a16b8f3136a3356c586a558108080050e832ba14bbb0010c}
+    8bit:
+      adapter: ggmlc-laya
+      repo: mys/laya-typed-decisions-GGUF
+      files:
+        - {file: laya_typed_decisions_q8_0.gguf, size: 455179648, sha256: 6eb6ef58bc4f99bd9db40381604108af782ffc314aa00da6641f429991ca1f18}
+
+  # --- Decider (Mapika/decider, llama.cpp GGUFs) ---
+  # Served by our own engine (engines/ggmlc-custom-decider, llama.cpp + mtmd).
+  # Vision models list the multimodal projector with role: mmproj.
+  decider:0.8b:
+    description: "Decider 0.8B: small Qwen3.5-based one-pass decision model"
+    readme: readmes/decider/0.8b.md
+    type: decision
+    default: 4bit
+    capabilities:
+      input: [text]
+      output: [choice, score, noul]
+    info:
+      family: decider
+      parameters: 0.8B
+      architecture: qwen3.5
+      base_model: Qwen/Qwen3.5-0.8B-Base
+      source: Mapika/decider-0.8b
+      license: apache-2.0
+      languages: [en]
+      context_length: 262144
+      max_options: 10
+      homepage: "https://github.com/Mapika/decider"
+    settings:
+      context_size: 8192
+      temperature: 1.0
+    4bit:
+      adapter: ggmlc-custom-decider
+      repo: mradermacher/decider-0.8b-GGUF
+      files:
+        - {file: decider-0.8b.Q4_K_M.gguf, size: 529297856, sha256: ce48f94d8f176e6433dc09ee34fd4a39ac16b29043beaeb7b81d98373b27cd67}
+    8bit:
+      adapter: ggmlc-custom-decider
+      repo: mradermacher/decider-0.8b-GGUF
+      files:
+        - {file: decider-0.8b.Q8_0.gguf, size: 811844032, sha256: 2665d08c1052b4e01dabcb08771d25579f6776f7066355e4a0ccc5f74e32d4a2}
+
+  decider:4b:
+    description: "Decider 4B: Qwen3.5-based one-pass decision model (v2.1)"
+    readme: readmes/decider/4b.md
+    type: decision
+    default: 4bit
+    capabilities:
+      input: [text]
+      output: [choice, score, noul]
+    info:
+      family: decider
+      parameters: 4B
+      architecture: qwen3.5
+      base_model: Qwen/Qwen3.5-4B-Base
+      source: Mapika/decider-4b
+      license: apache-2.0
+      languages: [en]
+      context_length: 262144
+      max_options: 10
+      homepage: "https://github.com/Mapika/decider"
+    settings:
+      context_size: 8192
+      temperature: 1.0
+    4bit:
+      adapter: ggmlc-custom-decider
+      repo: Mapika/decider-4b-GGUF
+      files:
+        - {file: decider-4b-v2.1-Q4_K_M.gguf, size: 2708804640, sha256: c7083fcfc93f650cd66caeade4a3840ef9eeeeb1e80920907c554f70619d7c56}
+    8bit:
+      adapter: ggmlc-custom-decider
+      repo: Mapika/decider-4b-GGUF
+      files:
+        - {file: decider-4b-v2.1-Q8_0.gguf, size: 4482403360, sha256: 74614659ab849bc0ec4f0431e1f84ae8bc11fe30b42c3a235a8b0049d36cbc3d}
+
+  decider:2b-vision:
+    description: "Decider 2B Vision: one-pass decisions about text and one image"
+    readme: readmes/decider/2b-vision.md
+    type: decision
+    default: 4bit
+    capabilities:
+      input: [text, vision]
+      output: [choice, score, noul]
+    info:
+      family: decider
+      parameters: 2B
+      architecture: "qwen3.5 + qwen3-vl projector"
+      base_model: Qwen/Qwen3.5-2B-Base
+      source: Mapika/decider-2b-vision
+      license: apache-2.0
+      languages: [en]
+      context_length: 262144
+      max_options: 10
+      homepage: "https://github.com/Mapika/decider"
+    settings:
+      context_size: 8192
+      temperature: 1.0
+    4bit:
+      adapter: ggmlc-custom-decider
+      repo: mradermacher/decider-2b-vision-GGUF
+      files:
+        - {file: decider-2b-vision.Q4_K_M.gguf, size: 1274397056, sha256: b3e38aa90856d6b93df0d2b186e941e57fa6fd4b022a3a89fe538ff01ebd9985}
+        - {file: decider-2b-vision.mmproj-Q8_0.gguf, size: 364664448, sha256: 79e636085e90f1b4bdc5df22003cde0dd0d88086a04b7c101e6bd7d1cc9f2c91, role: mmproj}
+    8bit:
+      adapter: ggmlc-custom-decider
+      repo: mradermacher/decider-2b-vision-GGUF
+      files:
+        - {file: decider-2b-vision.Q8_0.gguf, size: 2012012928, sha256: 11e07e4c6a56856e05ec5b4c98308a8e869607bfaad9e70b94c9a6439c595b9c}
+        - {file: decider-2b-vision.mmproj-Q8_0.gguf, size: 364664448, sha256: 79e636085e90f1b4bdc5df22003cde0dd0d88086a04b7c101e6bd7d1cc9f2c91, role: mmproj}

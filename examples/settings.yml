@@ -1,0 +1,24 @@
+# Local engine settings. Copy to ~/.ai-server/settings.yml (or point to it
+# with --settings-file / AI_SERVER_SETTINGS). Only overrides are needed;
+# everything else comes from the registry.
+#
+# Precedence (low -> high):
+#   registry model < registry quant < adapters.<adapter> < models.<id>.settings
+#   < models.<id>.quants.<quant> < --set key=value
+#
+# See all keys and where each value comes from: self settings <model>
+version: 1
+
+adapters:
+  ggmlc-custom-decider:        # every Decider model
+    threads: 8
+  ggmlc-laya:                  # every Kev / Laya model
+    threads: 6
+
+models:
+  decider:2b-vision:
+    settings:                  # all quants
+      context_size: 4096
+    quants:
+      8bit:                    # only the 8bit quant
+        flash_attn: "on"
