@@ -45,7 +45,8 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends cmake curl just libvulkan1 mesa-vulkan-drivers ninja-build
+          sudo apt-get install -y --no-install-recommends cmake curl libvulkan1 mesa-vulkan-drivers ninja-build
+          curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | sudo bash -s -- --to /usr/local/bin --tag 1.43.0
 
       - name: Build server and engines
         env:
