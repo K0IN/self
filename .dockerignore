@@ -1,0 +1,9 @@
+.git
+.github
+.devcontainer
+build
+dist
+engines/*/build
+engines/*/deps
+site
+*.part

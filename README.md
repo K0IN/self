@@ -52,6 +52,22 @@ Stop with **Ctrl+C**. The server stops taking requests, drops queued work,
 closes the engine's stdin, waits for it to exit, and falls back to
 SIGTERM/SIGKILL if needed.
 
+## Container distribution
+
+Containers are published to GHCR for Linux hosts with NVIDIA CUDA 13, NVIDIA
+CUDA 12, and CPU-only hosts:
+
+```bash
+docker pull ghcr.io/<owner>/<repo>:latest       # CUDA 13
+docker pull ghcr.io/<owner>/<repo>:cuda-12       # CUDA 12
+docker pull ghcr.io/<owner>/<repo>:cpu           # CPU
+docker run --rm --gpus all -p 8080:8080 ghcr.io/<owner>/<repo>:latest
+```
+
+Podman uses the same image names and tags. Every build also publishes an
+immutable variant tag containing the commit, such as
+`cuda-13-0123456789abcdef`; `latest` points to the CUDA 13 image from `main`.
+
 ### All `just` recipes
 
 | Recipe | What it does |
