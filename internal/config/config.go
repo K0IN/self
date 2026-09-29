@@ -24,7 +24,6 @@ type Serve struct {
 	QueueSize             int
 	PreprocessConcurrency int
 	RuntimeDir            string
-	Registry              string
 	AllowHTTPImages       bool
 	AllowPrivateImages    bool
 	Verbose               bool
@@ -37,8 +36,6 @@ type Serve struct {
 	SettingsFile         string
 	SettingsFileExplicit bool
 }
-
-const DefaultRegistry = "https://k0in.github.io/self/models.yml"
 
 // multiFlag collects repeated string flags.
 type multiFlag struct{ v *[]string }
@@ -79,7 +76,6 @@ func ParseServe(args []string, getenv func(string) string, stderr io.Writer) (Se
 		Host:                  "127.0.0.1",
 		Port:                  8080,
 		ModelsDir:             DefaultModelsDir(),
-		Registry:              DefaultRegistry,
 		Device:                "auto",
 		QueueSize:             64,
 		PreprocessConcurrency: 8,
@@ -104,10 +100,6 @@ func ParseServe(args []string, getenv func(string) string, stderr io.Writer) (Se
 	if v := getenv("AI_SERVER_SETTINGS"); v != "" {
 		s.SettingsFile = v
 	}
-	if v := getenv("AI_SERVER_REGISTRY"); v != "" {
-		s.Registry = v
-	}
-
 	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	fs.StringVar(&s.Host, "host", s.Host, "listen host (env AI_SERVER_HOST)")
@@ -118,7 +110,6 @@ func ParseServe(args []string, getenv func(string) string, stderr io.Writer) (Se
 	fs.IntVar(&s.QueueSize, "queue-size", s.QueueSize, "max ready requests waiting for the model")
 	fs.IntVar(&s.PreprocessConcurrency, "preprocess-concurrency", s.PreprocessConcurrency, "concurrent image fetch/decode/resize jobs")
 	fs.StringVar(&s.RuntimeDir, "runtime-dir", s.RuntimeDir, "engine directory override (development; env AI_SERVER_RUNTIME_DIR)")
-	fs.StringVar(&s.Registry, "registry", "", "registry file override (default: bundled registry)")
 	fs.BoolVar(&s.AllowHTTPImages, "allow-http-images", false, "allow plain http:// image URLs")
 	fs.BoolVar(&s.AllowPrivateImages, "allow-private-images", false, "allow image URLs resolving to private/loopback addresses")
 	fs.BoolVar(&s.Verbose, "verbose", false, "show engine logs and request logs")

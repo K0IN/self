@@ -6,8 +6,5 @@
     },
     "runArgs": [
         "--gpus=all"
-    ],
-    "remoteEnv": {
-        "AI_SERVER_REGISTRY": "models/registry.yml"
-    }
+    ]
 }

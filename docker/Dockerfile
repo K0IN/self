@@ -20,7 +20,6 @@ COPY bin/self /app/self
 COPY bin/libexec /app/libexec
 
 ENV AI_SERVER_RUNTIME_DIR=/app/libexec/ai-server
-ENV AI_SERVER_REGISTRY=https://k0in.github.io/self/models.yml
 ENV AI_SERVER_MODELS=/models
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility

@@ -3,7 +3,7 @@
 ## What
 
 - `models/registry.yml`: public, human-edited model list.
-- Embedded in the binary (`models/embed.go`). Override with `--registry FILE`.
+- Embedded in the binary (`models/embed.go`).
 - Model cards: `models/readmes/<name>/<tag>.md`.
 
 ## Entry format

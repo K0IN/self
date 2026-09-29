@@ -7,6 +7,10 @@
 - `just check` -> gofmt + vet + tests
 - `just test-integration` -> real laya engine + kev:0.5b
 
+`just test` runs all Go tests. `just test-race` adds the race detector.
+`just check` requires clean `gofmt` output, then runs `go vet ./...` and the
+full test suite.
+
 ## Unit tests (no GPU, no model)
 
 | Package | Covers |
@@ -33,6 +37,20 @@ SELF_TEST_ENGINE=$PWD/bin/libexec/ai-server/laya SELF_TEST_GGUF=/path/kev.gguf \
 ```
 
 - Skipped when env vars are missing.
+
+## Smoke requests
+
+With a server running, these recipes exercise the HTTP surface:
+
+```text
+just health
+just model-info
+just try-text
+just try-all
+```
+
+The smoke recipes use `PORT` (default `8080`) and the JSON fixtures in
+`examples/`.
 
 ## Manual e2e (done)
 

@@ -8,7 +8,7 @@ import (
 )
 
 func TestBundledRegistry(t *testing.T) {
-	reg, err := LoadRegistry("")
+	reg, err := LoadRegistry()
 	if err != nil {
 		t.Fatal(err)
 	}

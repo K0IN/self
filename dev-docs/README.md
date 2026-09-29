@@ -1,6 +1,20 @@
-# Dev docs
+# Development documentation
 
-Short docs per feature. Each file has: what it does, how it works, acceptance criteria.
+This directory describes the architecture and the workflows for developing,
+testing, packaging, and extending `self`.
+
+Start with [01 · Overview](01-overview.md), then use:
+
+- [02 · CLI](02-cli.md) for commands, flags, configuration, and Just wrappers.
+- [05 · Runtime and IPC](05-runtime-ipc.md) for engine discovery and the
+  `SELFIPC1` protocol.
+- [08 · HTTP API](08-http-api.md) for routes, request/response contracts, and
+  errors.
+- [13 · Build tooling](13-build-tooling.md) for local builds, runtime variants,
+  packaging, and the registry site.
+- [14 · Testing](14-testing.md) for unit, race, integration, and smoke checks.
+
+Each file also records how the feature works and its acceptance criteria.
 
 | File | Feature |
 | :--- | :--- |

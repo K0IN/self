@@ -15,7 +15,7 @@ import (
 // Settings prints the effective engine settings of a model, where each value
 // comes from, and every setting the adapter accepts (`self settings <id>`).
 func Settings(cfg config.Serve, out io.Writer) error {
-	reg, err := LoadRegistry(cfg.Registry)
+	reg, err := LoadRegistry()
 	if err != nil {
 		return err
 	}

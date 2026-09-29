@@ -103,8 +103,8 @@ Environment overrides for recipes: `MODEL=kev:4b PORT=9000 just serve`.
 
 ## Models
 
-All models come from `models/registry.yml`, which is embedded in the binary
-(override it with `--registry FILE`). Run `just list` to see them.
+All models come from `models/registry.yml`, which is embedded in the binary.
+Run `just list` to see them.
 
 | Model | Type | Quants (default first) | Capabilities | Works today |
 | :--- | :--- | :--- | :--- | :--- |
@@ -217,7 +217,6 @@ self settings <model>           Effective engine settings and their source
 | `--queue-size` | `64` | |
 | `--preprocess-concurrency` | `8` | |
 | `--runtime-dir` | bundled `libexec/ai-server` | `AI_SERVER_RUNTIME_DIR` |
-| `--registry` | embedded registry | |
 | `--allow-http-images` | off | |
 | `--allow-private-images` | off | |
 | `-v`, `--verbose` | off | |

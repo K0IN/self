@@ -49,7 +49,6 @@ Serve flags:
   --queue-size N                  ready-request queue size (default 64)
   --preprocess-concurrency N      concurrent image preprocessing (default 8)
   --runtime-dir DIR               engine directory override (development)
-  --registry FILE                 registry override
   --allow-http-images             allow plain http:// image URLs
   --allow-private-images          allow image URLs on private/loopback networks
   -v, --verbose                   show engine and request logs
@@ -197,7 +196,7 @@ func pull(ctx context.Context, args []string) error {
 	if err != nil {
 		return errs.New(errs.InvalidRequest, "%s", err)
 	}
-	reg, err := app.LoadRegistry(cfg.Registry)
+	reg, err := app.LoadRegistry()
 	if err != nil {
 		return err
 	}
@@ -222,12 +221,11 @@ func pull(ctx context.Context, args []string) error {
 
 func list(args []string) error {
 	fs := flag.NewFlagSet("list", flag.ContinueOnError)
-	regPath := fs.String("registry", "", "registry override")
 	modelsDir := fs.String("models-dir", config.DefaultModelsDir(), "model directory")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	reg, err := app.LoadRegistry(*regPath)
+	reg, err := app.LoadRegistry()
 	if err != nil {
 		return err
 	}
@@ -264,11 +262,10 @@ func list(args []string) error {
 
 func suggest(args []string) error {
 	args = append(args, "kev:0.5b")
-	cfg, err := config.ParseServe(args, os.Getenv, os.Stderr)
-	if err != nil {
-		return err
+	if len(args) != 1 {
+		return errs.New(errs.InvalidRequest, "usage: self suggest")
 	}
-	reg, err := app.LoadRegistry(cfg.Registry)
+	reg, err := app.LoadRegistry()
 	if err != nil {
 		return err
 	}

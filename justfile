@@ -146,7 +146,8 @@ settings m=model *flags="": build
 
 # Render the registry overview (GitHub Pages) into site/
 site:
-    go run ./cmd/registry-site -out site
+    cd docs && npm install && npm run build
+    rm -rf site && cp -r docs/.vitepress/dist site
 
 # Render the registry site and serve it on http://127.0.0.1:8000
 site-serve: site

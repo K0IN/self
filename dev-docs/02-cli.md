@@ -17,9 +17,19 @@
 - `--host` (127.0.0.1), `--port` (8080), `--quant`, `--models-dir` (~/.ai-server/models).
 - `--device`: `auto | cpu | cuda | cuda:N | metal | vulkan | vulkan:N`.
 - `--queue-size` (64), `--preprocess-concurrency` (8).
-- `--runtime-dir`, `--registry`, `--allow-http-images`, `--allow-private-images`, `-v`.
-- `--set key=value` (repeatable): engine setting override, e.g. `--set context_size=4096`.
+- `--runtime-dir`, `--allow-http-images`, `--allow-private-images`,
+  `--verbose` / `-v`.
 - `--settings-file FILE`: local settings (default `~/.ai-server/settings.yml`).
+
+The `justfile` provides the usual development wrappers:
+
+- `just setup`: build `self`, fetch the Laya runtime, and build the decision
+	runtime.
+- `just bootstrap`: build only the runtimes missing from `bin/libexec/ai-server`.
+- `just serve`, `just serve-verbose`, `just serve-cpu`, and `just decision`:
+  build/bootstrap and then run the matching command.
+- `just pull`, `just list`, `just check-model`, and `just settings`: invoke the
+  corresponding CLI workflows.
 
 ## Config rules
 

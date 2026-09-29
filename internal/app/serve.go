@@ -10,7 +10,6 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"sync/atomic"
@@ -31,39 +30,15 @@ import (
 	bundled "ai-server/models"
 )
 
-// LoadRegistry loads the override file or the embedded registry.
-func LoadRegistry(path string) (*registry.Registry, error) {
-	if path != "" {
-		u, err := url.Parse(path)
-		if err == nil && (u.Scheme == "http" || u.Scheme == "https") {
-			client := http.Client{Timeout: 30 * time.Second}
-			resp, err := client.Get(path)
-			if err != nil {
-				return nil, fmt.Errorf("load registry %s: %w", path, err)
-			}
-			defer resp.Body.Close()
-			if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-				return nil, fmt.Errorf("load registry %s: HTTP %s", path, resp.Status)
-			}
-			b, err := io.ReadAll(io.LimitReader(resp.Body, 16<<20))
-			if err != nil {
-				return nil, fmt.Errorf("read registry %s: %w", path, err)
-			}
-			r, err := registry.Parse(b)
-			if err != nil {
-				return nil, fmt.Errorf("%s: %w", path, err)
-			}
-			return r, nil
-		}
-		return registry.LoadFile(path)
-	}
+// LoadRegistry loads the registry embedded in the binary.
+func LoadRegistry() (*registry.Registry, error) {
 	return registry.Parse(bundled.Registry)
 }
 
 // Serve runs `self serve` until ctx is cancelled or the engine dies.
 // requireType, when set, enforces the model type (used by `self decision`).
 func Serve(ctx context.Context, cfg config.Serve, requireType registry.ModelType, out io.Writer, isTTY bool) error {
-	reg, err := LoadRegistry(cfg.Registry)
+	reg, err := LoadRegistry()
 	if err != nil {
 		return err
 	}
