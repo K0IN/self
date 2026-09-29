@@ -1,0 +1,34 @@
+{{define "head"}}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.}}</title>
+<style>
+:root { --fg:#1f2328; --muted:#656d76; --border:#d0d7de; --bg:#fff; --soft:#f6f8fa; --accent:#0969da; }
+@media (prefers-color-scheme: dark) { :root { --fg:#e6edf3; --muted:#8d96a0; --border:#30363d; --bg:#0d1117; --soft:#161b22; --accent:#4493f8; } }
+* { box-sizing: border-box; }
+body { margin:0; font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; color:var(--fg); background:var(--bg); }
+main { max-width: 980px; margin: 0 auto; padding: 32px 20px 64px; }
+a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
+header { display:flex; justify-content:space-between; align-items:baseline; gap:16px; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:24px; }
+header h1 { font-size: 22px; margin: 0; }
+.muted { color: var(--muted); }
+table { width:100%; border-collapse: collapse; margin: 12px 0 24px; }
+th, td { text-align:left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+code, pre { font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size: 13px; }
+code { background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+pre { background: var(--soft); padding: 12px 14px; border-radius: 6px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+.tag { display:inline-block; font-size:12px; padding:1px 8px; margin:1px 2px 1px 0; border:1px solid var(--border); border-radius: 999px; }
+.tag.vision { border-color: var(--accent); color: var(--accent); }
+.hash { font-size: 11px; word-break: break-all; color: var(--muted); }
+.card { border:1px solid var(--border); border-radius: 8px; padding: 4px 20px; margin: 16px 0; }
+</style>
+</head>
+<body><main>{{end}}
+
+{{define "foot"}}</main></body></html>{{end}}
+
+{{define "caps"}}{{range .}}<span class="tag{{if eq . "vision"}} vision{{end}}">{{.}}</span>{{end}}{{end}}

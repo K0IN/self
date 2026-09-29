@@ -1,0 +1,52 @@
+{{define "model.html"}}{{template "head" .M.ID}}
+<header>
+  <h1><a href="{{.Root}}index.html">{{.Opt.Title}}</a> / <code>{{.M.ID}}</code></h1>
+  <span class="muted">{{if .Opt.RepoURL}}<a href="{{.Opt.RepoURL}}/blob/main/models/{{.M.ReadmeSrc}}">edit</a>{{end}}</span>
+</header>
+
+<p>{{.M.Description}}</p>
+<p>{{template "caps" .M.Capabilities}} <span class="tag">{{.M.Type}}</span></p>
+<pre><code>self serve {{.M.ID}}</code></pre>
+
+{{if .M.Info}}
+<h2>Model</h2>
+<table>
+  <tbody>
+  {{range .M.Info}}<tr><th>{{.K}}</th><td>{{.V}}</td></tr>{{end}}
+  </tbody>
+</table>
+{{end}}
+
+{{if .M.Settings}}
+<h2>Engine settings</h2>
+<table>
+  <tbody>
+  {{range .M.Settings}}<tr><th><code>{{.K}}</code></th><td>{{.V}}</td></tr>{{end}}
+  </tbody>
+</table>
+<p class="muted">Override at run time: <code>self serve {{.M.ID}} --set key=value</code></p>
+{{end}}
+
+<div class="card">{{.M.Readme}}</div>
+
+<h2>Quants</h2>
+<table>
+  <thead><tr><th>Quant</th><th>Files</th><th>Size</th><th>Engine</th></tr></thead>
+  <tbody>
+  {{range .M.Quants}}
+    <tr>
+      <td><code>{{.Name}}</code>{{if .Default}} <span class="muted">default</span>{{end}}</td>
+      <td>
+        {{range .Files}}
+          <div><a href="{{.URL}}">{{.Name}}</a>{{if ne .Role "model"}} <span class="tag">{{.Role}}</span>{{end}} <span class="muted">{{.Size}}</span></div>
+          <div class="hash">sha256 {{.SHA256}}</div>
+        {{end}}
+      </td>
+      <td>{{.Size}}</td>
+      <td><code>{{.Adapter}}</code></td>
+    </tr>
+  {{end}}
+  </tbody>
+</table>
+<pre><code>self pull {{.M.ID}} --quant &lt;quant&gt;</code></pre>
+{{template "foot"}}{{end}}
