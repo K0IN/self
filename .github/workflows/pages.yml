@@ -3,12 +3,12 @@ name: Build and deploy documentation
 on:
   push:
     branches: [main]
-    paths:
-      - 'docs/**'
-      - 'models/**'
-      - 'internal/site/**'
-      - 'cmd/registry-site/**'
-      - '.github/workflows/pages.yml'
+    # paths:
+    #   - 'docs/**'
+    #   - 'models/**'
+    #   - 'internal/site/**'
+    #   - 'cmd/registry-site/**'
+    #   - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:
