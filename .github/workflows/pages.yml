@@ -6,8 +6,6 @@ on:
     # paths:
     #   - 'docs/**'
     #   - 'models/**'
-    #   - 'internal/site/**'
-    #   - 'cmd/registry-site/**'
     #   - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -32,6 +30,8 @@ jobs:
           node-version: 22
       - name: Build VitePress site
         working-directory: docs
+        env:
+          DOCS_BASE: /self/
         run: |
           npm install
           npm run build

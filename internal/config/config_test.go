@@ -1,11 +1,29 @@
 package config
 
 import (
+	"flag"
 	"io"
 	"testing"
 )
 
 func env(m map[string]string) func(string) string { return func(k string) string { return m[k] } }
+
+func TestParseServeWithExtraFlags(t *testing.T) {
+	var iterations int
+	var out string
+	extra := func(fs *flag.FlagSet) {
+		fs.IntVar(&iterations, "iterations", 20, "")
+		fs.StringVar(&out, "out", "", "")
+	}
+	s, err := ParseServeWith([]string{"--iterations", "5", "kev:0.5b@q8", "--out", "/tmp/r", "--device", "cpu"}, env(nil), io.Discard, extra)
+	if err != nil || iterations != 5 || out != "/tmp/r" || s.Model != "kev:0.5b" || s.Quant != "q8" || s.Device != "cpu" {
+		t.Fatalf("%+v iterations=%d out=%q %v", s, iterations, out, err)
+	}
+	// The extra flags exist only for commands that register them.
+	if _, err := ParseServe([]string{"kev:0.5b", "--iterations", "5"}, env(nil), io.Discard); err == nil {
+		t.Fatal("serve accepted --iterations")
+	}
+}
 
 func TestDefaults(t *testing.T) {
 	s, err := ParseServe([]string{"kev:4b"}, env(nil), io.Discard)

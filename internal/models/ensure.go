@@ -3,15 +3,16 @@ package models
 import (
 	"context"
 
-	"ai-server/internal/decision"
-	"ai-server/internal/errs"
 	"ai-server/internal/registry"
 )
 
+// Files are the local paths of a variant's files, by role.
+type Files map[registry.FileRole]string
+
 // Ensure downloads any missing files of r and returns local paths.
 // newProgress is called once per file that needs downloading.
-func Ensure(ctx context.Context, s Store, d *Downloader, r registry.Resolved, newProgress func() Progress) (decision.ModelFiles, error) {
-	var out decision.ModelFiles
+func Ensure(ctx context.Context, s Store, d *Downloader, r registry.Resolved, newProgress func() Progress) (Files, error) {
+	out := Files{}
 	for _, f := range r.Variant.Files {
 		dest := s.Path(r, f)
 		if !s.Installed(r, f) {
@@ -24,14 +25,7 @@ func Ensure(ctx context.Context, s Store, d *Downloader, r registry.Resolved, ne
 				return out, err
 			}
 		}
-		switch f.Role {
-		case registry.RoleModel:
-			out.Model = dest
-		case registry.RoleMMProj:
-			out.MMProj = dest
-		default:
-			return out, errs.New(errs.Internal, "unhandled file role %q", f.Role)
-		}
+		out[f.Role] = dest
 	}
 	return out, nil
 }

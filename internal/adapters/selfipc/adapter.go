@@ -50,8 +50,6 @@ type Spec struct {
 	RequestTimeout time.Duration
 }
 
-const stopGrace = 5 * time.Second
-
 // Factory returns a decision.Factory for spec.
 func Factory(spec Spec) decision.Factory {
 	if spec.RequestTimeout <= 0 {
@@ -65,7 +63,7 @@ type Adapter struct {
 	spec Spec
 
 	mu     sync.Mutex // one request at a time
-	proc   *runtime.Process
+	proc   *runtime.Supervisor
 	r      *ipc.Reader
 	w      *ipc.Writer
 	info   decision.RuntimeInfo
@@ -114,34 +112,17 @@ func (a *Adapter) Start(ctx context.Context, cfg decision.RuntimeConfig) error {
 	if err != nil {
 		return errs.Wrap(errs.RuntimeStartFailed, err, "cannot start engine %s", cfg.EnginePath)
 	}
-	a.proc = proc
+	a.proc = runtime.Supervise(proc, "decision engine")
 	a.r = ipc.NewReader(proc.Stdout(), ipc.DefaultLimits())
 	a.w = ipc.NewWriter(proc.Stdin(), ipc.DefaultLimits())
 	go func() { <-proc.Done(); close(a.done) }()
 
-	type result struct {
-		f   ipc.Frame
-		err error
+	var first ipc.Frame
+	err = runtime.Handshake(ctx, a.proc, func() (err error) { first, err = a.r.ReadFrame(); return })
+	if err != nil {
+		return err
 	}
-	ch := make(chan result, 1)
-	go func() {
-		f, err := a.r.ReadFrame()
-		ch <- result{f, err}
-	}()
-	var res result
-	select {
-	case res = <-ch:
-	case <-ctx.Done():
-		a.proc.Kill()
-		return errs.Wrap(errs.RuntimeStartFailed, ctx.Err(), "engine start cancelled")
-	}
-	if res.err != nil {
-		a.proc.Kill()
-		<-a.proc.Done()
-		return errs.Wrap(errs.RuntimeStartFailed, res.err, "engine failed to start (%s)%s",
-			a.proc.ExitDescription(), runtime.FormatTail(a.proc.StderrTail(15)))
-	}
-	info, err := parseReady(res.f.Header, cfg.Device)
+	info, err := parseReady(first.Header, cfg.Device)
 	if err != nil {
 		a.proc.Kill()
 		return errs.Wrap(errs.RuntimeStartFailed, err, "invalid engine handshake")
@@ -209,7 +190,7 @@ func (a *Adapter) Decide(_ context.Context, req decision.Request) (decision.Resp
 	defer a.mu.Unlock()
 	select {
 	case <-a.done:
-		return decision.Response{}, a.crashErr(nil)
+		return decision.Response{}, a.proc.CrashErr(nil)
 	default:
 	}
 	a.nextID++
@@ -222,17 +203,12 @@ func (a *Adapter) Decide(_ context.Context, req decision.Request) (decision.Resp
 		if errors.Is(err, ipc.ErrTooLarge) {
 			return decision.Response{}, errs.New(errs.ImageTooLarge, "request exceeds the engine frame limit")
 		}
-		return decision.Response{}, a.crashErr(err)
+		return decision.Response{}, a.proc.CrashErr(err)
 	}
 
-	watchdog := time.AfterFunc(a.spec.RequestTimeout, a.proc.Kill)
-	f, err := a.r.ReadFrame()
-	stopped := watchdog.Stop()
-	if err != nil {
-		if !stopped {
-			return decision.Response{}, errs.New(errs.RuntimeCrashed, "engine did not answer within %s and was stopped", a.spec.RequestTimeout)
-		}
-		return decision.Response{}, a.crashErr(err)
+	var f ipc.Frame
+	if err := a.proc.Await(a.spec.RequestTimeout, func() (err error) { f, err = a.r.ReadFrame(); return }); err != nil {
+		return decision.Response{}, err
 	}
 	out, err := decodeResponse(f, id, req.Questions)
 	if err != nil {
@@ -249,31 +225,8 @@ func (a *Adapter) Decide(_ context.Context, req decision.Request) (decision.Resp
 	return out, nil
 }
 
-func (a *Adapter) crashErr(cause error) error {
-	select {
-	case <-a.done:
-	case <-time.After(2 * time.Second):
-		a.proc.Kill()
-	}
-	return &errs.Error{
-		Kind:    errs.RuntimeCrashed,
-		Message: fmt.Sprintf("decision engine %s%s", a.proc.ExitDescription(), runtime.FormatTail(a.proc.StderrTail(15))),
-		Err:     cause,
-	}
-}
-
 // Close stops the engine gracefully (stdin EOF, then SIGTERM, then SIGKILL).
-func (a *Adapter) Close(ctx context.Context) error {
-	if a.proc == nil {
-		return nil
-	}
-	return a.proc.Stop(ctx, stopGrace)
-}
+func (a *Adapter) Close(ctx context.Context) error { return a.proc.Close(ctx) }
 
 // StderrTail exposes recent engine stderr for crash reports.
-func (a *Adapter) StderrTail(n int) []string {
-	if a.proc == nil {
-		return nil
-	}
-	return a.proc.StderrTail(n)
-}
+func (a *Adapter) StderrTail(n int) []string { return a.proc.StderrTail(n) }

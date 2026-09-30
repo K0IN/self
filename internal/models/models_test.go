@@ -342,8 +342,8 @@ func TestStoreLayoutAndEnsure(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := filepath.Join(s.Root, "kev", "4b", "q4", "kev.gguf")
-	if files.Model != want {
-		t.Fatalf("path = %s", files.Model)
+	if files[registry.RoleModel] != want {
+		t.Fatalf("path = %s", files[registry.RoleModel])
 	}
 	if _, err := Ensure(context.Background(), s, d, res, nil); err != nil || hits != 1 {
 		t.Fatalf("second ensure re-downloaded: hits=%d err=%v", hits, err)
@@ -448,6 +448,45 @@ func TestInstalledChecksPinnedSize(t *testing.T) {
 	os.WriteFile(p, []byte("1234567890"), 0o644)
 	if !s.Installed(res, f) {
 		t.Fatal("correct-size file not installed")
+	}
+}
+
+func TestStoreRemove(t *testing.T) {
+	s := Store{Root: t.TempDir()}
+	put := func(name, tag, quant string) string {
+		dir := filepath.Join(s.Root, name, tag, quant)
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "m.gguf.part"), []byte("x"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return dir
+	}
+	q4, q8, other := put("kev", "4b", "q4"), put("kev", "4b", "q8"), put("kev", "0.5b", "q4")
+	exists := func(p string) bool { _, err := os.Stat(p); return err == nil }
+
+	got, err := s.Remove("kev:4b", "q8")
+	if err != nil || len(got) != 1 || got[0] != "q8" || exists(q8) || !exists(q4) {
+		t.Fatalf("remove q8: got=%v err=%v", got, err)
+	}
+	got, err = s.Remove("kev:4b", "")
+	if err != nil || len(got) != 1 || got[0] != "q4" || exists(filepath.Join(s.Root, "kev", "4b")) {
+		t.Fatalf("remove all: got=%v err=%v", got, err)
+	}
+	if !exists(other) {
+		t.Fatal("removing kev:4b touched kev:0.5b")
+	}
+	if got, err = s.Remove("kev:4b", ""); err != nil || len(got) != 0 {
+		t.Fatalf("remove missing: got=%v err=%v", got, err)
+	}
+	for _, bad := range [][2]string{{"../kev:4b", ""}, {"kev:..", ""}, {"kev:4b", "../q4"}, {"kev/x:4b", ""}, {":4b", ""}} {
+		if _, err := s.Remove(bad[0], bad[1]); errs.KindOf(err) != errs.InvalidRequest {
+			t.Fatalf("Remove(%q, %q) err = %v", bad[0], bad[1], err)
+		}
+	}
+	if !exists(other) {
+		t.Fatal("invalid reference deleted files")
 	}
 }
 

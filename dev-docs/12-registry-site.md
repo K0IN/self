@@ -1,35 +1,43 @@
-# 12 · Registry site (GitHub Pages)
+# 12 · Documentation and registry site (GitHub Pages)
 
 ## What
 
-- Static site from `models/registry.yml` + model cards.
-- Code: `internal/site` (templates embedded), `cmd/registry-site`.
-- Markdown via `github.com/yuin/goldmark` (GFM).
-
-## Output (`site/`)
-
-- `index.html`: table of models (id, description, capabilities, quants, size).
-- `models/<name>/<tag>.html`: rendered readme, `self serve`, quants, files, size, sha256, HF links, edit link.
-- `registry.yml`: raw copy.
-- `.nojekyll`.
+- One VitePress site in `docs/` (Node 22, `vitepress`, `yaml`): the user guide
+  (`index.md`, `docker.md`, `settings.md`, `cli.md`, `api.md`, `examples.md`) and a
+  model catalog generated from the registry. `ONBOARDING.md` is a page that is not in the sidebar.
+- Config: `docs/.vitepress/config.mjs` (`base` from `DOCS_BASE`, default `/`;
+  local search; sidebar). Theme: `docs/.vitepress/theme/` (`ModelCatalog.vue`,
+  `ApiField.vue`, `custom.css`).
+- `docs/generate-registry.mjs` runs before every build (`npm run build`). It reads
+  `models/registry.yml` (or `REGISTRY_FILE`) and the model cards and writes:
+  - `docs/public/models.yml`: the exact registry text. Published as
+    `https://k0in.github.io/self/models.yml`, which is the registry `self` loads (see 03).
+  - `docs/public/registry.json`: catalog data (id, capabilities, quants, files, sizes).
+  - `docs/registry/index.md` (search page) and `docs/registry/<name>/<tag>.md`: the model card
+    plus registry details and a table of quants, adapters, files, sizes, sha256.
+- A missing model card fails the build.
+- `docs/public/examples/settings.yml` is the example local settings file.
+- Generated and build output (all in `.gitignore`): `docs/registry/`, `docs/public/models.yml`,
+  `docs/public/registry.json`, `docs/node_modules/`, `docs/.vitepress/dist/`, `site/`.
 
 ## Commands
 
-- `just site` -> build into `site/`.
-- `just site-serve` -> preview on http://127.0.0.1:8000.
-- `SITE_REPO_URL` / `-repo` -> edit / source links.
+- `just site` -> `npm install` + `npm run build` in `docs/`, then copy `docs/.vitepress/dist` to `site/`.
+- `just site-serve` -> `just site`, then `vitepress preview` on http://127.0.0.1:8000 (local builds use base `/`).
+- `cd docs && npm run dev` -> live-reloading dev server.
+- `DOCS_BASE=/self/` -> base path used by GitHub Pages.
 
 ## CI
 
-- `.github/workflows/pages.yml`.
-- On push to `main` touching `models/`, site code or the workflow.
-- Runs registry + site tests, builds, deploys to Pages.
+- `.github/workflows/pages.yml` ("Build and deploy documentation").
+- On every push to `main` (the `paths` filter is commented out) and on manual dispatch.
+- Builds the site with `DOCS_BASE=/self/`, uploads `docs/.vitepress/dist`, deploys to Pages.
+- It does not run the Go tests. Run `go test ./...` before merging registry changes.
 - Enable: repo settings -> Pages -> Source: GitHub Actions.
 
 ## Acceptance criteria
 
-- Must: every model gets a page. Index links to it.
-- Must: missing readme fails the build.
-- Must: user text is HTML-escaped (description).
-- Must: bundled registry renders (`TestBuildBundledRegistry`).
+- Must: every registry model gets a page and a catalog entry.
+- Must: missing readme fails the build (`generate-registry.mjs`) and `go test` (`internal/registry` `TestBundledRegistry`).
+- Must: after a build, `docs/public/models.yml` is byte-identical to `models/registry.yml` (copies in a working tree can be stale until the next build).
 - Open: visual check in a browser not done yet.

@@ -72,6 +72,12 @@ var deviceRE = regexp.MustCompile(`^(auto|cpu|cuda|cuda:\d+|metal|vulkan|vulkan:
 // ParseServe parses `self serve` arguments. getenv is os.Getenv in
 // production and injectable in tests.
 func ParseServe(args []string, getenv func(string) string, stderr io.Writer) (Serve, error) {
+	return ParseServeWith(args, getenv, stderr, nil)
+}
+
+// ParseServeWith is ParseServe for commands that take the serve flags plus
+// their own: extra registers those on the flag set before parsing.
+func ParseServeWith(args []string, getenv func(string) string, stderr io.Writer, extra func(*flag.FlagSet)) (Serve, error) {
 	s := Serve{
 		Host:                  "127.0.0.1",
 		Port:                  8080,
@@ -116,7 +122,9 @@ func ParseServe(args []string, getenv func(string) string, stderr io.Writer) (Se
 	fs.BoolVar(&s.Verbose, "v", false, "shorthand for --verbose")
 	fs.StringVar(&s.SettingsFile, "settings-file", s.SettingsFile, "local engine settings file (default ~/.ai-server/settings.yml; env AI_SERVER_SETTINGS)")
 	fs.Var(multiFlag{&s.Set}, "set", "engine setting override key=value (repeatable), e.g. --set context_size=4096")
-
+	if extra != nil {
+		extra(fs)
+	}
 	// Allow flags before and after the model argument.
 	var positional []string
 	rest := args

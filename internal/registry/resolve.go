@@ -66,7 +66,7 @@ func (r *Registry) suggest(ref string) string {
 		}
 	}
 	if len(hits) == 0 {
-		return " (run `self list` to see available models)"
+		return " (run `self ls-remote` to see available models)"
 	}
 	return " (did you mean: " + strings.Join(hits, ", ") + "?)"
 }

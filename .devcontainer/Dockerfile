@@ -8,10 +8,12 @@ RUN apt-get update \
     && curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" | tar -C /usr/local -xz \
     && useradd --create-home --shell /usr/bin/fish vscode \
     && mkdir -p /workspaces \
-    && chown vscode:vscode /workspaces
+    && chown vscode:vscode /workspaces \
+    && mkdir -p /home/ubuntu/go \
+    && chown -R ubuntu:ubuntu /home/ubuntu/go
 
 ENV PATH=/usr/local/go/bin:${PATH} \
-    GOPATH=/go
+    GOPATH=/home/ubuntu/go
 
 RUN printf '\nalias self="go run /workspaces/universal-ai-server/cmd/self"\n' >> /etc/bash.bashrc \
     && printf '\nalias self="go run /workspaces/universal-ai-server/cmd/self"\n' >> /etc/zsh/zshrc \

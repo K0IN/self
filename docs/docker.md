@@ -19,10 +19,14 @@ docker run --rm -p 8080:8080 -v "$HOME/.ai-server/models:/models" \
 
 The directory layout is selected by the model id and quantization. Do not mount a single GGUF file over `/models`; mount the directory so `self` can verify, resume, and reuse its downloads.
 
-The server also stores the exact registry response as `/models/.registry.yml`
-and writes per-model `metadata.json` files in `/models`. Once a model has been downloaded, it can be started
-without network access by mounting the same directory and using the model
-reference as usual:
+## Offline use
+
+On every successful registry fetch the server stores the exact response as
+`/models/.registry.yml` and writes per-model `metadata.json` files in
+`/models`. If the registry cannot be reached or is invalid, the server logs a
+warning and uses that cached copy. Once a model has been downloaded, it can be
+started without network access by mounting the same directory and using the
+model reference as usual:
 
 ```bash
 docker run --rm --network none -p 8080:8080 \
@@ -30,5 +34,15 @@ docker run --rm --network none -p 8080:8080 \
   ghcr.io/k0in/self:latest serve kev:4b --host 0.0.0.0 --port 8080
 ```
 
-A model that has never been downloaded requires one online run to discover its
-metadata and files.
+The same applies to `self ls`, `self ls-remote` (which lists the cached
+registry), `self settings` and `self check` for downloaded models.
+
+Limits:
+
+- The cache is created by the first successful online run. Models downloaded
+  by an older version that did not write it need one online run first.
+- A model that has never been downloaded requires one online run to discover
+  its metadata and files; `self pull` and `self serve` fail offline for it.
+- A cached registry can be outdated. Run once online to refresh it.
+- A read-only `/models` mount works for downloaded models: a failed cache
+  update only logs a warning.

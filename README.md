@@ -104,11 +104,15 @@ models are currently supported:
 Text-only models reject requests containing images. Model files remain in the
 `/models` volume and are reused on subsequent runs.
 
+To see how fast a model runs on your machine, run `self benchmark kev:0.5b`. It
+writes a report you can share as a pull request, see [benchmarks/](benchmarks/README.md).
+
 The server caches the exact registry response as `/models/.registry.yml` and
 writes per-model metadata files such as
-`/models/kev/4b/metadata.json`. After a model has been downloaded successfully,
-it can be started offline from that cache. A model that has never been
-downloaded still requires one online run to discover its metadata and files.
+`/models/kev/4b/metadata.json`. If the registry cannot be reached or is
+invalid, it logs a warning and uses that cache, so downloaded models keep
+working offline. A model that has never been downloaded, or a first run without
+a cache, still requires one online run to discover its metadata and files.
 
 To run a previously cached model offline, mount the same `/models` volume and
 start the model as usual:

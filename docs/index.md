@@ -27,15 +27,14 @@ docker run --rm -p 8080:8080 \
   ghcr.io/k0in/self:latest
 ```
 
-The server fetches the registry from `https://k0in.github.io/self/models.yml` at runtime. If it cannot reach that URL or the registry is invalid, the command fails; it does not fall back to a bundled or local registry.
+The server fetches the registry from `https://k0in.github.io/self/models.yml` at runtime and keeps a copy in the models directory (`.registry.yml`). If it cannot reach that URL or the registry is invalid, it logs a warning and uses the cached copy, so models that are already downloaded keep working offline. The very first run needs network access: without a cached registry the command fails, and there is no bundled registry. See [Docker and model paths](/docker) for running fully offline.
 
 ## Choose a model
 
 Browse the [model registry](/registry/) or run:
 
 ```bash
-self list
-self suggest
+self ls-remote
 self pull kev:0.5b
 ```
 

@@ -22,8 +22,9 @@ type Engine struct {
 
 // SearchDirs returns candidate engine directories in priority order:
 // the explicit override, then the bundle next to the executable
-// (<exe>/libexec/ai-server and <exe>/../libexec/ai-server). $PATH is never
-// searched so an unrelated binary is never picked up by accident.
+// (<exe>/libexec/ai-server and <exe>/../libexec/ai-server), then the source
+// checkout's bin/libexec/ai-server (development only, see sourceTreeBundle).
+// $PATH is never searched so an unrelated binary is never picked up by accident.
 func SearchDirs(override string) []string {
 	if override != "" {
 		return []string{override}
@@ -36,10 +37,27 @@ func SearchDirs(override string) []string {
 		exe = r
 	}
 	base := filepath.Dir(exe)
-	return []string{
+	dirs := []string{
 		filepath.Join(base, BundleSubdir),
 		filepath.Join(base, "..", BundleSubdir),
 	}
+	if src := sourceTreeBundle(); src != "" {
+		dirs = append(dirs, src)
+	}
+	return dirs
+}
+
+// sourceTreeBundle is <checkout>/bin/libexec/ai-server, taken from this file's
+// compile-time path so `go run` (binary in the build cache) finds the engines
+// that `just runtime` installs. Release builds use -trimpath, which makes the
+// path relative, so this returns "" for them.
+func sourceTreeBundle() string {
+	_, file, _, ok := goruntime.Caller(0)
+	if !ok || !filepath.IsAbs(file) {
+		return ""
+	}
+	root := filepath.Dir(filepath.Dir(filepath.Dir(file))) // <root>/internal/runtime/discover.go
+	return filepath.Join(root, "bin", BundleSubdir)
 }
 
 // Find locates engine name in dirs.

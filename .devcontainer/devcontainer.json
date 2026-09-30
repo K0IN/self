@@ -4,6 +4,7 @@
         "dockerfile": "Dockerfile",
         "context": ".."
     },
+    "remoteUser": "ubuntu",
     "runArgs": [
         "--gpus=all"
     ],

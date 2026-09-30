@@ -41,14 +41,17 @@ const handleModelKeydown = event => {
 }
 
 const focusSearch = event => {
-    if (event.key === '/' && event.target?.tagName !== 'INPUT' && event.target?.tagName !== 'TEXTAREA') {
-        event.preventDefault()
-        searchInput.value?.focus()
-    }
+    const target = event.target
+    if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) return
+    if (target?.isContentEditable || ['INPUT', 'SELECT', 'TEXTAREA'].includes(target?.tagName)) return
+    event.preventDefault()
+    // Capture phase + stop: VitePress local search also binds "/" and would steal focus with its modal.
+    event.stopPropagation()
+    searchInput.value?.focus()
 }
 
-onMounted(() => window.addEventListener('keydown', focusSearch))
-onBeforeUnmount(() => window.removeEventListener('keydown', focusSearch))
+onMounted(() => window.addEventListener('keydown', focusSearch, true))
+onBeforeUnmount(() => window.removeEventListener('keydown', focusSearch, true))
 </script>
 
 <template>
@@ -83,18 +86,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', focusSearch))
                 <p>{{ model.description }}</p>
                 <div class="model-tags">
                     <span v-for="quant in model.quants" :key="quant" class="model-tag">{{ quant }}</span>
-                </div>
-                <div class="model-sources">
-                    <div v-for="variant in model.variants" :key="variant.name" class="model-source">
-                        <strong>{{ variant.name }}</strong>
-                        <a :href="variant.repoUrl" target="_blank" rel="noreferrer">{{ variant.repo }}</a>
-                        <ul>
-                            <li v-for="file in variant.files" :key="file.name">
-                                <a :href="file.url" target="_blank" rel="noreferrer">{{ file.name }}</a>
-                                <code>sha256:{{ file.sha256 }}</code>
-                            </li>
-                        </ul>
-                    </div>
                 </div>
                 <div class="model-card-footer">
                     <span>{{ model.size }}</span>

@@ -4,7 +4,7 @@ These examples are kept with the documentation so they are published with the si
 
 ## Local settings
 
-Download [settings.yml](/self/examples/settings.yml), copy it to `~/.ai-server/settings.yml`, and adjust the values for your machine:
+Download [settings.yml](/examples/settings.yml), copy it to `~/.ai-server/settings.yml`, and adjust the values for your machine:
 
 ```bash
 mkdir -p ~/.ai-server
@@ -13,11 +13,11 @@ curl -fsSL https://k0in.github.io/self/examples/settings.yml \
 self settings kev:4b
 ```
 
-The settings file is optional. It layers machine-specific engine values over the registry. See [Local settings](/self/settings) for the complete precedence order and Docker mount instructions.
+The settings file is optional. It layers machine-specific engine values over the registry. See [Local settings](/settings) for the complete precedence order and Docker mount instructions.
 
 ## Direct API examples
 
-The full request and response examples are in the [API reference](/self/api), including curl, Python, JavaScript, text decisions, and vision requests.
+The full request and response examples are in the [API reference](/api), including curl, Python, JavaScript, text decisions, and vision requests.
 
 A minimal request looks like this:
 

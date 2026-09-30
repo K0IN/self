@@ -145,7 +145,7 @@ func TestBundledRegistrySettings(t *testing.T) {
 			if _, err := ResolveSettings(res, nil); err != nil {
 				t.Errorf("%s/%s: %v", id, q, err)
 			}
-			if r.Models[id].Info.ContextLength == 0 || r.Models[id].Info.MaxOptions == 0 {
+			if m := r.Models[id]; m.Type == registry.TypeDecision && (m.Info.ContextLength == 0 || m.Info.MaxOptions == 0) {
 				t.Errorf("%s: info.context_length and info.max_options should be set", id)
 			}
 		}

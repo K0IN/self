@@ -5,9 +5,9 @@ when a model needs an engine or readout that does not exist yet.
 
 ```
   Hugging Face repo
-        │  just onboard <owner/repo>        (reads only the GGUF header, a few MiB)
+        │  write the entry by hand          (size + sha256 from the Hub's LFS metadata)
         ▼
-  registry snippet  ──paste──►  models/registry.yml
+  registry entry  ──paste──►  models/registry.yml
         │  just check-model <name:tag>      (download, start engine, probe questions)
         ▼
   ok / FAIL with a reason
@@ -16,21 +16,13 @@ when a model needs an engine or readout that does not exist yet.
   POST /v1/systemone
 ```
 
-## 1. Generate the entry
+## 1. Add the entry
 
-```bash
-just onboard Mapika/decider-4b-GGUF
-# or with an explicit id
-just onboard mradermacher/decider-0.8b-GGUF --id decider:0.8b
-```
+Copy an existing entry in `models/registry.yml` and adjust it:
 
-`self onboard`:
-
-- lists the repo (`/api/models/<repo>/tree/main`);
-- groups GGUF files into `4bit` (Q4_K_M > Q4_K_S > IQ4_XS > Q4_0), `5bit`,
-  `6bit`, `8bit` (Q8_0) and `f16` (F16/BF16); the first found is the default;
-- attaches a multimodal projector (`*mmproj*`, prefers Q8_0) as `role: mmproj`;
-- reads the model header over HTTP range requests and picks the adapter:
+- one variant per quant; the first is the default;
+- attach a multimodal projector (`*mmproj*`) as `role: mmproj`;
+- pick the adapter from the GGUF metadata:
 
 | GGUF metadata | Adapter | Engine |
 | :--- | :--- | :--- |
@@ -39,22 +31,21 @@ just onboard mradermacher/decider-0.8b-GGUF --id decider:0.8b
 
 - pins every file with its exact `size` and `sha256` (from the Hub's LFS
   metadata);
-- writes a model card skeleton to `models/readmes/<name>/<tag>.md`
-  (`--readme-dir ""` to skip) and links it with `readme:`.
+- add a model card at `models/readmes/<name>/<tag>.md` and link it with
+  `readme:`.
 
-Review the snippet (trim quants you don't want, replace the TODO
-`description`), edit the model card, and paste the snippet into
-`models/registry.yml`.
+Replace the `description`, write the model card, and keep only the quants you
+want.
 
 ### Registry fields
 
 | Field | Required | Meaning |
 | :--- | :--- | :--- |
-| `description` | yes | one line, shown by `self list` and on the overview page |
+| `description` | yes | one line, shown by `self ls-remote` and on the overview page |
 | `readme` | yes | path to the model card (Markdown), relative to `registry.yml`, e.g. `readmes/kev/4b.md` |
 | `files[].size` | yes | exact byte size of the upstream file |
 | `files[].sha256` | yes | sha256 of the upstream file |
-| `info` | no | metadata: `family`, `parameters`, `architecture`, `base_model`, `source`, `license`, `languages`, `context_length`, `max_options`, `homepage` (prefilled by `self onboard`). `max_options` also caps requests. |
+| `info` | no | metadata: `family`, `parameters`, `architecture`, `base_model`, `source`, `license`, `languages`, `context_length`, `max_options`, `homepage`. `max_options` also caps requests. |
 | `settings` | no | engine parameters (below); also allowed under a quant to override |
 
 ### Engine settings
@@ -70,7 +61,7 @@ Precedence (low to high):
 
 The local file is `~/.ai-server/settings.yml` (optional), or
 `--settings-file FILE` / `AI_SERVER_SETTINGS` (must exist). Example:
-[`settings.yml`](/self/examples/settings.yml). `self settings <id>`
+[`settings.yml`](/examples/settings.yml). `self settings <id>`
 (`just settings <id>`) shows every key, its value and where it came from.
 Unknown keys, wrong types and out-of-range values are rejected before the
 engine starts. Effective settings are printed at startup and returned by
@@ -102,7 +93,7 @@ New settings: add a `settings.Param` to the adapter's schema
 a different file (the repo was updated), `self` refuses to download it; if
 the received bytes do not match, the file is deleted and never used. An
 installed file whose size differs from the pin is re-downloaded. When a
-repo is updated on purpose, re-run `self onboard` and take the new pins.
+repo is updated on purpose, take the new pins into `registry.yml`.
 
 ## 2. Verify it
 
@@ -204,7 +195,7 @@ LLAMA_CPP_TAG=b11300 just engine build   # upgrade llama.cpp (deps/ is re-fetche
 | [Mapika/decider](https://github.com/Mapika/decider) | Reference for the prompt, readout, confidences and score isolation; `engine_gguf.py` is the upstream llama.cpp readout we mirrored in C++. |
 | [monatis/ggmlc](https://github.com/monatis/ggmlc) | Upstream Laya engine; also the path to compile other PyTorch decision models into self-describing GGUFs (`ggmlc.decision`). |
 | [abrander/gguf](https://github.com/abrander/gguf) | GGUF header parsing (local and, via range requests, remote). |
-| Hugging Face Hub API (`/api/models/<repo>/tree`, `?expand[]=gguf`) | Repo listing and GGUF summary for `self onboard`; `X-Linked-Size` / `X-Linked-Etag` for download verification. |
+| Hugging Face Hub API (`/api/models/<repo>/tree`, `?expand[]=gguf`) | Repo listing and GGUF summary; `X-Linked-Size` / `X-Linked-Etag` for download verification. |
 | [ollama](https://github.com/ollama/ollama) | Same shape (Go server + native runner subprocess + registry); good reference for multi-platform runner packaging and model manifests if we outgrow the YAML registry. |
 | [LocalAI](https://github.com/mudler/LocalAI) | Go server with many gRPC backends per modality — reference for the future image/TTS/STT adapters. |
 | [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp), [whisper.cpp](https://github.com/ggml-org/whisper.cpp) | ggml-based native engines for the planned image and STT modes; they fit the same subprocess + SELFIPC1 pattern. |

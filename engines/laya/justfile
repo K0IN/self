@@ -25,7 +25,8 @@ fetch variant="auto" version="v0.9.6":
     if [[ "$selected" == auto ]]; then
       has_library() {
         local name=$1
-        ldconfig -p 2>/dev/null | grep -q "$name" && return 0
+        # no `grep -q`: it exits early and pipefail turns ldconfig's SIGPIPE into a false negative
+        ldconfig -p 2>/dev/null | grep "$name" >/dev/null && return 0
         for dir in ${CUDA_LIB_DIRS:-} /usr/local/cuda/lib64 /usr/local/cuda/lib \
                    "$HOME"/.local/lib/python3*/site-packages/nvidia/*/lib \
                    /usr/lib/python3*/site-packages/nvidia/*/lib; do
@@ -44,8 +45,8 @@ fetch variant="auto" version="v0.9.6":
         120)         echo "GPU sm120 has no matching Laya CUDA release; using Vulkan" >&2; selected=vulkan ;;
         *)           selected=vulkan ;;
       esac
-      if [[ "$selected" == cuda-* ]] && { ! ldconfig -p 2>/dev/null | grep -q 'libcudart\.so\.12' ||
-        ! ldconfig -p 2>/dev/null | grep -q 'libcublas\.so\.12'; } &&
+      if [[ "$selected" == cuda-* ]] && { ! ldconfig -p 2>/dev/null | grep 'libcudart\.so\.12' >/dev/null ||
+        ! ldconfig -p 2>/dev/null | grep 'libcublas\.so\.12' >/dev/null; } &&
          [[ -z "${CUDA_LIB_DIRS:-}" ]]; then
         echo "Laya CUDA builds require CUDA 12 runtime libraries; using Vulkan" >&2
         selected=vulkan

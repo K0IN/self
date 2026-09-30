@@ -14,15 +14,21 @@ type ModelType string
 
 const (
 	TypeDecision ModelType = "decision"
-	// Future: TypeImage, TypeTTS, TypeSTT, TypeLLM, TypeEmbedding.
 )
 
-func parseModelType(s string) (ModelType, error) {
-	switch ModelType(s) {
-	case TypeDecision:
-		return TypeDecision, nil
-	}
-	return "", fmt.Errorf("unknown model type %q (supported: decision)", s)
+// typeSpec is what the registry accepts for one model type.
+type typeSpec struct {
+	Capabilities []Capability
+	// Roles are the file roles a variant may list; every type needs RoleModel.
+	Roles []FileRole
+}
+
+// modelTypes is the one place a new model type is declared for the registry.
+var modelTypes = map[ModelType]typeSpec{
+	TypeDecision: {
+		Capabilities: []Capability{CapText, CapVision, CapMultiImage, CapChoice, CapScore, CapNoul},
+		Roles:        []FileRole{RoleModel, RoleMMProj},
+	},
 }
 
 // Capability is a typed registry capability.
@@ -36,11 +42,6 @@ const (
 	CapScore      Capability = "score"
 	CapNoul       Capability = "noul"
 )
-
-// capabilitiesByType lists the capability strings valid for each model type.
-var capabilitiesByType = map[ModelType][]Capability{
-	TypeDecision: {CapText, CapVision, CapMultiImage, CapChoice, CapScore, CapNoul},
-}
 
 // Capabilities separates accepted input features from produced output types.
 type Capabilities struct {
@@ -83,7 +84,7 @@ func (c Capabilities) List() []Capability {
 
 func parseCapabilities(t ModelType, input, output []string, maxImages int) (Capabilities, error) {
 	allowed := map[Capability]bool{}
-	for _, c := range capabilitiesByType[t] {
+	for _, c := range modelTypes[t].Capabilities {
 		allowed[c] = true
 	}
 	caps := Capabilities{Input: CapabilitySet{set: map[Capability]bool{}}, Output: CapabilitySet{set: map[Capability]bool{}}, MaxImages: maxImages}
@@ -139,7 +140,7 @@ type Variant struct {
 	Settings map[string]any
 }
 
-// Info is descriptive model metadata. It is shown by `self list`, the API
+// Info is descriptive model metadata. It is shown by `self ls-remote`, the API
 // and the registry site; it does not change how the engine runs (use
 // settings for that).
 type Info struct {
@@ -224,6 +225,10 @@ func (m Model) Quants() []string {
 type Registry struct {
 	Version int
 	Models  map[string]Model
+	// Skipped are ids of models whose type this build does not know. They are
+	// left out so a registry that gained a new type still loads for older
+	// clients.
+	Skipped []string
 }
 
 // IDs returns all model ids, sorted.

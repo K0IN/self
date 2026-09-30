@@ -6,8 +6,6 @@
 package adapters
 
 import (
-	"sort"
-
 	"ai-server/internal/adapters/customdecider"
 	"ai-server/internal/adapters/ggmlclaya"
 	"ai-server/internal/adapters/selfipc"
@@ -18,20 +16,36 @@ import (
 	"ai-server/internal/settings"
 )
 
-// DecisionEntry describes a decision adapter.
-type DecisionEntry struct {
+// Base is what every adapter entry has, whatever its model type.
+type Base struct {
 	// Engine is the bundled executable name under libexec/ai-server.
 	Engine string
-	New    decision.Factory
 	// Settings lists the engine parameters the adapter accepts.
 	Settings settings.Schema
 }
 
+// DecisionEntry describes a decision adapter.
+type DecisionEntry struct {
+	Base
+	New decision.Factory
+}
+
 var decisionAdapters = map[string]DecisionEntry{
 	// Upstream ggmlc Laya daemon: ggmlc-compiled decision GGUFs (Kev, Laya).
-	"ggmlc-laya": {Engine: ggmlclaya.Engine, New: ggmlclaya.New, Settings: ggmlclaya.Settings},
+	"ggmlc-laya": {Base: Base{Engine: ggmlclaya.Engine, Settings: ggmlclaya.Settings}, New: ggmlclaya.New},
 	// Our llama.cpp-based engine for Decider checkpoints (+ vision via mmproj).
-	"ggmlc-custom-decider": {Engine: customdecider.Engine, New: selfipc.Factory(customdecider.Spec), Settings: customdecider.Settings},
+	"ggmlc-custom-decider": {Base: Base{Engine: customdecider.Engine, Settings: customdecider.Settings}, New: selfipc.Factory(customdecider.Spec)},
+}
+
+// Lookup returns the parts of adapter name that do not depend on the model
+// type. A new model type adds a table above and a case here.
+func Lookup(t registry.ModelType, name string) (Base, error) {
+	switch t {
+	case registry.TypeDecision:
+		e, err := Decision(name)
+		return e.Base, err
+	}
+	return Base{}, errs.New(errs.UnsupportedModel, "no adapters for model type %q", t)
 }
 
 // ResolveSettings merges registry settings (model, then quant) with CLI
@@ -45,7 +59,7 @@ func ResolveSettings(res registry.Resolved, overrides map[string]any) (settings.
 // quant, local adapter, local model, local quant, CLI overrides. It returns
 // the validated values and, per key, the name of the layer that set it.
 func ResolveSettingsLayered(res registry.Resolved, local *localconf.Config, overrides map[string]any) (settings.Values, map[string]string, error) {
-	e, err := Decision(res.Variant.Adapter)
+	e, err := Lookup(res.Model.Type, res.Variant.Adapter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -84,20 +98,6 @@ func Decision(name string) (DecisionEntry, error) {
 
 // Known reports whether an adapter exists for the model type.
 func Known(name string, t registry.ModelType) bool {
-	switch t {
-	case registry.TypeDecision:
-		_, ok := decisionAdapters[name]
-		return ok
-	}
-	return false
-}
-
-// DecisionNames lists registered decision adapters.
-func DecisionNames() []string {
-	out := make([]string, 0, len(decisionAdapters))
-	for k := range decisionAdapters {
-		out = append(out, k)
-	}
-	sort.Strings(out)
-	return out
+	_, err := Lookup(t, name)
+	return err == nil
 }

@@ -54,7 +54,7 @@ const catalog = rows.map(({ id, model, quants, slug, size, capabilities }) => ({
 }))
 fs.writeFileSync(path.join(publicDir, 'registry.json'), JSON.stringify(catalog, null, 2) + '\n')
 
-const catalogJSON = JSON.stringify(catalog).replaceAll('&', '&amp;').replaceAll('"', '&quot;')
+const catalogJSON = JSON.stringify(catalog.map(({ variants, ...card }) => card)).replaceAll('&', '&amp;').replaceAll('"', '&quot;')
 const index = `# Model registry\n\nThe registry is the source of truth for downloadable models. Search the catalog or [download models.yml](/models.yml).\n\n<ModelCatalog :models="${catalogJSON}" />\n`
 fs.writeFileSync(path.join(output, 'index.md'), index)
 
@@ -73,10 +73,17 @@ function formatBytes(bytes) {
 for (const { id, model, quants, slug } of rows) {
     const readmePath = path.join(root, 'models', model.readme)
     const readme = fs.readFileSync(readmePath, 'utf8')
-    const lines = [`${readme.trim()}`, '', `## Registry details`, '', `- Registry id: \`${id}\``, `- Type: ${model.type}`, `- Default quantization: \`${model.default}\``, `- Capabilities: ${(model.capabilities?.input ?? []).join(', ')} -> ${(model.capabilities?.output ?? []).join(', ')}`, '', '## Available quants', '', '| Quant | Adapter | Files |', '| --- | --- | --- |']
+    const lines = [`${readme.trim()}`, '', `## Registry details`, '', `- Registry id: \`${id}\``, `- Type: ${model.type}`, `- Default quantization: \`${model.default}\``, `- Capabilities: ${(model.capabilities?.input ?? []).join(', ')} -> ${(model.capabilities?.output ?? []).join(', ')}`, '', '## Available quants', '', '| Quant | Adapter | Repository | File | Size | SHA-256 |', '| --- | --- | --- | --- | --- | --- |']
     for (const quant of quants) {
         const variant = model[quant]
-        lines.push(`| ${quant}${quant === model.default ? ' (default)' : ''} | ${variant.adapter} | ${(variant.files ?? []).map(file => `\`${file.file}\``).join('<br>')} |`)
+        const files = variant.files ?? []
+        const quantCell = `${quant}${quant === model.default ? ' (default)' : ''}`
+        const repoCell = `[${variant.repo}](https://huggingface.co/${variant.repo})`
+        files.forEach((file, index) => {
+            const first = index === 0
+            const fileUrl = `https://huggingface.co/${variant.repo}/blob/main/${file.file}`
+            lines.push(`| ${first ? quantCell : ''} | ${first ? variant.adapter : ''} | ${first ? repoCell : ''} | [\`${file.file}\`](${fileUrl}) | ${formatBytes(Number(file.size || 0))} | \`${file.sha256}\` |`)
+        })
     }
     fs.mkdirSync(path.dirname(path.join(output, slug)), { recursive: true })
     fs.writeFileSync(path.join(output, `${slug}.md`), lines.join('\n') + '\n')

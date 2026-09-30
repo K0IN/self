@@ -1,5 +1,7 @@
-// Package app wires registry, downloads, engine adapter, service and HTTP
-// server together for `self serve`.
+// Package app wires registry, downloads, engine adapters and the HTTP server
+// together for the self commands (serve, pull, check, benchmark, settings).
+// Everything that does not depend on the model type lives in target.go and
+// serve.go; each type adds its own file (decision.go).
 package app
 
 import (
@@ -10,168 +12,54 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
-	"strings"
 	"sync/atomic"
 	"time"
 
-	"ai-server/internal/adapters"
 	"ai-server/internal/api"
-	apidecision "ai-server/internal/api/decision"
 	"ai-server/internal/config"
-	"ai-server/internal/decision"
 	"ai-server/internal/errs"
-	"ai-server/internal/imageutil"
-	"ai-server/internal/localconf"
-	"ai-server/internal/models"
 	"ai-server/internal/registry"
 	"ai-server/internal/runtime"
-	"ai-server/internal/settings"
 )
 
-const registryURL = "https://k0in.github.io/self/models.yml"
-
-// LoadRegistry loads the registry from the published GitHub Pages document.
-func LoadRegistry(modelsDir string) (*registry.Registry, error) {
-	reg, source, err := loadRegistry(&http.Client{Timeout: 30 * time.Second}, registryURL)
-	if err == nil {
-		if cacheErr := models.SaveRegistry(modelsDir, reg, source); cacheErr != nil {
-			return nil, fmt.Errorf("cache registry: %w", cacheErr)
-		}
-		return reg, nil
-	}
-	cached, cacheErr := models.LoadRegistryCache(modelsDir)
-	if cacheErr == nil {
-		return cached, nil
-	}
-	return nil, fmt.Errorf("load registry: %w (offline cache unavailable: %v)", err, cacheErr)
-}
-
-func loadRegistry(client *http.Client, source string) (*registry.Registry, []byte, error) {
-	u, err := url.Parse(source)
-	if err != nil {
-		return nil, nil, fmt.Errorf("registry URL: %w", err)
-	}
-	resp, err := client.Get(u.String())
-	if err != nil {
-		return nil, nil, fmt.Errorf("load registry %s: %w", source, err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, nil, fmt.Errorf("load registry %s: HTTP %s", source, resp.Status)
-	}
-	b, err := io.ReadAll(io.LimitReader(resp.Body, 16<<20))
-	if err != nil {
-		return nil, nil, fmt.Errorf("read registry %s: %w", source, err)
-	}
-	reg, err := registry.Parse(b)
-	if err != nil {
-		return nil, nil, fmt.Errorf("parse registry %s: %w", source, err)
-	}
-	return reg, b, nil
-}
-
-// Serve runs `self serve` until ctx is cancelled or the engine dies.
-// requireType, when set, enforces the model type (used by `self decision`).
-func Serve(ctx context.Context, cfg config.Serve, requireType registry.ModelType, out io.Writer, isTTY bool) error {
-	reg, err := LoadRegistry(cfg.ModelsDir)
+// Serve runs `self serve` until ctx is cancelled or the engine dies. Each
+// model type starts its engine in its own serve function and hands the
+// running model to serveHTTP.
+func Serve(ctx context.Context, cfg config.Serve, out io.Writer, isTTY bool) error {
+	t, err := resolveTarget(cfg)
 	if err != nil {
 		return err
 	}
-	res, err := reg.Resolve(cfg.Model, registry.ResolveOptions{Quant: cfg.Quant, Type: requireType, AdapterKnown: adapters.Known})
-	if err != nil {
-		return err
-	}
-	switch res.Model.Type {
+	switch t.res.Model.Type {
 	case registry.TypeDecision:
-		return serveDecision(ctx, cfg, res, out, isTTY)
+		return serveDecision(ctx, cfg, t, out, isTTY)
 	}
-	return errs.New(errs.UnsupportedModel, "model type %q cannot be served yet", res.Model.Type)
+	return errs.New(errs.UnsupportedModel, "model type %q cannot be served yet", t.res.Model.Type)
 }
 
-func serveDecision(ctx context.Context, cfg config.Serve, res registry.Resolved, out io.Writer, isTTY bool) error {
-	entry, err := adapters.Decision(res.Variant.Adapter)
-	if err != nil {
-		return err
-	}
-	engine, err := runtime.Find(entry.Engine, runtime.SearchDirs(cfg.RuntimeDir))
-	if err != nil {
-		return err
-	}
+// runningModel is a started engine, whatever the model type, as far as the
+// HTTP lifecycle is concerned.
+type runningModel struct {
+	// Kind is the model type, for messages.
+	Kind   string
+	Engine string
+	Device string
+	// Mount registers the type's routes.
+	Mount api.Mount
+	// Done is closed when the engine exits.
+	Done <-chan struct{}
+	// StderrTail returns recent engine stderr for crash reports (optional).
+	StderrTail func(n int) []string
+	// Fail makes queued and later requests fail with err after a crash.
+	Fail func(err error)
+	// Drain cancels queued work and waits for the running request.
+	Drain func()
+	// Close stops the engine.
+	Close func()
+}
 
-	set, _, err := ResolveSettings(cfg, res)
-	if err != nil {
-		return err
-	}
-	fmt.Fprintf(out, "Model    %s\nQuant    %s\nAdapter  %s\n", res.ID(), res.Variant.Quant, res.Variant.Adapter)
-	if len(set) > 0 {
-		fmt.Fprintf(out, "Settings %s\n", settings.Format(set))
-	}
-
-	store := models.Store{Root: cfg.ModelsDir}
-	files, err := models.Ensure(ctx, store, models.NewDownloader(), res, func() models.Progress {
-		fmt.Fprintln(out)
-		return &models.TerminalProgress{W: out, TTY: isTTY}
-	})
-	if err != nil {
-		return err
-	}
-
-	var engineLog io.Writer
-	if cfg.Verbose {
-		engineLog = os.Stderr
-	}
-	adapter := entry.New()
-	fmt.Fprintf(out, "\nUsing %s\n\nLoading model...\n", tildify(files.Model))
-	startCtx, cancelStart := context.WithTimeout(ctx, 10*time.Minute)
-	err = adapter.Start(startCtx, decision.RuntimeConfig{
-		ModelID:    res.ID(),
-		Files:      files,
-		Device:     cfg.Device,
-		EnginePath: engine.Path,
-		LibDir:     engine.LibDir,
-		Log:        engineLog,
-		Settings:   set,
-	})
-	cancelStart()
-	if err != nil {
-		return err
-	}
-	closeAdapter := func() {
-		c, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		defer cancel()
-		_ = adapter.Close(c)
-	}
-
-	info, err := adapter.Info(ctx)
-	if err != nil {
-		closeAdapter()
-		return err
-	}
-	caps := modelCaps(res).Intersect(info.Capabilities)
-	if res.Model.Capabilities.Has(registry.CapVision) && !caps.Vision {
-		closeAdapter()
-		return errs.New(errs.UnsupportedModel, "%s declares vision, but the %s engine reports no image input", res.ID(), res.Variant.Adapter)
-	}
-	if caps.Vision && info.ImageInput == nil {
-		closeAdapter()
-		return errs.New(errs.RuntimeStartFailed, "engine reports vision support but no image input geometry")
-	}
-
-	lim := imageutil.DefaultLimits()
-	lim.AllowHTTP, lim.AllowPrivate = cfg.AllowHTTPImages, cfg.AllowPrivateImages
-	svc := decision.NewService(decision.ServiceConfig{
-		ModelID:               res.ID(),
-		Quant:                 res.Variant.Quant,
-		Capabilities:          caps,
-		ImageInput:            info.ImageInput,
-		QueueSize:             cfg.QueueSize,
-		PreprocessConcurrency: cfg.PreprocessConcurrency,
-		Info:                  res.Model.Info,
-		Settings:              set,
-	}, adapter, imageutil.NewPreprocessor(lim))
-
+func serveHTTP(ctx context.Context, cfg config.Serve, out io.Writer, m runningModel) error {
 	level := slog.LevelWarn
 	if cfg.Verbose {
 		level = slog.LevelDebug
@@ -180,7 +68,7 @@ func serveDecision(ctx context.Context, cfg config.Serve, res registry.Resolved,
 	state := &runnerState{}
 	state.v.Store("ready")
 	srv := &http.Server{
-		Handler:           api.NewRouter(apidecision.New(svc).Mount, state, log),
+		Handler:           api.NewRouter(m.Mount, state, log),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       60 * time.Second,
 		IdleTimeout:       120 * time.Second,
@@ -188,11 +76,11 @@ func serveDecision(ctx context.Context, cfg config.Serve, res registry.Resolved,
 	}
 	ln, err := net.Listen("tcp", cfg.Addr())
 	if err != nil {
-		svc.Close()
-		closeAdapter()
+		m.Drain()
+		m.Close()
 		return fmt.Errorf("cannot listen on %s: %w", cfg.Addr(), err)
 	}
-	fmt.Fprintf(out, "Ready\n\nEngine   %s\nDevice   %s\nVRAM     %s\nAPI      http://%s\n", engine.Path, info.Device, runtime.VRAMUsage(ctx), ln.Addr())
+	fmt.Fprintf(out, "Ready\n\nEngine   %s\nDevice   %s\nVRAM     %s\nAPI      http://%s\n", m.Engine, m.Device, runtime.VRAMUsage(ctx), ln.Addr())
 
 	srvErr := make(chan error, 1)
 	go func() { srvErr <- srv.Serve(ln) }()
@@ -201,13 +89,13 @@ func serveDecision(ctx context.Context, cfg config.Serve, res registry.Resolved,
 	select {
 	case <-ctx.Done():
 		fmt.Fprintln(out, "\nShutting down...")
-	case <-adapter.Done():
+	case <-m.Done:
 		state.v.Store("crashed")
-		crash := errs.New(errs.RuntimeCrashed, "the decision engine exited unexpectedly")
-		if t, ok := adapter.(interface{ StderrTail(int) []string }); ok {
-			crash.Message += runtime.FormatTail(t.StderrTail(20))
+		crash := errs.New(errs.RuntimeCrashed, "the %s engine exited unexpectedly", m.Kind)
+		if m.StderrTail != nil {
+			crash.Message += runtime.FormatTail(m.StderrTail(20))
 		}
-		svc.Fail(crash)
+		m.Fail(crash)
 		result = crash
 	case err := <-srvErr:
 		result = fmt.Errorf("http server: %w", err)
@@ -218,11 +106,11 @@ func serveDecision(ctx context.Context, cfg config.Serve, res registry.Resolved,
 	shCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	go func() { _ = srv.Shutdown(shCtx) }()
 	// 2. cancel queued work and wait for the running pass.
-	svc.Close()
+	m.Drain()
 	_ = srv.Shutdown(shCtx)
 	cancel()
 	// 3-6. close engine stdin, wait, SIGTERM, SIGKILL.
-	closeAdapter()
+	m.Close()
 	if result == nil {
 		if err := <-srvErr; err != nil && !errors.Is(err, http.ErrServerClosed) {
 			result = err
@@ -231,45 +119,6 @@ func serveDecision(ctx context.Context, cfg config.Serve, res registry.Resolved,
 	return result
 }
 
-// overrides parses --set key=value flags.
-func overrides(cfg config.Serve) map[string]any {
-	m, _ := settings.ParseOverrides(cfg.Set) // syntax validated by config
-	return m
-}
-
-// LoadLocal reads the local settings file (default location is optional).
-func LoadLocal(cfg config.Serve) (*localconf.Config, error) {
-	if cfg.SettingsFileExplicit {
-		return localconf.Load(cfg.SettingsFile, false)
-	}
-	return localconf.Load(localconf.DefaultPath(), true)
-}
-
-// ResolveSettings returns the effective engine settings for res: registry,
-// then the local settings file, then --set. The map gives each key's source.
-func ResolveSettings(cfg config.Serve, res registry.Resolved) (settings.Values, map[string]string, error) {
-	local, err := LoadLocal(cfg)
-	if err != nil {
-		return nil, nil, errs.New(errs.InvalidRequest, "%s", err)
-	}
-	return adapters.ResolveSettingsLayered(res, local, overrides(cfg))
-}
-
-// modelCaps are the registry capabilities, capped by info.max_options.
-func modelCaps(res registry.Resolved) decision.Capabilities {
-	c := decision.CapabilitiesFromRegistry(res.Model.Capabilities)
-	c.MaxOptions = res.Model.Info.MaxOptions
-	return c
-}
-
 type runnerState struct{ v atomic.Value }
 
 func (r *runnerState) RunnerState() string { return r.v.Load().(string) }
-
-func tildify(p string) string {
-	home, err := os.UserHomeDir()
-	if err == nil && home != "" && strings.HasPrefix(p, home+string(os.PathSeparator)) {
-		return "~" + p[len(home):]
-	}
-	return p
-}

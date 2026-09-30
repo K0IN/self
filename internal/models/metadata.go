@@ -19,7 +19,7 @@ func SaveRegistry(root string, reg *registry.Registry, source []byte) error {
 	if err := os.MkdirAll(root, 0o755); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(root, registryCacheName), source, 0o644); err != nil {
+	if err := writeFileAtomic(filepath.Join(root, registryCacheName), source); err != nil {
 		return fmt.Errorf("write registry cache: %w", err)
 	}
 	for id, model := range reg.Models {
@@ -52,5 +52,25 @@ func writeJSON(path string, value any) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, append(data, '\n'), 0o644)
+	return writeFileAtomic(path, append(data, '\n'))
+}
+
+// writeFileAtomic keeps an interrupted write from corrupting the offline cache.
+func writeFileAtomic(path string, data []byte) error {
+	tmp, err := os.CreateTemp(filepath.Dir(path), ".tmp-*")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp.Name())
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	if err := os.Chmod(tmp.Name(), 0o644); err != nil {
+		return err
+	}
+	return os.Rename(tmp.Name(), path)
 }

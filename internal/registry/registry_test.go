@@ -1,6 +1,10 @@
 package registry
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -134,7 +138,6 @@ func TestCapabilities(t *testing.T) {
 
 func TestParseRejects(t *testing.T) {
 	bad := map[string]string{
-		"wrong type":      strings.Replace(sample, "type: decision\n    default: q4", "type: painting\n    default: q4", 1),
 		"missing default": strings.Replace(sample, "    default: q4\n", "", 1),
 		"bad default":     strings.Replace(sample, "default: q4", "default: q3", 1),
 		"non gguf":        strings.Replace(sample, "kev_4b_ud_q4_k_m.gguf", "model.safetensors", 1),
@@ -150,10 +153,60 @@ func TestParseRejects(t *testing.T) {
 		"unsafe path":     strings.Replace(sample, "kev_4b_ud_q4_k_m.gguf", "../evil.gguf", 1),
 		"no adapter":      strings.Replace(sample, "      adapter: ggmlc-laya\n      repo: mys", "      repo: mys", 1),
 		"bad version":     strings.Replace(sample, "version: 1", "version: 2", 1),
+		"no type":         strings.Replace(sample, "    type: decision\n    default: q4", "    default: q4", 1),
+		"unknown role":    strings.Replace(sample, "role: mmproj", "role: vocoder", 1),
 	}
 	for name, doc := range bad {
 		if _, err := Parse([]byte(doc)); err == nil {
 			t.Errorf("%s: expected error", name)
+		}
+	}
+}
+
+// A registry that gained a model type must still load for older clients.
+func TestParseSkipsUnknownType(t *testing.T) {
+	doc := sample + "  voice:1b:\n    type: hologram\n    files: [not, understood]\n    q4: 3\n"
+	r := mustParse(t, doc)
+	if got := strings.Join(r.IDs(), ","); got != "decider-vision:2b,kev:4b" {
+		t.Fatalf("ids = %s", got)
+	}
+	if len(r.Skipped) != 1 || r.Skipped[0] != "voice:1b" {
+		t.Fatalf("skipped = %v", r.Skipped)
+	}
+}
+
+func TestFetch(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/down" {
+			http.Error(w, "no", http.StatusServiceUnavailable)
+			return
+		}
+		_, _ = w.Write([]byte(sample))
+	}))
+	defer server.Close()
+	reg, raw, err := Fetch(server.Client(), server.URL)
+	if err != nil || len(reg.Models) != 2 || string(raw) != sample {
+		t.Fatalf("reg=%v err=%v", reg, err)
+	}
+	if _, _, err := Fetch(server.Client(), server.URL+"/down"); err == nil || !strings.Contains(err.Error(), "HTTP 503") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+// The bundled registry must parse cleanly and every model card must exist
+// (the docs build fails otherwise).
+func TestBundledRegistry(t *testing.T) {
+	const dir = "../../models"
+	reg, err := LoadFile(filepath.Join(dir, "registry.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reg.Skipped) > 0 {
+		t.Errorf("models of unknown type: %v", reg.Skipped)
+	}
+	for _, id := range reg.IDs() {
+		if _, err := os.Stat(filepath.Join(dir, filepath.FromSlash(reg.Models[id].Readme))); err != nil {
+			t.Errorf("%s: %v", id, err)
 		}
 	}
 }

@@ -3,9 +3,14 @@
 package models
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
+	"ai-server/internal/errs"
 	"ai-server/internal/registry"
 )
 
@@ -42,4 +47,52 @@ func (s Store) Installed(r registry.Resolved, f registry.File) bool {
 		return false
 	}
 	return f.Size <= 0 || st.Size() == f.Size
+}
+
+// pathSegment is what a name, tag or quant must look like before it is used
+// to build a path that gets deleted.
+var pathSegment = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
+
+// Remove deletes the downloaded quants of model id ("name:tag"), including
+// partial downloads, and returns the quants removed. An empty quant removes
+// all of them. It does not consult the registry, so models that were dropped
+// from it can still be removed.
+func (s Store) Remove(id, quant string) ([]string, error) {
+	name, tag, _ := strings.Cut(id, ":")
+	if tag == "" {
+		tag = "latest"
+	}
+	segments := []string{name, tag}
+	ref := id
+	if quant != "" {
+		segments = append(segments, quant)
+		ref += "@" + quant
+	}
+	for _, seg := range segments {
+		if !pathSegment.MatchString(seg) {
+			return nil, errs.New(errs.InvalidRequest, "invalid model reference %q", ref)
+		}
+	}
+	tagDir := filepath.Join(s.Root, name, tag)
+	entries, err := os.ReadDir(tagDir)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var removed []string
+	for _, e := range entries {
+		if !e.IsDir() || (quant != "" && e.Name() != quant) {
+			continue
+		}
+		if err := os.RemoveAll(filepath.Join(tagDir, e.Name())); err != nil {
+			return removed, err
+		}
+		removed = append(removed, e.Name())
+	}
+	// os.Remove only succeeds on empty directories, which prunes leftovers.
+	_ = os.Remove(tagDir)
+	_ = os.Remove(filepath.Join(s.Root, name))
+	return removed, nil
 }

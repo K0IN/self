@@ -26,13 +26,12 @@ import (
 const (
 	maxLine        = 16 << 20
 	requestTimeout = 2 * time.Minute
-	stopGrace      = 5 * time.Second
 )
 
 // Adapter implements decision.Adapter.
 type Adapter struct {
 	mu     sync.Mutex // serializes Decide; the daemon is strictly sequential
-	proc   *runtime.Process
+	proc   *runtime.Supervisor
 	out    *bufio.Reader
 	info   decision.RuntimeInfo
 	nextID uint64
@@ -66,33 +65,23 @@ func (a *Adapter) Start(ctx context.Context, cfg decision.RuntimeConfig) error {
 	if err != nil {
 		return errs.Wrap(errs.RuntimeStartFailed, err, "cannot start engine %s", cfg.EnginePath)
 	}
-	a.proc = proc
+	a.proc = runtime.Supervise(proc, "decision engine")
 	a.out = bufio.NewReaderSize(proc.Stdout(), 64<<10)
 	go func() { <-proc.Done(); close(a.done) }()
 
-	ready := make(chan error, 1)
-	go func() {
+	err = runtime.Handshake(ctx, a.proc, func() error {
 		line, err := a.readLine()
 		if err != nil {
-			ready <- err
-			return
+			return err
 		}
 		var r readyLine
 		if json.Unmarshal(line, &r) != nil || r.Status != "ready" {
-			ready <- fmt.Errorf("unexpected engine handshake: %.200s", line)
-			return
+			return fmt.Errorf("unexpected engine handshake: %.200s", line)
 		}
-		ready <- nil
-	}()
-	select {
-	case err := <-ready:
-		if err != nil {
-			a.proc.Kill()
-			return a.startErr(err)
-		}
-	case <-ctx.Done():
-		a.proc.Kill()
-		return errs.Wrap(errs.RuntimeStartFailed, ctx.Err(), "engine start cancelled")
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	caps := decision.Capabilities{Text: true, Choice: true, Score: true, Noul: true, MaxOptions: maxOptions(md)}
@@ -102,12 +91,6 @@ func (a *Adapter) Start(ctx context.Context, cfg decision.RuntimeConfig) error {
 		Capabilities: caps,
 	}
 	return nil
-}
-
-func (a *Adapter) startErr(err error) error {
-	<-a.proc.Done()
-	return errs.Wrap(errs.RuntimeStartFailed, err, "engine failed to start (%s)%s",
-		a.proc.ExitDescription(), runtime.FormatTail(a.proc.StderrTail(15)))
 }
 
 func (a *Adapter) readLine() ([]byte, error) {
@@ -154,7 +137,7 @@ func (a *Adapter) Decide(_ context.Context, req decision.Request) (decision.Resp
 	defer a.mu.Unlock()
 	select {
 	case <-a.done:
-		return decision.Response{}, a.crashErr(nil)
+		return decision.Response{}, a.proc.CrashErr(nil)
 	default:
 	}
 	a.nextID++
@@ -169,17 +152,12 @@ func (a *Adapter) Decide(_ context.Context, req decision.Request) (decision.Resp
 	}
 	line = append(line, '\n')
 	if _, err := a.proc.Stdin().Write(line); err != nil {
-		return decision.Response{}, a.crashErr(err)
+		return decision.Response{}, a.proc.CrashErr(err)
 	}
 
-	watchdog := time.AfterFunc(requestTimeout, a.proc.Kill)
-	resp, err := a.readLine()
-	stopped := watchdog.Stop()
-	if err != nil {
-		if !stopped {
-			return decision.Response{}, errs.New(errs.RuntimeCrashed, "engine did not answer within %s and was stopped", requestTimeout)
-		}
-		return decision.Response{}, a.crashErr(err)
+	var resp []byte
+	if err := a.proc.Await(requestTimeout, func() (err error) { resp, err = a.readLine(); return }); err != nil {
+		return decision.Response{}, err
 	}
 	out, err := translateResponse(resp, id, req.Questions)
 	if err != nil {
@@ -194,35 +172,11 @@ func (a *Adapter) Decide(_ context.Context, req decision.Request) (decision.Resp
 	return out, nil
 }
 
-func (a *Adapter) crashErr(cause error) error {
-	select {
-	case <-a.done:
-	case <-time.After(2 * time.Second):
-		// Stream broke but the process lingers; make sure it is gone.
-		a.proc.Kill()
-	}
-	return &errs.Error{
-		Kind:    errs.RuntimeCrashed,
-		Message: fmt.Sprintf("decision engine %s%s", a.proc.ExitDescription(), runtime.FormatTail(a.proc.StderrTail(15))),
-		Err:     cause,
-	}
-}
-
 // Close stops the engine gracefully.
-func (a *Adapter) Close(ctx context.Context) error {
-	if a.proc == nil {
-		return nil
-	}
-	return a.proc.Stop(ctx, stopGrace)
-}
+func (a *Adapter) Close(ctx context.Context) error { return a.proc.Close(ctx) }
 
 // StderrTail exposes recent engine stderr for crash reports.
-func (a *Adapter) StderrTail(n int) []string {
-	if a.proc == nil {
-		return nil
-	}
-	return a.proc.StderrTail(n)
-}
+func (a *Adapter) StderrTail(n int) []string { return a.proc.StderrTail(n) }
 
 func firstNonEmpty(ss ...string) string {
 	for _, s := range ss {

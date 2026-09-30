@@ -6,7 +6,6 @@
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
-[private]
 mod engine "engines"
 
 bin         := "bin"
@@ -55,6 +54,15 @@ check:
     go vet ./...
     go test ./...
 
+# Start the real engine for every model and check the API answers correctly.
+# Downloads each model once. Add SELF_TEST_QUANTS=all or SELF_TEST_DEVICE=cpu as needed.
+test-models: build bootstrap
+    SELF_TEST_MODELS=all go test ./tests/models -run TestModels -v -count=1 -timeout 2h
+
+# Same for one model, e.g. `just test-model kev:0.5b` or `just test-model kev:4b@q8`.
+test-model model: build bootstrap
+    SELF_TEST_MODELS='{{model}}' go test ./tests/models -run TestModels -v -count=1 -timeout 1h
+
 # Format code
 fmt:
     gofmt -w .
@@ -64,6 +72,6 @@ site:
     cd docs && npm install && npm run build
     rm -rf site && cp -r docs/.vitepress/dist site
 
-# Render the registry site and serve it on http://127.0.0.1:8000
+# Render the registry site and serve it on port 8000 (Pages builds use base /self/, see pages.yml)
 site-serve: site
-    python3 -m http.server 8000 --bind 127.0.0.1 --directory site
+    cd docs && npx vitepress preview . --port 8000

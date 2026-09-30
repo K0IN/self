@@ -6,6 +6,8 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"slices"
+	"sort"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
@@ -47,13 +49,42 @@ func Parse(data []byte) (*Registry, error) {
 		if err := validateID(id); err != nil {
 			return nil, fmt.Errorf("registry: model %q: %w", id, err)
 		}
-		m, err := parseModel(id, &node)
+		t, known, err := peekType(&node)
+		if err != nil {
+			return nil, fmt.Errorf("registry: model %q: %w", id, err)
+		}
+		if !known {
+			reg.Skipped = append(reg.Skipped, id)
+			continue
+		}
+		m, err := parseModel(id, t, &node)
 		if err != nil {
 			return nil, fmt.Errorf("registry: model %q: %w", id, err)
 		}
 		reg.Models[id] = m
 	}
+	sort.Strings(reg.Skipped)
 	return reg, nil
+}
+
+// peekType reads only the type of a model, so entries of a type this build
+// does not know are skipped without judging fields it cannot understand.
+func peekType(node *yaml.Node) (t ModelType, known bool, err error) {
+	if node.Kind != yaml.MappingNode {
+		return "", false, fmt.Errorf("must be a mapping")
+	}
+	var head struct {
+		Type string `yaml:"type"`
+	}
+	if err := node.Decode(&head); err != nil {
+		return "", false, err
+	}
+	if head.Type == "" {
+		return "", false, fmt.Errorf("type is required")
+	}
+	t = ModelType(head.Type)
+	_, known = modelTypes[t]
+	return t, known, nil
 }
 
 // validateID ensures ids map to safe, human-readable directory names.
@@ -70,12 +101,8 @@ func validateID(id string) error {
 	return nil
 }
 
-func parseModel(id string, node *yaml.Node) (Model, error) {
-	if node.Kind != yaml.MappingNode {
-		return Model{}, fmt.Errorf("must be a mapping")
-	}
+func parseModel(id string, t ModelType, node *yaml.Node) (Model, error) {
 	var head struct {
-		Type         string `yaml:"type"`
 		Default      string `yaml:"default"`
 		Capabilities struct {
 			Input  []string `yaml:"input"`
@@ -106,10 +133,6 @@ func parseModel(id string, node *yaml.Node) (Model, error) {
 	if err := validateReadme(head.Readme); err != nil {
 		return Model{}, err
 	}
-	t, err := parseModelType(head.Type)
-	if err != nil {
-		return Model{}, err
-	}
 	caps, err := parseCapabilities(t, head.Capabilities.Input, head.Capabilities.Output, head.MaxImages)
 	if err != nil {
 		return Model{}, err
@@ -121,7 +144,7 @@ func parseModel(id string, node *yaml.Node) (Model, error) {
 		if reservedModelKeys[key] {
 			continue
 		}
-		v, err := parseVariant(key, node.Content[i+1])
+		v, err := parseVariant(t, key, node.Content[i+1])
 		if err != nil {
 			return Model{}, fmt.Errorf("quant %q: %w", key, err)
 		}
@@ -144,7 +167,7 @@ func parseModel(id string, node *yaml.Node) (Model, error) {
 	return m, nil
 }
 
-func parseVariant(quant string, node *yaml.Node) (Variant, error) {
+func parseVariant(t ModelType, quant string, node *yaml.Node) (Variant, error) {
 	if strings.ContainsAny(quant, `/\`) || quant == "." || quant == ".." {
 		return Variant{}, fmt.Errorf("invalid quant name")
 	}
@@ -190,12 +213,11 @@ func parseVariant(quant string, node *yaml.Node) (Variant, error) {
 				return Variant{}, fmt.Errorf("files[%d]: role is required for additional files", i)
 			}
 		}
-		switch role {
-		case RoleModel:
+		if !slices.Contains(modelTypes[t].Roles, role) {
+			return Variant{}, fmt.Errorf("files[%d]: unknown role %q for %s models", i, role, t)
+		}
+		if role == RoleModel {
 			models++
-		case RoleMMProj:
-		default:
-			return Variant{}, fmt.Errorf("files[%d]: unknown role %q", i, role)
 		}
 		if f.Size <= 0 {
 			return Variant{}, fmt.Errorf("files[%d] %s: size (bytes) is required", i, f.Name)

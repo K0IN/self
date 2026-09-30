@@ -18,11 +18,14 @@ unchanged.
 
 | Method | Path | Does |
 | :--- | :--- | :--- |
-| GET | `/health` | `{"status":"ok","model":…,"runner":"ready"}` |
-| GET | `/v1/model` | Loaded model, capabilities, `info`, effective `settings` |
-| GET | `/v1/models` | List (one entry today) |
+| GET | `/health` | `{"status":"ok","model":…,"runner":"ready"}`. Runner `crashed` or `stopping` -> 503 with `"status":"unavailable"` |
+| GET | `/v1/model` | Loaded model: `id`, `object`, `type`, `quant`, `capabilities` (`input` / `output`), `info`, effective `settings` |
+| GET | `/v1/models` | `{"object":"list","data":[<model>]}` (one entry today) |
 | POST | `/v1/systemone` | Answer questions |
 | POST | `/v1/decide` | Alias of `/v1/systemone` |
+
+Unknown routes return 400 `invalid_request`; a wrong method returns 405
+(`Allow: GET, POST`) with the same body shape.
 
 ## Request
 
@@ -38,17 +41,23 @@ unchanged.
 }
 ```
 
-- `state`: string or object.
-- `criteria`: list or `{key: description}`.
-- `images`: URL string, data URI, or `{url, name, description}`.
+- `Content-Type` must be `application/json` when sent. Body limit 32 MiB (413 `image_too_large`). Unknown fields are rejected (400).
+- `state`: required; a string or any other JSON value except `null`.
+- `questions`: an object keyed by question id (order is kept), 1-64 questions. Each needs `type` and non-empty `instructions`.
+  - `choice`: `criteria` is a list of keys or `{key: description}` (description may be `null`).
+  - `score`: `criteria` is a non-empty list of level descriptions.
+  - `noul`: no `criteria`.
+- `images`: URL string, data URI, or `{url, name, description}` (see 10).
 - `model` optional. If set, must match the loaded model.
 
 ## Response
 
-- `choice`: `choice`, `probabilities`, `confidence`.
-- `score`: `score` (expected level index), `probabilities`, `confidence`.
-- `noul`: `noul`, `confidence`.
-- `usage`: `input_tokens`, `images`, `latency_ms`, `queue_ms`.
+`{"model": …, "answers": {<id>: …}, "usage": …}`. Answers keep the question order.
+
+- `choice`: `type`, `choice`, `probabilities` (per option, in option order), `confidence`.
+- `score`: `type`, `score` (expected level index), `probabilities` (keyed by level index `"0"`, `"1"`, …), `confidence`.
+- `noul`: `type`, `noul` (probability the statement holds), `confidence`.
+- `usage`: `input_tokens`, `output_tokens`, `images` (when images were sent), `latency_ms` (engine), `queue_ms`.
 
 ## Errors
 
@@ -64,7 +73,9 @@ unchanged.
 | `image_fetch_failed` | 502 |
 | `runtime_crashed`, `runtime_not_found`, `runtime_start_failed`, `shutting_down` | 503 |
 | `timeout` | 504 |
-| `internal_error` | 500 |
+| `internal_error` (and kinds without a mapping, e.g. `unsupported_model`, `download_failed`) | 500 |
+
+`internal_error` messages are replaced by `Internal server error.`
 
 ## Acceptance criteria
 
@@ -74,4 +85,5 @@ unchanged.
 - Must: wrong `model` -> 404.
 - Must: full queue -> 429.
 - Must: every error uses the shape above (`internal/api/decision` tests with a fake adapter).
-- Manual: curl examples in README work for every model.
+- Must: the served API matches this file for every model (end-to-end tests `api: *`, see 14).
+- Manual (verified with `kev:0.5b`): `GET /health`, `/v1/model`, `/v1/models`, `POST /v1/systemone`, unknown route (400), wrong method (405).

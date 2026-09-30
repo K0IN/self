@@ -61,7 +61,7 @@ Reload the profile, then use the command as usual:
 
 ```bash
 self serve kev:4b --host 0.0.0.0 --port 8080
-self list
+self ls
 self completion bash
 ```
 
