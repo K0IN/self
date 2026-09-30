@@ -24,7 +24,7 @@ jobs:
         include:
           - variant: cuda-13
             base_variant: cuda-13
-            engine_variant: cpu
+            engine_variant: cuda-13.4
           - variant: cuda-12
             base_variant: cuda-12
             engine_variant: cuda-12.8

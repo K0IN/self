@@ -6,6 +6,7 @@
 #   just engine build                      # default: cuda-12.8, installs into ../../bin/libexec/ai-server
 #   just engine build vulkan               # or: cpu
 #   just engine deps cuda-12.8 b11300      # other llama.cpp release
+#   just engine deps cuda-13.4             # CUDA 13 runtime
 #   just engine clean
 #
 # Recipes run in this directory (engines/ggmlc-custom-decider).
@@ -21,7 +22,7 @@ raw       := "https://raw.githubusercontent.com/ggml-org/llama.cpp/" + tag
 default:
     @just --list
 
-# Download prebuilt llama.cpp libraries + matching headers into deps/ (variant: cuda-12.8 | vulkan | cpu)
+# Download prebuilt llama.cpp libraries + matching headers into deps/ (variant: cuda-12.8 | cuda-13.4 | vulkan | cpu)
 deps variant="cuda-12.8": (libs variant) headers
 
 # Prebuilt runtime libraries (skipped when deps/ already has this tag+variant)
@@ -31,9 +32,10 @@ libs variant:
     set -euo pipefail
     case "{{variant}}" in
       cuda-12.8) asset="llama-{{tag}}-bin-ubuntu-cuda-12.8-x64.tar.gz" ;;
+      cuda-13.4) asset="llama-{{tag}}-bin-ubuntu-cuda-13.4-x64.tar.gz" ;;
       vulkan)    asset="llama-{{tag}}-bin-ubuntu-vulkan-x64.tar.gz" ;;
       cpu)       asset="llama-{{tag}}-bin-ubuntu-x64.tar.gz" ;;
-      *) echo "unknown variant {{variant}} (cuda-12.8 | vulkan | cpu)" >&2; exit 1 ;;
+      *) echo "unknown variant {{variant}} (cuda-12.8 | cuda-13.4 | vulkan | cpu)" >&2; exit 1 ;;
     esac
     if [[ -f {{deps}}/.tag && "$(cat {{deps}}/.tag)" == "{{tag}}-{{variant}}" ]]; then
       echo "deps/lib up to date ({{tag}}, {{variant}})"; exit 0
