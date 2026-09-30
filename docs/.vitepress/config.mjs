@@ -17,6 +17,7 @@ export default defineConfig({
             { text: 'Local settings', link: '/self/settings' },
             { text: 'CLI and completions', link: '/self/cli' },
             { text: 'API reference', link: '/self/api' },
+            { text: 'Examples', link: '/self/examples' },
             { text: 'Model registry', link: '/self/registry/' }
         ],
         search: { provider: 'local' }

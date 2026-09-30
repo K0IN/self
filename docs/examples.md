@@ -4,11 +4,12 @@ These examples are kept with the documentation so they are published with the si
 
 ## Local settings
 
-Copy [settings.yml](examples/settings.yml) to `~/.ai-server/settings.yml` and adjust the values for your machine:
+Download [settings.yml](/self/examples/settings.yml), copy it to `~/.ai-server/settings.yml`, and adjust the values for your machine:
 
 ```bash
 mkdir -p ~/.ai-server
-cp docs/examples/settings.yml ~/.ai-server/settings.yml
+curl -fsSL https://k0in.github.io/self/examples/settings.yml \
+  -o ~/.ai-server/settings.yml
 self settings kev:4b
 ```
 

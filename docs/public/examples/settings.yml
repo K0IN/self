@@ -16,9 +16,9 @@ adapters:
     threads: 6
 
 models:
-  "decider-vision:2b":
+  decider:2b-vision:
     settings:                  # all quants
       context_size: 4096
     quants:
-      q8:                      # only the q8 quant
+      8bit:                    # only the 8bit quant
         flash_attn: "on"

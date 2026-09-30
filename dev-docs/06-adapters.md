@@ -28,7 +28,7 @@
 - Each adapter has a typed schema: name, flag, type, bounds / enum.
 - Order: registry model < registry quant < local adapter < local model < local quant < `--set`.
 - Local file: `~/.ai-server/settings.yml` (optional). Override: `--settings-file` / `AI_SERVER_SETTINGS` (must exist).
-  - Package `internal/localconf`. Strict YAML (typos fail). Example: `examples/settings.yml`.
+  - Package `internal/localconf`. Strict YAML (typos fail). Example: `docs/examples/settings.yml`.
 - `self settings <id>`: value + source per key, plus unset keys with help.
 - Validated before the engine starts. Bad key/type/range -> `invalid_request`.
 - Rendered as engine flags. False bools emit nothing.

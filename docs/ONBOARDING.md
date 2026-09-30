@@ -70,7 +70,7 @@ Precedence (low to high):
 
 The local file is `~/.ai-server/settings.yml` (optional), or
 `--settings-file FILE` / `AI_SERVER_SETTINGS` (must exist). Example:
-[`examples/settings.yml`](../examples/settings.yml). `self settings <id>`
+[`settings.yml`](/self/examples/settings.yml). `self settings <id>`
 (`just settings <id>`) shows every key, its value and where it came from.
 Unknown keys, wrong types and out-of-range values are rejected before the
 engine starts. Effective settings are printed at startup and returned by
