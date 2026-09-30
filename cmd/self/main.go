@@ -196,7 +196,7 @@ func pull(ctx context.Context, args []string) error {
 	if err != nil {
 		return errs.New(errs.InvalidRequest, "%s", err)
 	}
-	reg, err := app.LoadRegistry()
+	reg, err := app.LoadRegistry(cfg.ModelsDir)
 	if err != nil {
 		return err
 	}
@@ -225,7 +225,7 @@ func list(args []string) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	reg, err := app.LoadRegistry()
+	reg, err := app.LoadRegistry(*modelsDir)
 	if err != nil {
 		return err
 	}
@@ -265,7 +265,7 @@ func suggest(args []string) error {
 	if len(args) != 1 {
 		return errs.New(errs.InvalidRequest, "usage: self suggest")
 	}
-	reg, err := app.LoadRegistry()
+	reg, err := app.LoadRegistry(config.DefaultModelsDir())
 	if err != nil {
 		return err
 	}

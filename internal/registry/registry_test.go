@@ -10,9 +10,9 @@ import (
 const sample = `
 version: 1
 models:
-	"decider-vision:2b":
+  "decider-vision:2b":
     description: "Decider 2B Vision: decisions about text and one image"
-		readme: readmes/decider-vision/2b.md
+    readme: readmes/decider-vision/2b.md
     type: decision
     default: 4bit
     capabilities:

@@ -21,7 +21,7 @@ import (
 // the engine, send a fixed set of probe questions and verify the answers are
 // well-formed and non-degenerate. Used by `self check` and `just check-model`.
 func Check(ctx context.Context, cfg config.Serve, out io.Writer, isTTY bool) error {
-	reg, err := LoadRegistry()
+	reg, err := LoadRegistry(cfg.ModelsDir)
 	if err != nil {
 		return err
 	}

@@ -33,8 +33,19 @@ import (
 const registryURL = "https://k0in.github.io/self/models.yml"
 
 // LoadRegistry loads the registry from the published GitHub Pages document.
-func LoadRegistry() (*registry.Registry, error) {
-	return loadRegistry(&http.Client{Timeout: 30 * time.Second}, registryURL)
+func LoadRegistry(modelsDir string) (*registry.Registry, error) {
+	reg, err := loadRegistry(&http.Client{Timeout: 30 * time.Second}, registryURL)
+	if err == nil {
+		if cacheErr := models.SaveRegistry(modelsDir, reg); cacheErr != nil {
+			return nil, fmt.Errorf("cache registry: %w", cacheErr)
+		}
+		return reg, nil
+	}
+	cached, cacheErr := models.LoadRegistryCache(modelsDir)
+	if cacheErr == nil {
+		return cached, nil
+	}
+	return nil, fmt.Errorf("load registry: %w (offline cache unavailable: %v)", err, cacheErr)
 }
 
 func loadRegistry(client *http.Client, source string) (*registry.Registry, error) {
@@ -64,7 +75,7 @@ func loadRegistry(client *http.Client, source string) (*registry.Registry, error
 // Serve runs `self serve` until ctx is cancelled or the engine dies.
 // requireType, when set, enforces the model type (used by `self decision`).
 func Serve(ctx context.Context, cfg config.Serve, requireType registry.ModelType, out io.Writer, isTTY bool) error {
-	reg, err := LoadRegistry()
+	reg, err := LoadRegistry(cfg.ModelsDir)
 	if err != nil {
 		return err
 	}
