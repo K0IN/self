@@ -10,8 +10,8 @@ just onboard <hf-repo>  ->  edit readme + description  ->  paste into registry.y
 
 - Lists the HF repo (`/api/models/<repo>/tree/main`).
 - Groups GGUFs into quants:
-  - `4bit`: Q4_K_M > Q4_K_S > IQ4_XS > Q4_0
-  - `5bit`, `6bit`, `8bit` (Q8_0), `f16` (F16/BF16)
+  - `q4`: Q4_K_M > Q4_K_S > IQ4_XS > Q4_0
+  - `q8` (Q8_0), `fp16` (F16/BF16)
 - First found = default.
 - Picks mmproj (prefers Q8_0) as `role: mmproj`.
 - Reads GGUF header via HTTP range requests (a few MiB).

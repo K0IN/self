@@ -63,7 +63,7 @@ The container entrypoint accepts `serve` options after the image name:
 | Option | Default | Purpose |
 | :--- | :--- | :--- |
 | `serve <model>` | `kev:0.5b` | Model reference to download and serve; append `@quant` to select a quant |
-| `--quant <name>` | Model default | Quantization, such as `4bit` or `8bit` |
+| `--quant <name>` | Model default | Quantization, such as `q4`, `q8`, or `fp16` |
 | `--device <name>` | `auto` | `cpu`, `cuda`, `cuda:N`, `vulkan`, or `vulkan:N` |
 | `--queue-size <n>` | `64` | Maximum queued requests |
 | `--preprocess-concurrency <n>` | `8` | Concurrent image preprocessing jobs |
@@ -86,7 +86,7 @@ For example:
 ```bash
 docker run --rm --gpus all -p 9000:9000 -v self-models:/models \
   -e AI_SERVER_PORT=9000 \
-  ghcr.io/<owner>/<repo>:latest serve decider-vision:2b@4bit --host 0.0.0.0
+  ghcr.io/<owner>/<repo>:latest serve decider-vision:2b@q4 --host 0.0.0.0
 ```
 
 ## Models
@@ -104,10 +104,11 @@ models are currently supported:
 Text-only models reject requests containing images. Model files remain in the
 `/models` volume and are reused on subsequent runs.
 
-The server caches the model registry and per-model `metadata.json` files in
-the `/models` volume. After a model has been downloaded successfully, it can
-be started offline from that cache. A model that has never been downloaded
-still requires one online run to discover its metadata and files.
+The server caches the exact registry response as `/models/.registry.yml` and
+writes per-model metadata files such as
+`/models/kev/4b/metadata.json`. After a model has been downloaded successfully,
+it can be started offline from that cache. A model that has never been
+downloaded still requires one online run to discover its metadata and files.
 
 To run a previously cached model offline, mount the same `/models` volume and
 start the model as usual:

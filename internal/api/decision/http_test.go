@@ -86,7 +86,7 @@ func setupSvc(t *testing.T, caps dom.Capabilities, geom *dom.ImageGeometry, queu
 	lim := imageutil.DefaultLimits()
 	lim.AllowHTTP, lim.AllowPrivate = true, true
 	svc := dom.NewService(dom.ServiceConfig{
-		ModelID: "test:1b", Quant: "4bit", Capabilities: caps, ImageInput: geom, QueueSize: queue, PreprocessConcurrency: 4,
+		ModelID: "test:1b", Quant: "q4", Capabilities: caps, ImageInput: geom, QueueSize: queue, PreprocessConcurrency: 4,
 	}, f, imageutil.NewPreprocessor(lim))
 	srv := httptest.NewServer(api.NewRouter(New(svc).Mount, healthy{}, slog.New(slog.NewTextHandler(io.Discard, nil))))
 	t.Cleanup(func() {
@@ -121,7 +121,7 @@ func TestInfoRoutes(t *testing.T) {
 	srv := setup(t, textCaps, nil, 4, newFake())
 	for path, want := range map[string]string{
 		"/health":    `"status":"ok"`,
-		"/v1/model":  `"id":"test:1b","object":"model","type":"decision","quant":"4bit","capabilities":{"input":{"text":true,"vision":false`,
+		"/v1/model":  `"id":"test:1b","object":"model","type":"decision","quant":"q4","capabilities":{"input":{"text":true,"vision":false`,
 		"/v1/models": `"data":[{"id":"test:1b"`,
 	} {
 		resp, err := http.Get(srv.URL + path)

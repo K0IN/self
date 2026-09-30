@@ -6,10 +6,20 @@ Run a local AI model server with a registry-driven workflow.
 
 ## Quick start
 
+Native installation is not supported. The development commands below are
+Docker-backed shorthand: `just setup` means running the image's `setup`
+command, and `just serve <model>` means running the image's `serve <model>`
+command with the host model directory mounted.
+
 ```bash
-# Native development
-just setup
-just serve kev:0.5b
+# Docker-backed development
+docker run --rm \
+  -v "$HOME/.ai-server/models:/models" \
+  ghcr.io/k0in/self:latest setup
+
+docker run --rm -p 8080:8080 \
+  -v "$HOME/.ai-server/models:/models" \
+  ghcr.io/k0in/self:latest serve kev:0.5b
 
 # Docker, with downloaded models persisted on the host
 docker run --rm -p 8080:8080 \

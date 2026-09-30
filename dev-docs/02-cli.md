@@ -28,9 +28,9 @@ optional and selects the registry default when omitted:
 
 ```bash
 self serve kev:0.5b
-self serve kev:4b@8bit
-self serve decider-vision:2b@4bit
-self pull kev:4b@f16
+self serve kev:4b@q8
+self serve decider-vision:2b@q4
+self pull kev:4b@fp16
 ```
 
 The registry ID remains the portion before `@`, so registry keys and local
@@ -57,7 +57,7 @@ The `justfile` provides the usual development wrappers:
 
 ```
 Model    kev:0.5b
-Quant    4bit
+Quant    q4
 Adapter  ggmlc-laya
 Using ~/.ai-server/models/kev/0.5b/4bit/...
 Loading model...

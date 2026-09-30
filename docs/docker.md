@@ -14,13 +14,13 @@ The image sets `AI_SERVER_MODELS=/models` and starts `kev:0.5b` on `0.0.0.0:8080
 
 ```bash
 docker run --rm -p 8080:8080 -v "$HOME/.ai-server/models:/models" \
-  ghcr.io/k0in/self:latest serve kev:4b@4bit --host 0.0.0.0 --port 8080
+  ghcr.io/k0in/self:latest serve kev:4b@q4 --host 0.0.0.0 --port 8080
 ```
 
 The directory layout is selected by the model id and quantization. Do not mount a single GGUF file over `/models`; mount the directory so `self` can verify, resume, and reuse its downloads.
 
-The server also stores the model registry cache and per-model `metadata.json`
-files in `/models`. Once a model has been downloaded, it can be started
+The server also stores the exact registry response as `/models/.registry.yml`
+and writes per-model `metadata.json` files in `/models`. Once a model has been downloaded, it can be started
 without network access by mounting the same directory and using the model
 reference as usual:
 

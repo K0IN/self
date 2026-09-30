@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { withBase } from 'vitepress'
 
 const props = defineProps({
     models: {
@@ -60,7 +61,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', focusSearch))
         </div>
 
         <div v-if="filteredModels.length" class="model-grid">
-            <a v-for="model in filteredModels" :key="model.id" class="model-card" :href="model.href">
+            <a v-for="model in filteredModels" :key="model.id" class="model-card" :href="withBase(model.href)">
                 <div class="model-card-topline">
                     <span class="model-kind">{{ model.type }}</span>
                     <span class="model-arrow" aria-hidden="true">↗</span>

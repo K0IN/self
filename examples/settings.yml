@@ -20,5 +20,5 @@ models:
     settings:                  # all quants
       context_size: 4096
     quants:
-      8bit:                    # only the 8bit quant
+      q8:                      # only the q8 quant
         flash_attn: "on"

@@ -22,7 +22,7 @@ HTTP (chi) -> api/decision -> decision.Service -> Scheduler -> Adapter -> engine
 - Native engine runs as a child process. Talks over stdin/stdout.
 - Adapter = the only Go code that knows an engine's protocol.
 - Registry (YAML) maps a model id to files + adapter. CLI references may add a
-	quant suffix: `self serve decider-vision:2b@4bit`.
+	quant suffix: `self serve decider-vision:2b@q4`.
 
 ## Packages
 

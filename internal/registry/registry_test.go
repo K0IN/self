@@ -14,17 +14,17 @@ models:
     description: "Decider 2B Vision: decisions about text and one image"
     readme: readmes/decider-vision/2b.md
     type: decision
-    default: 4bit
+	default: q4
     capabilities:
       input: [text, vision]
       output: [choice, score, noul]
-    4bit:
+	q4:
       adapter: ggmlc-laya
       repo: mradermacher/decider-2b-vision-GGUF
       files:
         - {file: decider-2b-vision.Q4_K_M.gguf, size: 100, sha256: ` + sumA + `}
         - {file: decider-2b-vision.mmproj-Q8_0.gguf, size: 20, sha256: ` + sumB + `, role: mmproj}
-    8bit:
+	q8:
       adapter: ggmlc-laya
       repo: mradermacher/decider-2b-vision-GGUF
       files:
@@ -36,7 +36,7 @@ models:
     capabilities:
       input: [text]
       output: [choice, score, noul]
-    4bit:
+	q4:
       adapter: ggmlc-laya
       repo: mys/kev-4b-GGUF
       files:
@@ -63,24 +63,24 @@ func TestParseValid(t *testing.T) {
 		t.Fatalf("ids = %s", got)
 	}
 	d := r.Models["decider-vision:2b"]
-	if d.Type != TypeDecision || d.Default != "4bit" || len(d.Variants) != 2 {
+	if d.Type != TypeDecision || d.Default != "q4" || len(d.Variants) != 2 {
 		t.Fatalf("bad model: %+v", d)
 	}
-	files := d.Variants["4bit"].Files
+	files := d.Variants["q4"].Files
 	if len(files) != 2 || files[0].Role != RoleModel || files[1].Role != RoleMMProj {
 		t.Fatalf("files = %+v", files)
 	}
 	if files[0].Size != 100 || files[0].SHA256 != sumA || files[1].SHA256 != strings.ToLower(sumB) {
 		t.Fatalf("pins = %+v", files)
 	}
-	if d.Variants["4bit"].Size() != 120 {
-		t.Fatalf("variant size = %d", d.Variants["4bit"].Size())
+	if d.Variants["q4"].Size() != 120 {
+		t.Fatalf("variant size = %d", d.Variants["q4"].Size())
 	}
 	if d.Readme != "readmes/decider-vision/2b.md" || d.Description == "" {
 		t.Fatalf("readme/description = %q %q", d.Readme, d.Description)
 	}
 	// single variant => implicit default
-	if r.Models["kev:4b"].Default != "4bit" {
+	if r.Models["kev:4b"].Default != "q4" {
 		t.Fatal("implicit default not set")
 	}
 }
@@ -88,10 +88,10 @@ func TestParseValid(t *testing.T) {
 func TestResolveDefaultAndOverride(t *testing.T) {
 	r := mustParse(t, sample)
 	res, err := r.Resolve("decider-vision:2b", ResolveOptions{})
-	if err != nil || res.Variant.Quant != "4bit" {
+	if err != nil || res.Variant.Quant != "q4" {
 		t.Fatalf("default: %v %+v", err, res.Variant)
 	}
-	res, err = r.Resolve("decider-vision:2b", ResolveOptions{Quant: "8bit"})
+	res, err = r.Resolve("decider-vision:2b", ResolveOptions{Quant: "q8"})
 	if err != nil || res.Variant.Files[0].Name != "decider-2b-vision.Q8_0.gguf" {
 		t.Fatalf("override: %v %+v", err, res.Variant)
 	}
@@ -108,7 +108,7 @@ func TestResolveErrors(t *testing.T) {
 		kind errs.Kind
 	}{
 		{"nope:1b", ResolveOptions{}, errs.ModelNotFound},
-		{"kev:4b", ResolveOptions{Quant: "2bit"}, errs.QuantNotFound},
+		{"kev:4b", ResolveOptions{Quant: "q2"}, errs.QuantNotFound},
 		{"kev:4b", ResolveOptions{Type: "image"}, errs.UnsupportedModel},
 		{"kev:4b", ResolveOptions{AdapterKnown: func(string, ModelType) bool { return false }}, errs.UnsupportedModel},
 	}
@@ -134,7 +134,7 @@ func TestCapabilities(t *testing.T) {
 
 func TestParseRejects(t *testing.T) {
 	bad := map[string]string{
-		"wrong type":      strings.Replace(sample, "type: decision\n    default: 4bit", "type: painting\n    default: 4bit", 1),
+		"wrong type":      strings.Replace(sample, "type: decision\n    default: q4", "type: painting\n    default: q4", 1),
 		"missing default": strings.Replace(sample, "    default: 4bit\n", "", 1),
 		"bad default":     strings.Replace(sample, "default: 4bit", "default: 3bit", 1),
 		"non gguf":        strings.Replace(sample, "kev_4b_ud_q4_k_m.gguf", "model.safetensors", 1),

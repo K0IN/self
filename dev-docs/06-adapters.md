@@ -54,6 +54,6 @@
 - Must: settings precedence and rejection covered (`internal/adapters` + `internal/settings` tests).
 - Must: local layers sit between registry and `--set`; sources reported (`TestResolveSettingsLocal`).
 - Must: missing default file is fine; missing explicit file errors; bad local values error with the file path.
-- Manual: `self check decider-vision:2b@4bit --settings-file …` uses local values (verified).
-- Manual: `self check decider-vision:2b@4bit --set context_size=4096 --set flash_attn=on` passes (verified).
+- Manual: `self check decider-vision:2b@q4 --settings-file …` uses local values (verified).
+- Manual: `self check decider-vision:2b@q4 --set context_size=4096 --set flash_attn=on` passes (verified).
 - Manual: `--set top_k=5` and laya `--set context_size=…` rejected with the list of known keys (verified).

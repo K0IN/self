@@ -341,7 +341,7 @@ func TestStoreLayoutAndEnsure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := filepath.Join(s.Root, "kev", "4b", "4bit", "kev.gguf")
+	want := filepath.Join(s.Root, "kev", "4b", "q4", "kev.gguf")
 	if files.Model != want {
 		t.Fatalf("path = %s", files.Model)
 	}
@@ -364,7 +364,7 @@ models:
     capabilities:
       input: [text]
       output: [noul]
-    4bit:
+	q4:
       adapter: ggmlc-laya
       repo: mys/kev-4b-GGUF
       files:

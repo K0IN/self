@@ -54,9 +54,9 @@ The smoke recipes use `PORT` (default `8080`) and the JSON fixtures in
 
 ## Manual e2e (done)
 
-- `kev:0.5b`, `kev:4b@4bit`, and `decider-vision:2b@4bit` served and answered.
+- `kev:0.5b`, `kev:4b@q4`, and `decider-vision:2b@q4` served and answered.
 - Vision examples, error cases, 8 concurrent requests, clean shutdown.
-- `self check` for `kev:0.5b`, `decider-vision:2b@4bit`.
+- `self check` for `kev:0.5b`, `decider-vision:2b@q4`.
 - Tampered registry pin refused.
 
 ## Acceptance criteria

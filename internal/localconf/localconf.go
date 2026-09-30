@@ -11,7 +11,7 @@
 //	    settings:                  # all quants of this model
 //	      context_size: 4096
 //	    quants:
-//	      8bit:                    # one quant
+//	      q8:                      # one quant
 //	        flash_attn: "on"
 //
 // Precedence (low -> high): registry model, registry quant, local adapter,

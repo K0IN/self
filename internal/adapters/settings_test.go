@@ -24,14 +24,14 @@ models:
       output: [choice]
     info: {family: d, parameters: 1B, context_length: 32768, max_options: 10, languages: [en]}
     settings: {context_size: 8192, temperature: 1.5}
-    default: 4bit
-    4bit:
+	default: q4
+	q4:
       adapter: ggmlc-custom-decider
       repo: a/b
       settings: {context_size: 4096}
       files:
         - {file: d.gguf, size: 1, sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
-    8bit:
+	q8:
       adapter: ggmlc-custom-decider
       repo: a/b
       files:
@@ -53,7 +53,7 @@ func resolve(t *testing.T, doc, quant string) registry.Resolved {
 
 // Precedence: model settings < quant settings < --set overrides.
 func TestResolveSettingsPrecedence(t *testing.T) {
-	res := resolve(t, reg, "4bit")
+	res := resolve(t, reg, "q4")
 	if res.Model.Info.ContextLength != 32768 || res.Model.Info.MaxOptions != 10 || res.Model.Info.Parameters != "1B" {
 		t.Fatalf("info = %+v", res.Model.Info)
 	}
@@ -64,7 +64,7 @@ func TestResolveSettingsPrecedence(t *testing.T) {
 	if v["context_size"] != int64(4096) || v["temperature"] != 1.5 {
 		t.Fatalf("quant override: %v", v)
 	}
-	v, _ = ResolveSettings(resolve(t, reg, "8bit"), nil)
+	v, _ = ResolveSettings(resolve(t, reg, "q8"), nil)
 	if v["context_size"] != int64(8192) {
 		t.Fatalf("model level: %v", v)
 	}
@@ -88,12 +88,12 @@ models:
   d:1b:
     settings: {context_size: 2048}
     quants:
-      4bit: {flash_attn: "off"}
+	q4: {flash_attn: "off"}
 `))
 	if err != nil {
 		t.Fatal(err)
 	}
-	v, src, err := ResolveSettingsLayered(resolve(t, reg, "4bit"), local, map[string]any{"threads": "2"})
+	v, src, err := ResolveSettingsLayered(resolve(t, reg, "q4"), local, map[string]any{"threads": "2"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,13 +102,13 @@ models:
 		t.Fatalf("values = %v", v)
 	}
 	wantSrc := map[string]string{"context_size": "local model", "temperature": "local adapter ggmlc-custom-decider",
-		"threads": "--set", "flash_attn": "local quant 4bit"}
+		"threads": "--set", "flash_attn": "local quant q4"}
 	if !reflect.DeepEqual(src, wantSrc) {
 		t.Fatalf("sources = %v", src)
 	}
 	// Local values are validated against the schema too.
 	bad, _ := localconf.Parse([]byte("models: {d:1b: {settings: {context_size: 5}}}"))
-	if _, _, err := ResolveSettingsLayered(resolve(t, reg, "4bit"), bad, nil); errs.KindOf(err) != errs.InvalidRequest {
+	if _, _, err := ResolveSettingsLayered(resolve(t, reg, "q4"), bad, nil); errs.KindOf(err) != errs.InvalidRequest {
 		t.Fatalf("bad local value: %v", err)
 	}
 }

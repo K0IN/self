@@ -83,7 +83,7 @@ func TestAnalyzeVisionRepo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r.Adapter != "ggmlc-custom-decider" || r.Default != "4bit" || r.ID != "decider-vision:2b" {
+	if r.Adapter != "ggmlc-custom-decider" || r.Default != "q4" || r.ID != "decider-vision:2b" {
 		t.Fatalf("%+v", r)
 	}
 	quants := []string{}
@@ -93,7 +93,7 @@ func TestAnalyzeVisionRepo(t *testing.T) {
 			t.Fatalf("mmproj = %+v", v.MMProj)
 		}
 	}
-	if strings.Join(quants, ",") != "4bit=m.Q4_K_M.gguf,8bit=m.Q8_0.gguf,f16=m.f16.gguf" {
+	if strings.Join(quants, ",") != "q4=m.Q4_K_M.gguf,q8=m.Q8_0.gguf,fp16=m.f16.gguf" {
 		t.Fatalf("quants = %v", quants)
 	}
 	reg, err := registry.Parse([]byte("version: 1\nmodels:\n" + r.YAML()))

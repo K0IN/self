@@ -16,7 +16,7 @@ models:
     settings:
       context_size: 4096
     quants:
-      8bit:
+      q8:
         flash_attn: "on"
 ```
 
@@ -38,9 +38,9 @@ Later layers replace the same key; unrelated keys remain. Use `self settings <mo
 An omitted default file is fine. A path supplied explicitly by `--settings-file` or `AI_SERVER_SETTINGS` must exist and parse as version 1 YAML. Keep keys within the adapter's supported settings; unknown or invalid values are rejected before the engine starts.
 
 ```bash
-self settings decider-vision:2b@4bit
-self serve decider-vision:2b@4bit --settings-file ./settings.yml
-self serve kev:4b@8bit --set threads=8 --set context_size=4096
+self settings decider-vision:2b@q4
+self serve decider-vision:2b@q4 --settings-file ./settings.yml
+self serve kev:4b@q8 --set threads=8 --set context_size=4096
 ```
 
 For Docker, mount the settings file read-only and pass its path inside the container:

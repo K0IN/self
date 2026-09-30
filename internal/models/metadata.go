@@ -27,7 +27,11 @@ func SaveRegistry(root string, reg *registry.Registry, source []byte) error {
 		if tag == "" {
 			tag = "latest"
 		}
-		if err := writeJSON(filepath.Join(root, name, tag, "metadata.json"), model); err != nil {
+		dir := filepath.Join(root, name, tag)
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return fmt.Errorf("create metadata directory for %s: %w", id, err)
+		}
+		if err := writeJSON(filepath.Join(dir, "metadata.json"), model); err != nil {
 			return fmt.Errorf("write metadata for %s: %w", id, err)
 		}
 	}

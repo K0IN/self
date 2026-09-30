@@ -13,9 +13,9 @@
   description: "Decider 2B Vision: one-pass decisions about text and one image"
   readme: readmes/decider-vision/2b.md
   type: decision
-  default: 4bit
+  default: q4
   capabilities: [text, vision, choice, score, noul]
-  4bit:
+  q4:
     adapter: ggmlc-custom-decider
     repo: mradermacher/decider-2b-vision-GGUF
     files:
@@ -26,11 +26,11 @@
 ## Rules
 
 - Id: `name:tag`. No `/ \ :` or spaces in parts.
-- CLI references may append `@quant`, for example `decider-vision:2b@4bit`.
+- CLI references may append `@quant`, for example `decider-vision:2b@q4`.
   The `@quant` portion is not part of the registry ID.
 - `type`: only `decision` for now.
 - `capabilities`: `text | vision | multi-image | choice | score | noul`. `multi-image` implies `vision`.
-- Every non-reserved key is a quant (`4bit`, `8bit`, `f16`, …).
+- Every non-reserved key is a quant (`q4`, `q8`, `fp16`, …).
 - `default` required if more than one quant.
 - Files: GGUF only, clean relative paths.
 - Roles: `model` (exactly one) and `mmproj` (optional).

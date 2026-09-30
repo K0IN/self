@@ -1,11 +1,21 @@
 :root {
-    --vp-c-brand-1: #111111;
-    --vp-c-brand-2: #333333;
-    --vp-c-brand-3: #555555;
+    --vp-c-brand-1: #14532d;
+    --vp-c-brand-2: #166534;
+    --vp-c-brand-3: #15803d;
     --catalog-ink: #161616;
     --catalog-muted: #737373;
     --catalog-line: #e7e7e7;
     --catalog-soft: #f6f6f3;
+}
+
+.dark {
+    --vp-c-brand-1: #86efac;
+    --vp-c-brand-2: #4ade80;
+    --vp-c-brand-3: #22c55e;
+    --catalog-ink: #f5f5f5;
+    --catalog-muted: #b8b8b8;
+    --catalog-line: #3f3f46;
+    --catalog-soft: #27272a;
 }
 
 .model-catalog {
@@ -24,7 +34,18 @@
     min-height: 42px;
     border: 1px solid var(--catalog-line);
     border-radius: 6px;
-    background: #fff;
+    background: var(--vp-c-bg);
+    color: var(--catalog-ink);
+    color-scheme: light;
+}
+
+.dark .catalog-search,
+.dark .catalog-toolbar select {
+    color-scheme: dark;
+}
+
+.catalog-toolbar option {
+    background: var(--vp-c-bg);
     color: var(--catalog-ink);
 }
 
@@ -152,7 +173,7 @@
 }
 
 .model-tag {
-    background: #fff;
+    background: var(--vp-c-bg);
     border: 1px solid var(--catalog-line);
     color: var(--catalog-ink);
     text-transform: none;

@@ -33,7 +33,7 @@ models:
     description: "Kev 0.5b: Qwen2.5-0.5B-based System One decision model (ggmlc)"
     readme: readmes/kev/0.5b.md
     type: decision
-    default: 4bit
+    default: q4
     capabilities:
       input: [text]
       output: [choice, score, noul]
@@ -49,17 +49,17 @@ models:
       max_options: 16
     settings:
       threads: 4
-    4bit:
+    q4:
       adapter: ggmlc-laya
       repo: mys/kev-0.5b-GGUF
       files:
         - {file: kev_0.5b_ud_q4_k_m.gguf, size: 570955168, sha256: 154db89455fb1871b93e4343a2954331c2469d718426c893b4d1bd6f0e1b40bf}
-    8bit:
+    q8:
       adapter: ggmlc-laya
       repo: mys/kev-0.5b-GGUF
       files:
         - {file: kev_0.5b_q8_0.gguf, size: 548153728, sha256: 5c747e0da78745e49609d6989a0964ce1688fa4741a49ae13f17256acda13280}
-    f16:
+    fp16:
       adapter: ggmlc-laya
       repo: mys/kev-0.5b-GGUF
       files:
@@ -69,7 +69,7 @@ models:
     description: "Kev 0.8b: Qwen3.5-0.8B-based System One decision model (ggmlc)"
     readme: readmes/kev/0.8b.md
     type: decision
-    default: 4bit
+    default: q4
     capabilities:
       input: [text]
       output: [choice, score, noul]
@@ -85,17 +85,17 @@ models:
       max_options: 16
     settings:
       threads: 4
-    4bit:
+    q4:
       adapter: ggmlc-laya
       repo: mys/kev-0.8b-GGUF
       files:
         - {file: kev_0.8b_ud_q4_k_m.gguf, size: 958685280, sha256: 410d9c071a72435d5579b88af98b53fe520260ae61e4154c234e6a28a4ae9623}
-    8bit:
+    q8:
       adapter: ggmlc-laya
       repo: mys/kev-0.8b-GGUF
       files:
         - {file: kev_0.8b_q8_0.gguf, size: 827809856, sha256: 12f77506dbfaa3c1d12f7e3f8da04feceda276f2d5aa322cd0858a8ce11e6c6c}
-    f16:
+    fp16:
       adapter: ggmlc-laya
       repo: mys/kev-0.8b-GGUF
       files:
@@ -105,7 +105,7 @@ models:
     description: "Kev 4b: Qwen3.5-4B-based System One decision model (ggmlc)"
     readme: readmes/kev/4b.md
     type: decision
-    default: 4bit
+    default: q4
     capabilities:
       input: [text]
       output: [choice, score, noul]
@@ -121,17 +121,17 @@ models:
       max_options: 16
     settings:
       threads: 4
-    4bit:
+    q4:
       adapter: ggmlc-laya
       repo: mys/kev-4b-GGUF
       files:
         - {file: kev_4b_ud_q4_k_m.gguf, size: 4211035872, sha256: f2b31aa5a3c0f75f22f034f0452a8d7553d583c77b2783926f3ba1682143b92b}
-    8bit:
+    q8:
       adapter: ggmlc-laya
       repo: mys/kev-4b-GGUF
       files:
         - {file: kev_4b_q8_0.gguf, size: 4498493152, sha256: 51c9353a5ff0b8e2f7cd7262359c0b26ea54b327214fe26a5da52b505b2978e8}
-    f16:
+    fp16:
       adapter: ggmlc-laya
       repo: mys/kev-4b-GGUF
       files:
@@ -142,7 +142,7 @@ models:
     description: "Laya English: ModernBERT encoder, English (ggmlc)"
     readme: readmes/laya/english.md
     type: decision
-    default: 4bit
+    default: q4
     capabilities:
       input: [text]
       output: [choice, score, noul]
@@ -156,17 +156,17 @@ models:
       max_options: 16
     settings:
       threads: 4
-    4bit:
+    q4:
       adapter: ggmlc-laya
       repo: mys/laya-GGUF
       files:
         - {file: laya_english_ud_q4_k_m.gguf, size: 419907712, sha256: e504de8fcac28e5dae1cf531fe1e1c0912703de5b82719ad84bd616e1257d835}
-    8bit:
+    q8:
       adapter: ggmlc-laya
       repo: mys/laya-GGUF
       files:
         - {file: laya_english_q8_0.gguf, size: 451505440, sha256: 6243305fb16cf22e53b932c220bd029be2adbfbec6ce120356517b8ae2f38382}
-    f16:
+    fp16:
       adapter: ggmlc-laya
       repo: mys/laya-GGUF
       files:
@@ -176,7 +176,7 @@ models:
     description: "Laya Multilingual: mmBERT encoder, multilingual (ggmlc)"
     readme: readmes/laya/multilingual.md
     type: decision
-    default: 8bit
+    default: q8
     capabilities:
       input: [text]
       output: [choice, score, noul]
@@ -190,12 +190,12 @@ models:
       max_options: 16
     settings:
       threads: 4
-    4bit:
+    q4:
       adapter: ggmlc-laya
       repo: mys/laya-multilingual-GGUF
       files:
         - {file: laya_multilingual_ud_q4_k_m.gguf, size: 523916512, sha256: 7c0e47f3dfaf1242929d69e91afb8868fcc5ee78092e7784e1aa2ee85adc9840}
-    8bit:
+    q8:
       adapter: ggmlc-laya
       repo: mys/laya-multilingual-GGUF
       files:
@@ -205,7 +205,7 @@ models:
     description: "Laya Typed Decisions: encoder tuned for typed decisions (ggmlc)"
     readme: readmes/laya/typed-decisions.md
     type: decision
-    default: 4bit
+    default: q4
     capabilities:
       input: [text]
       output: [choice, score, noul]
@@ -218,12 +218,12 @@ models:
       max_options: 16
     settings:
       threads: 4
-    4bit:
+    q4:
       adapter: ggmlc-laya
       repo: mys/laya-typed-decisions-GGUF
       files:
         - {file: laya_typed_decisions_ud_q4_k_m.gguf, size: 423581888, sha256: 42919cae9c11f744a16b8f3136a3356c586a558108080050e832ba14bbb0010c}
-    8bit:
+    q8:
       adapter: ggmlc-laya
       repo: mys/laya-typed-decisions-GGUF
       files:
@@ -236,7 +236,7 @@ models:
     description: "Decider 0.8B: small Qwen3.5-based one-pass decision model"
     readme: readmes/decider/0.8b.md
     type: decision
-    default: 4bit
+    default: q4
     capabilities:
       input: [text]
       output: [choice, score, noul]
@@ -254,12 +254,12 @@ models:
     settings:
       context_size: 8192
       temperature: 1.0
-    4bit:
+    q4:
       adapter: ggmlc-custom-decider
       repo: mradermacher/decider-0.8b-GGUF
       files:
         - {file: decider-0.8b.Q4_K_M.gguf, size: 529297856, sha256: ce48f94d8f176e6433dc09ee34fd4a39ac16b29043beaeb7b81d98373b27cd67}
-    8bit:
+    q8:
       adapter: ggmlc-custom-decider
       repo: mradermacher/decider-0.8b-GGUF
       files:
@@ -269,7 +269,7 @@ models:
     description: "Decider 4B: Qwen3.5-based one-pass decision model (v2.1)"
     readme: readmes/decider/4b.md
     type: decision
-    default: 4bit
+    default: q4
     capabilities:
       input: [text]
       output: [choice, score, noul]
@@ -287,12 +287,12 @@ models:
     settings:
       context_size: 8192
       temperature: 1.0
-    4bit:
+    q4:
       adapter: ggmlc-custom-decider
       repo: Mapika/decider-4b-GGUF
       files:
         - {file: decider-4b-v2.1-Q4_K_M.gguf, size: 2708804640, sha256: c7083fcfc93f650cd66caeade4a3840ef9eeeeb1e80920907c554f70619d7c56}
-    8bit:
+    q8:
       adapter: ggmlc-custom-decider
       repo: Mapika/decider-4b-GGUF
       files:
@@ -302,7 +302,7 @@ models:
     description: "Decider 2B Vision: one-pass decisions about text and one image"
     readme: readmes/decider-vision/2b.md
     type: decision
-    default: 4bit
+    default: q4
     capabilities:
       input: [text, vision]
       output: [choice, score, noul]
@@ -320,13 +320,13 @@ models:
     settings:
       context_size: 8192
       temperature: 1.0
-    4bit:
+    q4:
       adapter: ggmlc-custom-decider
       repo: mradermacher/decider-2b-vision-GGUF
       files:
         - {file: decider-2b-vision.Q4_K_M.gguf, size: 1274397056, sha256: b3e38aa90856d6b93df0d2b186e941e57fa6fd4b022a3a89fe538ff01ebd9985}
         - {file: decider-2b-vision.mmproj-Q8_0.gguf, size: 364664448, sha256: 79e636085e90f1b4bdc5df22003cde0dd0d88086a04b7c101e6bd7d1cc9f2c91, role: mmproj}
-    8bit:
+    q8:
       adapter: ggmlc-custom-decider
       repo: mradermacher/decider-2b-vision-GGUF
       files:

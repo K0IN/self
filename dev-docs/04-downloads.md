@@ -4,7 +4,7 @@
 
 ```
 ~/.ai-server/models/<name>/<tag>/<quant>/<file>
-e.g. ~/.ai-server/models/kev/4b/4bit/kev_4b_ud_q4_k_m.gguf
+e.g. ~/.ai-server/models/kev/4b/q4/kev_4b_ud_q4_k_m.gguf
 ```
 
 - Human readable. No hashes in paths.
@@ -51,5 +51,5 @@ Retrying in 2s (attempt 1/8), resuming from 777 MiB...
 - Must: server advertises different file -> refused before body download (`TestEnsureRefusesChangedUpstream`).
 - Must: wrong-size installed file is re-downloaded (`TestInstalledChecksPinnedSize`).
 - Must: two processes can't write the same file (`TestDownloadLockPreventsConcurrentWriters`).
-- Manual: installed `kev:0.5b`, `kev:4b@4bit`, and `decider-vision:2b@4bit`
+- Manual: installed `kev:0.5b`, `kev:4b@q4`, and `decider-vision:2b@q4`
 	match registry sha256 (verified).

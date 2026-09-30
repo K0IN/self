@@ -12,7 +12,7 @@ import (
 // Store is the root models directory, laid out for humans:
 //
 //	<root>/<name>/<tag>/<quant>/<file>
-//	e.g. ~/.ai-server/models/decider/2b-vision/4bit/decider-2b-vision.Q4_K_M.gguf
+//	e.g. ~/.ai-server/models/decider-vision/2b/q4/decider-2b-vision.Q4_K_M.gguf
 type Store struct {
 	Root string
 }
