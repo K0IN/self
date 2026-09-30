@@ -95,9 +95,25 @@
 }
 
 .catalog-summary a {
-    color: var(--catalog-muted);
+    color: var(--vp-c-brand-1);
+    font-weight: 600;
     text-decoration: underline;
     text-underline-offset: 3px;
+}
+
+.catalog-summary a:hover,
+.catalog-summary a:focus-visible,
+.model-card h2 a:hover,
+.model-source a:hover {
+    color: var(--vp-c-brand-2);
+}
+
+.catalog-summary a:focus-visible,
+.model-card h2 a:focus-visible,
+.model-source a:focus-visible {
+    border-radius: 2px;
+    outline: 2px solid var(--vp-c-brand-1);
+    outline-offset: 3px;
 }
 
 .model-grid {
@@ -181,6 +197,11 @@
     display: grid;
     gap: 0.25rem;
     font-size: 0.75rem;
+}
+
+.model-source>a,
+.model-source li a {
+    overflow-wrap: anywhere;
 }
 
 .model-source strong {

@@ -70,7 +70,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', focusSearch))
 
         <div class="catalog-summary">
             <span>{{ filteredModels.length }} model{{ filteredModels.length === 1 ? '' : 's' }}</span>
-            <a href="/self/models.yml">Download models.yml</a>
+            <a :href="withBase('/models.yml')">Download models.yml</a>
         </div>
 
         <div v-if="filteredModels.length" class="model-grid">
