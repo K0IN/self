@@ -27,6 +27,19 @@ const filteredModels = computed(() => props.models.filter(model => {
 
 const label = value => value === 'all' ? 'All' : value
 
+const openModel = event => {
+    if (event.target.closest('a')) return
+    window.location.href = withBase(event.currentTarget.dataset.href)
+}
+
+const handleModelKeydown = event => {
+    if (event.target.closest('a')) return
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        openModel(event)
+    }
+}
+
 const focusSearch = event => {
     if (event.key === '/' && event.target?.tagName !== 'INPUT' && event.target?.tagName !== 'TEXTAREA') {
         event.preventDefault()
@@ -61,21 +74,33 @@ onBeforeUnmount(() => window.removeEventListener('keydown', focusSearch))
         </div>
 
         <div v-if="filteredModels.length" class="model-grid">
-            <a v-for="model in filteredModels" :key="model.id" class="model-card" :href="withBase(model.href)">
+            <article v-for="model in filteredModels" :key="model.id" class="model-card" :data-href="model.href" tabindex="0" role="link" @click="openModel" @keydown="handleModelKeydown">
                 <div class="model-card-topline">
                     <span class="model-kind">{{ model.type }}</span>
                     <span class="model-arrow" aria-hidden="true">↗</span>
                 </div>
-                <h2>{{ model.id }}</h2>
+                <h2><a :href="withBase(model.href)">{{ model.id }}</a></h2>
                 <p>{{ model.description }}</p>
                 <div class="model-tags">
                     <span v-for="quant in model.quants" :key="quant" class="model-tag">{{ quant }}</span>
+                </div>
+                <div class="model-sources">
+                    <div v-for="variant in model.variants" :key="variant.name" class="model-source">
+                        <strong>{{ variant.name }}</strong>
+                        <a :href="variant.repoUrl" target="_blank" rel="noreferrer">{{ variant.repo }}</a>
+                        <ul>
+                            <li v-for="file in variant.files" :key="file.name">
+                                <a :href="file.url" target="_blank" rel="noreferrer">{{ file.name }}</a>
+                                <code>sha256:{{ file.sha256 }}</code>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="model-card-footer">
                     <span>{{ model.size }}</span>
                     <span>{{ model.capabilities.join(' · ') }}</span>
                 </div>
-            </a>
+            </article>
         </div>
         <div v-else class="catalog-empty">
             <strong>No models found</strong>

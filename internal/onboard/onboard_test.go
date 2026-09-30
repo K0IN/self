@@ -110,7 +110,7 @@ func TestAnalyzeVisionRepo(t *testing.T) {
 	if rd := r.Readme(); !strings.HasPrefix(rd, "# Decider 2b Vision") || !strings.Contains(rd, "self serve decider-vision:2b") {
 		t.Fatalf("readme skeleton = %q", rd)
 	}
-	f := m.Variants["4bit"].Files
+	f := m.Variants["q4"].Files
 	if f[0].Size != 4 || f[0].SHA256 != strings.Repeat("ab", 32) || f[1].Role != registry.RoleMMProj || f[1].Size != 1 {
 		t.Fatalf("pins = %+v", f)
 	}

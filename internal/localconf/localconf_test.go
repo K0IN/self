@@ -16,7 +16,7 @@ models:
     settings:
       context_size: 4096
     quants:
-	      q8:
+      q8:
         flash_attn: "on"
 `
 
@@ -32,7 +32,7 @@ func TestParseAndLayers(t *testing.T) {
 	if got := c.Layers("decider-vision:2b", "q4", "ggmlc-laya"); len(got) != 1 || got[0].Name != "local model" {
 		t.Fatalf("other quant/adapter = %+v", got)
 	}
-	if got := c.Layers("kev:4b", "4bit", "ggmlc-laya"); len(got) != 0 {
+	if got := c.Layers("kev:4b", "q4", "ggmlc-laya"); len(got) != 0 {
 		t.Fatalf("unrelated = %+v", got)
 	}
 	var nilc *Config

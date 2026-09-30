@@ -7,16 +7,17 @@ export default defineConfig({
     cleanUrls: true,
     themeConfig: {
         nav: [
-            { text: 'Guide', link: '/' },
-            { text: 'Models', link: '/registry/' },
+            { text: 'Guide', link: '/self/' },
+            { text: 'Models', link: '/self/registry/' },
             { text: 'GitHub', link: 'https://github.com/k0in/self' }
         ],
         sidebar: [
-            { text: 'Getting started', link: '/' },
-            { text: 'Docker and model paths', link: '/docker' },
-            { text: 'Local settings', link: '/settings' },
-            { text: 'CLI and completions', link: '/cli' },
-            { text: 'Model registry', link: '/registry/' }
+            { text: 'Getting started', link: '/self/' },
+            { text: 'Docker and model paths', link: '/self/docker' },
+            { text: 'Local settings', link: '/self/settings' },
+            { text: 'CLI and completions', link: '/self/cli' },
+            { text: 'API reference', link: '/self/api' },
+            { text: 'Model registry', link: '/self/registry/' }
         ],
         search: { provider: 'local' }
     }

@@ -43,12 +43,10 @@ curl http://localhost:8080/v1/model
   "id": "kev:0.5b",
   "object": "model",
   "type": "decision",
-  "quant": "4bit",
+  "quant": "q4",
   "capabilities": {
-    "input": {"text": true, "vision": false, "multi_image": false},
-    "output": {"choice": true, "score": true, "noul": true},
-    "max_images": 0,
-    "max_options": 16
+    "input": {"text": true, "vision": false, "multi_image": false, "max_images": 0},
+    "output": {"choice": true, "score": true, "noul": true, "max_options": 16}
   },
   "info": {
     "family": "kev",
@@ -78,7 +76,7 @@ curl http://localhost:8080/v1/models
       "id": "kev:0.5b",
       "object": "model",
       "type": "decision",
-      "quant": "4bit"
+      "quant": "q4"
     }
   ]
 }

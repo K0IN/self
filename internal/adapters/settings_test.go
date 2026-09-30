@@ -24,14 +24,14 @@ models:
       output: [choice]
     info: {family: d, parameters: 1B, context_length: 32768, max_options: 10, languages: [en]}
     settings: {context_size: 8192, temperature: 1.5}
-	default: q4
-	q4:
+    default: q4
+    q4:
       adapter: ggmlc-custom-decider
       repo: a/b
       settings: {context_size: 4096}
       files:
         - {file: d.gguf, size: 1, sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
-	q8:
+    q8:
       adapter: ggmlc-custom-decider
       repo: a/b
       files:
@@ -88,7 +88,7 @@ models:
   d:1b:
     settings: {context_size: 2048}
     quants:
-	q4: {flash_attn: "off"}
+      q4: {flash_attn: "off"}
 `))
 	if err != nil {
 		t.Fatal(err)
@@ -119,12 +119,12 @@ func TestResolveSettingsRejects(t *testing.T) {
 		"bad range":   strings.Replace(reg, "context_size: 4096", "context_size: 10", 1),
 		"bad type":    strings.Replace(reg, "temperature: 1.5", "temperature: hot", 1),
 	} {
-		_, err := ResolveSettings(resolve(t, doc, "4bit"), nil)
+		_, err := ResolveSettings(resolve(t, doc, "q4"), nil)
 		if errs.KindOf(err) != errs.InvalidRequest {
 			t.Errorf("%s: got %v", name, err)
 		}
 	}
-	if _, err := ResolveSettings(resolve(t, reg, "4bit"), map[string]any{"context_size": "huge"}); err == nil {
+	if _, err := ResolveSettings(resolve(t, reg, "q4"), map[string]any{"context_size": "huge"}); err == nil {
 		t.Error("bad --set accepted")
 	}
 }

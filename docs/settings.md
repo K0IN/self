@@ -49,6 +49,6 @@ For Docker, mount the settings file read-only and pass its path inside the conta
 docker run --rm -p 8080:8080 \
   -v "$HOME/.ai-server/models:/models" \
   -v "$HOME/.ai-server/settings.yml:/etc/self/settings.yml:ro" \
-  ghcr.io/k0in/self:latest serve kev:4b@8bit --host 0.0.0.0 \
+  ghcr.io/k0in/self:latest serve kev:4b@q8 --host 0.0.0.0 \
   --settings-file /etc/self/settings.yml
 ```

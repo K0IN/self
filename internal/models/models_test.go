@@ -364,7 +364,7 @@ models:
     capabilities:
       input: [text]
       output: [noul]
-	q4:
+    q4:
       adapter: ggmlc-laya
       repo: mys/kev-4b-GGUF
       files:

@@ -3,7 +3,7 @@ FROM nvidia/cuda:13.4.1-devel-ubuntu24.04
 ARG GO_VERSION=1.27.1
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates cmake curl fish git just ninja-build ripgrep sqlite3 zsh libvulkan1 mesa-vulkan-drivers \
+    && apt-get install -y --no-install-recommends ca-certificates cmake curl fish git just nodejs npm ninja-build ripgrep sqlite3 zsh libvulkan1 mesa-vulkan-drivers \
     && rm -rf /var/lib/apt/lists/* \
     && curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" | tar -C /usr/local -xz \
     && useradd --create-home --shell /usr/bin/fish vscode \

@@ -28,3 +28,46 @@ self completion fish > ~/.config/fish/completions/self.fish
 ```
 
 The completion files are generated from the installed binary, so regenerate them after upgrading `self`.
+
+## Use the Docker image as `self`
+
+If you do not want to install the native binary, define a shell function that
+forwards every argument to the container. Add the function for your shell to
+your profile, such as `~/.bashrc` or `~/.zshrc`:
+
+Bash and Zsh:
+
+```bash
+self() {
+	docker run --rm \
+		--publish 8080:8080 \
+		--volume "$HOME/.ai-server/models:/models" \
+		ghcr.io/k0in/self:latest "$@"
+}
+```
+
+Fish:
+
+```fish
+function self
+		docker run --rm \
+				--publish 8080:8080 \
+				--volume "$HOME/.ai-server/models:/models" \
+				ghcr.io/k0in/self:latest $argv
+end
+```
+
+Reload the profile, then use the command as usual:
+
+```bash
+self serve kev:4b --host 0.0.0.0 --port 8080
+self list
+self completion bash
+```
+
+The container image starts `kev:0.5b` when no command is supplied. Use the
+`cpu` image tag instead of `latest` on a host without NVIDIA CUDA support:
+
+```bash
+ghcr.io/k0in/self:cpu
+```

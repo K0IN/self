@@ -118,6 +118,11 @@
     transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
 }
 
+.model-card:focus-visible {
+    outline: 2px solid var(--vp-c-brand-1);
+    outline-offset: 3px;
+}
+
 .model-card:hover {
     border-color: #bdbdbd;
     background: var(--catalog-soft);
@@ -152,6 +157,54 @@
     color: var(--catalog-ink);
     font-size: 1.08rem;
     font-weight: 600;
+}
+
+.model-card h2 a,
+.model-source>a,
+.model-source li a {
+    color: var(--vp-c-brand-1);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.model-card h2 a {
+    text-decoration: none;
+}
+
+.model-sources {
+    display: grid;
+    gap: 0.7rem;
+    margin: 0.9rem 0;
+}
+
+.model-source {
+    display: grid;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+}
+
+.model-source strong {
+    color: var(--catalog-ink);
+    text-transform: uppercase;
+}
+
+.model-source ul {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.model-source li {
+    display: grid;
+    gap: 0.15rem;
+}
+
+.model-source code {
+    overflow-wrap: anywhere;
+    color: var(--catalog-muted);
+    font-size: 0.68rem;
 }
 
 .model-card p {

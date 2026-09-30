@@ -122,6 +122,10 @@ docker run --rm --network none --gpus all \
 
 ## HTTP API
 
+See the full [OpenAI-style API reference](docs/api.md) for endpoint examples,
+request and response fields, image inputs, Python and JavaScript clients, and
+error responses.
+
 ### Health
 
 ```bash

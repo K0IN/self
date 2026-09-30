@@ -14,17 +14,17 @@ models:
     description: "Decider 2B Vision: decisions about text and one image"
     readme: readmes/decider-vision/2b.md
     type: decision
-	default: q4
+    default: q4
     capabilities:
       input: [text, vision]
       output: [choice, score, noul]
-	q4:
+    q4:
       adapter: ggmlc-laya
       repo: mradermacher/decider-2b-vision-GGUF
       files:
         - {file: decider-2b-vision.Q4_K_M.gguf, size: 100, sha256: ` + sumA + `}
         - {file: decider-2b-vision.mmproj-Q8_0.gguf, size: 20, sha256: ` + sumB + `, role: mmproj}
-	q8:
+    q8:
       adapter: ggmlc-laya
       repo: mradermacher/decider-2b-vision-GGUF
       files:
@@ -36,7 +36,7 @@ models:
     capabilities:
       input: [text]
       output: [choice, score, noul]
-	q4:
+    q4:
       adapter: ggmlc-laya
       repo: mys/kev-4b-GGUF
       files:
@@ -135,8 +135,8 @@ func TestCapabilities(t *testing.T) {
 func TestParseRejects(t *testing.T) {
 	bad := map[string]string{
 		"wrong type":      strings.Replace(sample, "type: decision\n    default: q4", "type: painting\n    default: q4", 1),
-		"missing default": strings.Replace(sample, "    default: 4bit\n", "", 1),
-		"bad default":     strings.Replace(sample, "default: 4bit", "default: 3bit", 1),
+		"missing default": strings.Replace(sample, "    default: q4\n", "", 1),
+		"bad default":     strings.Replace(sample, "default: q4", "default: q3", 1),
 		"non gguf":        strings.Replace(sample, "kev_4b_ud_q4_k_m.gguf", "model.safetensors", 1),
 		"no size":         strings.Replace(sample, "size: 42, ", "", 1),
 		"bad sha256":      strings.Replace(sample, "size: 42, sha256: "+sumB, "size: 42, sha256: abc", 1),

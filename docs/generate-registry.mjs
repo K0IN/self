@@ -34,6 +34,20 @@ const catalog = rows.map(({ id, model, quants, slug, size, capabilities }) => ({
     type: model.type,
     description: model.description,
     quants,
+    variants: quants.map(quant => {
+        const variant = model[quant]
+        return {
+            name: quant,
+            repo: variant.repo,
+            repoUrl: `https://huggingface.co/${variant.repo}`,
+            files: (variant.files ?? []).map(file => ({
+                name: file.file,
+                size: formatBytes(Number(file.size || 0)),
+                sha256: file.sha256,
+                url: `https://huggingface.co/${variant.repo}/blob/main/${file.file}`
+            }))
+        }
+    }),
     capabilities,
     size,
     href: `/registry/${slug}`
