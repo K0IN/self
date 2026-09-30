@@ -12,7 +12,7 @@ func TestHTTPRegistry(t *testing.T) {
 		_, _ = w.Write([]byte("version: 1\nmodels: {}\n"))
 	}))
 	defer server.Close()
-	reg, err := loadRegistry(server.Client(), server.URL)
+	reg, _, err := loadRegistry(server.Client(), server.URL)
 	if err != nil {
 		t.Fatal(err)
 	}

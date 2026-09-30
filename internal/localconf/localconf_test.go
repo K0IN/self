@@ -12,7 +12,7 @@ adapters:
   ggmlc-custom-decider:
     threads: 8
 models:
-	"decider-vision:2b":
+  "decider-vision:2b":
     settings:
       context_size: 4096
     quants:

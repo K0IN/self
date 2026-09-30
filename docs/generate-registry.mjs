@@ -36,12 +36,12 @@ const catalog = rows.map(({ id, model, quants, slug, size, capabilities }) => ({
     quants,
     capabilities,
     size,
-    href: `/self/registry/${slug}`
+    href: `/registry/${slug}`
 }))
 fs.writeFileSync(path.join(publicDir, 'registry.json'), JSON.stringify(catalog, null, 2) + '\n')
 
 const catalogJSON = JSON.stringify(catalog).replaceAll('&', '&amp;').replaceAll('"', '&quot;')
-const index = `# Model registry\n\nThe registry is the source of truth for downloadable models. Search the catalog or [download models.yml](/self/models.yml).\n\n<ModelCatalog :models="${catalogJSON}" />\n`
+const index = `# Model registry\n\nThe registry is the source of truth for downloadable models. Search the catalog or [download models.yml](/models.yml).\n\n<ModelCatalog :models="${catalogJSON}" />\n`
 fs.writeFileSync(path.join(output, 'index.md'), index)
 
 function formatBytes(bytes) {

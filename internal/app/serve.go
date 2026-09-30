@@ -34,9 +34,9 @@ const registryURL = "https://k0in.github.io/self/models.yml"
 
 // LoadRegistry loads the registry from the published GitHub Pages document.
 func LoadRegistry(modelsDir string) (*registry.Registry, error) {
-	reg, err := loadRegistry(&http.Client{Timeout: 30 * time.Second}, registryURL)
+	reg, source, err := loadRegistry(&http.Client{Timeout: 30 * time.Second}, registryURL)
 	if err == nil {
-		if cacheErr := models.SaveRegistry(modelsDir, reg); cacheErr != nil {
+		if cacheErr := models.SaveRegistry(modelsDir, reg, source); cacheErr != nil {
 			return nil, fmt.Errorf("cache registry: %w", cacheErr)
 		}
 		return reg, nil
@@ -48,28 +48,28 @@ func LoadRegistry(modelsDir string) (*registry.Registry, error) {
 	return nil, fmt.Errorf("load registry: %w (offline cache unavailable: %v)", err, cacheErr)
 }
 
-func loadRegistry(client *http.Client, source string) (*registry.Registry, error) {
+func loadRegistry(client *http.Client, source string) (*registry.Registry, []byte, error) {
 	u, err := url.Parse(source)
 	if err != nil {
-		return nil, fmt.Errorf("registry URL: %w", err)
+		return nil, nil, fmt.Errorf("registry URL: %w", err)
 	}
 	resp, err := client.Get(u.String())
 	if err != nil {
-		return nil, fmt.Errorf("load registry %s: %w", source, err)
+		return nil, nil, fmt.Errorf("load registry %s: %w", source, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, fmt.Errorf("load registry %s: HTTP %s", source, resp.Status)
+		return nil, nil, fmt.Errorf("load registry %s: HTTP %s", source, resp.Status)
 	}
 	b, err := io.ReadAll(io.LimitReader(resp.Body, 16<<20))
 	if err != nil {
-		return nil, fmt.Errorf("read registry %s: %w", source, err)
+		return nil, nil, fmt.Errorf("read registry %s: %w", source, err)
 	}
 	reg, err := registry.Parse(b)
 	if err != nil {
-		return nil, fmt.Errorf("parse registry %s: %w", source, err)
+		return nil, nil, fmt.Errorf("parse registry %s: %w", source, err)
 	}
-	return reg, nil
+	return reg, b, nil
 }
 
 // Serve runs `self serve` until ctx is cancelled or the engine dies.

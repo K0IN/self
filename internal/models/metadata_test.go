@@ -9,7 +9,7 @@ import (
 )
 
 func TestRegistryMetadataCacheRoundTrip(t *testing.T) {
-	reg, err := registry.Parse([]byte(`version: 1
+	source := []byte(`version: 1
 models:
   demo:1b:
     description: demo
@@ -23,16 +23,17 @@ models:
       repo: someone/demo
       files:
         - {file: demo.gguf, size: 4, sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
-`))
+	`)
+	reg, err := registry.Parse(source)
 	if err != nil {
 		t.Fatal(err)
 	}
 	root := t.TempDir()
-	if err := SaveRegistry(root, reg); err != nil {
+	if err := SaveRegistry(root, reg, source); err != nil {
 		t.Fatal(err)
 	}
 	for _, path := range []string{
-		filepath.Join(root, ".registry.json"),
+		filepath.Join(root, ".registry.yml"),
 		filepath.Join(root, "demo", "1b", "metadata.json"),
 	} {
 		if _, err := os.Stat(path); err != nil {

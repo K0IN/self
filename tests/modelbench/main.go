@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"ai-server/internal/registry"
+	"ai-server/models"
 )
 
 type result struct {
@@ -66,16 +67,11 @@ func main() {
 
 	bin := flag.String("bin", "./bin/self", "path to the self binary")
 	out := flag.String("out", ".tmp/model-benchmark", "benchmark report directory")
-	registryPath := flag.String("registry", "models/registry.yml", "path to the model registry")
+	registryPath := flag.String("registry", "", "optional local registry path; default uses the published app registry")
 	engineDir := flag.String("engine-dir", "bin/libexec/ai-server", "directory containing runtime engines")
 	flag.Parse()
 
-	data, err := os.ReadFile(*registryPath)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	parsed, err := registry.Parse(data)
+	parsed, err := loadRegistry(*registryPath)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -125,14 +121,24 @@ func run(ctx context.Context, bin, engineDir, id string) result {
 	if err := cmd.Start(); err != nil {
 		return finish(item, started, fmt.Errorf("start app: %w", err))
 	}
+	processErr := make(chan error, 1)
+	go func() { processErr <- cmd.Wait() }()
 	defer func() {
 		_ = cmd.Process.Signal(os.Interrupt)
-		_ = cmd.Wait()
+		select {
+		case <-processErr:
+		default:
+		}
 	}()
 
 	baseURL := fmt.Sprintf("http://127.0.0.1:%d", port)
 	client := &http.Client{Timeout: 30 * time.Second}
 	if err := waitReady(ctx, client, baseURL); err != nil {
+		select {
+		case processErr := <-processErr:
+			return finish(item, started, fmt.Errorf("app exited before API became ready: %w", processErr))
+		default:
+		}
 		return finish(item, started, err)
 	}
 	if err := checkModel(client, baseURL, id); err != nil {
@@ -150,6 +156,17 @@ func run(ctx context.Context, bin, engineDir, id string) result {
 		return finish(item, started, fmt.Errorf("wrong choice: got %q, want %q (api latency %.1f ms)", choice, expected, latency))
 	}
 	return finish(item, started, nil)
+}
+
+func loadRegistry(path string) (*registry.Registry, error) {
+	if path == "" {
+		return models.Registry()
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return registry.Parse(data)
 }
 
 func finish(item result, started time.Time, err error) result {
