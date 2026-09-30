@@ -21,6 +21,22 @@
   `--verbose` / `-v`.
 - `--settings-file FILE`: local settings (default `~/.ai-server/settings.yml`).
 
+## Model references
+
+CLI model references use `<model>:<size>@<quant>`. The `@<quant>` suffix is
+optional and selects the registry default when omitted:
+
+```bash
+self serve kev:0.5b
+self serve kev:4b@8bit
+self serve decider:2b-vision@4bit
+self pull kev:4b@f16
+```
+
+The registry ID remains the portion before `@`, so registry keys and local
+settings continue to use IDs such as `decider:2b-vision`. Do not combine an
+`@<quant>` suffix with `--quant` in the same command.
+
 The `justfile` provides the usual development wrappers:
 
 - `just setup`: build `self`, fetch the Laya runtime, and build the decision

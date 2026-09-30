@@ -2,6 +2,8 @@
 
 Run a local AI model server with a registry-driven workflow.
 
+[View the project on GitHub](https://github.com/k0in/self)
+
 ## Quick start
 
 ```bash
@@ -15,11 +17,11 @@ docker run --rm -p 8080:8080 \
   ghcr.io/k0in/self:latest
 ```
 
-The binary embeds the registry at build time. The GitHub Pages site publishes the same registry for browsing, but the server does not fetch it at runtime.
+The server fetches the registry from `https://k0in.github.io/self/models.yml` at runtime. If it cannot reach that URL or the registry is invalid, the command fails; it does not fall back to a bundled or local registry.
 
 ## Choose a model
 
-Browse the [model registry](/registry/) or run:
+Browse the [model registry](/self/registry/) or run:
 
 ```bash
 self list

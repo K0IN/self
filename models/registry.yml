@@ -298,9 +298,9 @@ models:
       files:
         - {file: decider-4b-v2.1-Q8_0.gguf, size: 4482403360, sha256: 74614659ab849bc0ec4f0431e1f84ae8bc11fe30b42c3a235a8b0049d36cbc3d}
 
-  decider:2b-vision:
+  "decider-vision:2b":
     description: "Decider 2B Vision: one-pass decisions about text and one image"
-    readme: readmes/decider/2b-vision.md
+    readme: readmes/decider-vision/2b.md
     type: decision
     default: 4bit
     capabilities:

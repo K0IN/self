@@ -12,7 +12,7 @@ adapters:
     threads: 6
 
 models:
-  decider:2b-vision:
+  "decider-vision:2b":
     settings:
       context_size: 4096
     quants:
@@ -38,9 +38,9 @@ Later layers replace the same key; unrelated keys remain. Use `self settings <mo
 An omitted default file is fine. A path supplied explicitly by `--settings-file` or `AI_SERVER_SETTINGS` must exist and parse as version 1 YAML. Keep keys within the adapter's supported settings; unknown or invalid values are rejected before the engine starts.
 
 ```bash
-self settings decider:2b-vision
-self serve decider:2b-vision --settings-file ./settings.yml
-self serve kev:4b --set threads=8 --set context_size=4096
+self settings decider:2b-vision@4bit
+self serve decider:2b-vision@4bit --settings-file ./settings.yml
+self serve kev:4b@8bit --set threads=8 --set context_size=4096
 ```
 
 For Docker, mount the settings file read-only and pass its path inside the container:
@@ -49,6 +49,6 @@ For Docker, mount the settings file read-only and pass its path inside the conta
 docker run --rm -p 8080:8080 \
   -v "$HOME/.ai-server/models:/models" \
   -v "$HOME/.ai-server/settings.yml:/etc/self/settings.yml:ro" \
-  ghcr.io/k0in/self:latest serve kev:4b --host 0.0.0.0 \
+  ghcr.io/k0in/self:latest serve kev:4b@8bit --host 0.0.0.0 \
   --settings-file /etc/self/settings.yml
 ```

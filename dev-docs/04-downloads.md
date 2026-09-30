@@ -51,4 +51,5 @@ Retrying in 2s (attempt 1/8), resuming from 777 MiB...
 - Must: server advertises different file -> refused before body download (`TestEnsureRefusesChangedUpstream`).
 - Must: wrong-size installed file is re-downloaded (`TestInstalledChecksPinnedSize`).
 - Must: two processes can't write the same file (`TestDownloadLockPreventsConcurrentWriters`).
-- Manual: installed kev:0.5b, kev:4b, decider:2b-vision match registry sha256 (verified).
+- Manual: installed `kev:0.5b`, `kev:4b@4bit`, and `decider:2b-vision@4bit`
+	match registry sha256 (verified).

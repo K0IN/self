@@ -133,7 +133,11 @@ func ParseServe(args []string, getenv func(string) string, stderr io.Writer) (Se
 	if len(positional) != 1 {
 		return s, fmt.Errorf("expected exactly one model, e.g. `self serve kev:4b`")
 	}
-	s.Model = positional[0]
+	var err error
+	s.Model, s.Quant, err = parseModelRef(positional[0], s.Quant)
+	if err != nil {
+		return s, err
+	}
 	if s.Port < 1 || s.Port > 65535 {
 		return s, fmt.Errorf("invalid port %d", s.Port)
 	}
@@ -156,6 +160,20 @@ func ParseServe(args []string, getenv func(string) string, stderr io.Writer) (Se
 	s.SettingsFileExplicit = s.SettingsFile != ""
 	s.SettingsFile = expandHome(s.SettingsFile)
 	return s, nil
+}
+
+func parseModelRef(ref, quant string) (string, string, error) {
+	model, suffix, hasQuant := strings.Cut(ref, "@")
+	if !hasQuant {
+		return ref, quant, nil
+	}
+	if model == "" || suffix == "" || strings.Contains(suffix, "@") {
+		return "", "", fmt.Errorf("invalid model reference %q; expected `<model>:<size>@<quant>`", ref)
+	}
+	if quant != "" {
+		return "", "", fmt.Errorf("quant specified both in model reference %q and with --quant", ref)
+	}
+	return model, suffix, nil
 }
 
 func expandHome(p string) string {

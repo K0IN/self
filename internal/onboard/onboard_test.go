@@ -27,7 +27,7 @@ func lfs(f File) File {
 
 func TestDeriveID(t *testing.T) {
 	for in, want := range map[string]string{
-		"mradermacher/decider-2b-vision-GGUF": "decider:2b-vision",
+		"mradermacher/decider-2b-vision-GGUF": "decider-vision:2b",
 		"mys/kev-4b-GGUF":                     "kev:4b",
 		"mys/laya-GGUF":                       "laya:latest",
 	} {
@@ -83,7 +83,7 @@ func TestAnalyzeVisionRepo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r.Adapter != "ggmlc-custom-decider" || r.Default != "4bit" || r.ID != "decider:2b-vision" {
+	if r.Adapter != "ggmlc-custom-decider" || r.Default != "4bit" || r.ID != "decider-vision:2b" {
 		t.Fatalf("%+v", r)
 	}
 	quants := []string{}
@@ -100,14 +100,14 @@ func TestAnalyzeVisionRepo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generated YAML invalid: %v\n%s", err, r.YAML())
 	}
-	m := reg.Models["decider:2b-vision"]
+	m := reg.Models["decider-vision:2b"]
 	if !m.Capabilities.Has(registry.CapVision) {
 		t.Fatal("vision not enabled")
 	}
-	if m.Readme != "readmes/decider/2b-vision.md" {
+	if m.Readme != "readmes/decider-vision/2b.md" {
 		t.Fatalf("readme = %q", m.Readme)
 	}
-	if rd := r.Readme(); !strings.HasPrefix(rd, "# Decider 2b Vision") || !strings.Contains(rd, "self serve decider:2b-vision") {
+	if rd := r.Readme(); !strings.HasPrefix(rd, "# Decider 2b Vision") || !strings.Contains(rd, "self serve decider-vision:2b") {
 		t.Fatalf("readme skeleton = %q", rd)
 	}
 	f := m.Variants["4bit"].Files

@@ -1,27 +1,22 @@
 package app
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
-
-	"ai-server/internal/adapters"
-	"ai-server/internal/registry"
 )
 
-func TestBundledRegistry(t *testing.T) {
-	reg, err := LoadRegistry()
+func TestHTTPRegistry(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/yaml")
+		_, _ = w.Write([]byte("version: 1\nmodels: {}\n"))
+	}))
+	defer server.Close()
+	reg, err := loadRegistry(server.Client(), server.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, id := range []string{"kev:0.5b", "kev:4b", "laya:english", "decider:2b-vision"} {
-		if _, err := reg.Resolve(id, registry.ResolveOptions{AdapterKnown: adapters.Known}); err != nil {
-			t.Errorf("%s: %v", id, err)
-		}
-	}
-	for id, m := range reg.Models {
-		for q, v := range m.Variants {
-			if !adapters.Known(v.Adapter, m.Type) {
-				t.Errorf("%s/%s: unknown adapter %s", id, q, v.Adapter)
-			}
-		}
+	if len(reg.Models) != 0 {
+		t.Fatalf("expected empty test registry, got %d models", len(reg.Models))
 	}
 }

@@ -21,7 +21,8 @@ HTTP (chi) -> api/decision -> decision.Service -> Scheduler -> Adapter -> engine
 - Go server owns HTTP, validation, images, queue.
 - Native engine runs as a child process. Talks over stdin/stdout.
 - Adapter = the only Go code that knows an engine's protocol.
-- Registry (YAML) maps a model id to files + adapter.
+- Registry (YAML) maps a model id to files + adapter. CLI references may add a
+	quant suffix: `self serve decider:2b-vision@4bit`.
 
 ## Packages
 

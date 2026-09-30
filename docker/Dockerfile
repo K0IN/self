@@ -21,6 +21,8 @@ COPY bin/libexec /app/libexec
 
 ENV AI_SERVER_RUNTIME_DIR=/app/libexec/ai-server
 ENV AI_SERVER_MODELS=/models
+ENV AI_SERVER_HOST=0.0.0.0
+ENV AI_SERVER_PORT=8080
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
@@ -28,4 +30,4 @@ EXPOSE 8080
 VOLUME ["/models"]
 
 ENTRYPOINT ["/app/self"]
-CMD ["serve", "kev:0.5b", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["serve", "kev:0.5b"]

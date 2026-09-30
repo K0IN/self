@@ -17,6 +17,21 @@ func TestDefaults(t *testing.T) {
 	}
 }
 
+func TestModelReferenceQuant(t *testing.T) {
+	s, err := ParseServe([]string{"kev:4b@8bit"}, env(nil), io.Discard)
+	if err != nil || s.Model != "kev:4b" || s.Quant != "8bit" {
+		t.Fatalf("explicit quant: %+v %v", s, err)
+	}
+	if _, err := ParseServe([]string{"kev:4b@8bit", "--quant", "f16"}, env(nil), io.Discard); err == nil {
+		t.Fatal("accepted quant in both model reference and --quant")
+	}
+	for _, ref := range []string{"kev:4b@", "@8bit", "kev:4b@8bit@f16"} {
+		if _, err := ParseServe([]string{ref}, env(nil), io.Discard); err == nil {
+			t.Fatalf("accepted invalid model reference %q", ref)
+		}
+	}
+}
+
 func TestPrecedence(t *testing.T) {
 	e := env(map[string]string{"AI_SERVER_HOST": "0.0.0.0", "AI_SERVER_PORT": "9000", "AI_SERVER_MODELS": "/m"})
 	s, err := ParseServe([]string{"kev:4b"}, e, io.Discard)

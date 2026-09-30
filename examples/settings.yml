@@ -16,7 +16,7 @@ adapters:
     threads: 6
 
 models:
-  decider:2b-vision:
+  "decider-vision:2b":
     settings:                  # all quants
       context_size: 4096
     quants:

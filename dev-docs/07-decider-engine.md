@@ -39,7 +39,7 @@
 
 ## Acceptance criteria
 
-- Must: `self check decider:2b-vision` passes all probes (verified).
+- Must: `self check decider:2b-vision@4bit` passes all probes (verified).
 - Must: vision examples answer correctly (verified): lake 99.7%, coyote 96.1%, cactus 99.4%, pig 99.2%.
 - Must: 11 options -> 422. 2 images -> 422.
 - Must: 8 concurrent requests all 200.

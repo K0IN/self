@@ -3,15 +3,15 @@
 ## What
 
 - `models/registry.yml`: public, human-edited model list.
-- Embedded in the binary (`models/embed.go`).
+- Fetched at runtime from `https://k0in.github.io/self/models.yml`.
 - Model cards: `models/readmes/<name>/<tag>.md`.
 
 ## Entry format
 
 ```yaml
-decider:2b-vision:
+"decider-vision:2b":
   description: "Decider 2B Vision: one-pass decisions about text and one image"
-  readme: readmes/decider/2b-vision.md
+  readme: readmes/decider-vision/2b.md
   type: decision
   default: 4bit
   capabilities: [text, vision, choice, score, noul]
@@ -26,6 +26,8 @@ decider:2b-vision:
 ## Rules
 
 - Id: `name:tag`. No `/ \ :` or spaces in parts.
+- CLI references may append `@quant`, for example `decider:2b-vision@4bit`.
+  The `@quant` portion is not part of the registry ID.
 - `type`: only `decision` for now.
 - `capabilities`: `text | vision | multi-image | choice | score | noul`. `multi-image` implies `vision`.
 - Every non-reserved key is a quant (`4bit`, `8bit`, `f16`, …).

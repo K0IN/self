@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync/atomic"
@@ -27,12 +28,37 @@ import (
 	"ai-server/internal/registry"
 	"ai-server/internal/runtime"
 	"ai-server/internal/settings"
-	bundled "ai-server/models"
 )
 
-// LoadRegistry loads the registry embedded in the binary.
+const registryURL = "https://k0in.github.io/self/models.yml"
+
+// LoadRegistry loads the registry from the published GitHub Pages document.
 func LoadRegistry() (*registry.Registry, error) {
-	return registry.Parse(bundled.Registry)
+	return loadRegistry(&http.Client{Timeout: 30 * time.Second}, registryURL)
+}
+
+func loadRegistry(client *http.Client, source string) (*registry.Registry, error) {
+	u, err := url.Parse(source)
+	if err != nil {
+		return nil, fmt.Errorf("registry URL: %w", err)
+	}
+	resp, err := client.Get(u.String())
+	if err != nil {
+		return nil, fmt.Errorf("load registry %s: %w", source, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf("load registry %s: HTTP %s", source, resp.Status)
+	}
+	b, err := io.ReadAll(io.LimitReader(resp.Body, 16<<20))
+	if err != nil {
+		return nil, fmt.Errorf("read registry %s: %w", source, err)
+	}
+	reg, err := registry.Parse(b)
+	if err != nil {
+		return nil, fmt.Errorf("parse registry %s: %w", source, err)
+	}
+	return reg, nil
 }
 
 // Serve runs `self serve` until ctx is cancelled or the engine dies.

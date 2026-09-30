@@ -12,10 +12,10 @@ type Resolved struct {
 	Variant Variant
 }
 
-// ID returns the registry id, e.g. "decider:2b-vision".
+// ID returns the registry id, e.g. "decider-vision:2b".
 func (r Resolved) ID() string { return r.Model.ID }
 
-// Name and Tag split the id at ':' ("decider", "2b-vision"). Tag may be
+// Name and Tag split the id at ':' ("decider-vision", "2b"). Tag may be
 // empty.
 func (r Resolved) Name() string { n, _, _ := strings.Cut(r.Model.ID, ":"); return n }
 func (r Resolved) Tag() string  { _, t, _ := strings.Cut(r.Model.ID, ":"); return t }
@@ -34,6 +34,7 @@ type ResolveOptions struct {
 // Resolve selects a model and variant.
 func (r *Registry) Resolve(ref string, opt ResolveOptions) (Resolved, error) {
 	ref = strings.TrimSpace(ref)
+
 	m, ok := r.Models[ref]
 	if !ok {
 		return Resolved{}, errs.New(errs.ModelNotFound, "model %q is not in the registry%s", ref, r.suggest(ref))

@@ -1,5 +1,5 @@
 // Package registry loads the human-editable YAML model registry and resolves
-// model references ("kev:4b", "decider:2b-vision") to concrete, typed
+// model references ("kev:4b", "decider-vision:2b") to concrete, typed
 // variants. It knows nothing about inference.
 package registry
 

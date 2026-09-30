@@ -23,6 +23,16 @@ fetch variant="auto" version="v0.9.6":
       selected=metal
     fi
     if [[ "$selected" == auto ]]; then
+      has_library() {
+        local name=$1
+        ldconfig -p 2>/dev/null | grep -q "$name" && return 0
+        for dir in ${CUDA_LIB_DIRS:-} /usr/local/cuda/lib64 /usr/local/cuda/lib \
+                   "$HOME"/.local/lib/python3*/site-packages/nvidia/*/lib \
+                   /usr/lib/python3*/site-packages/nvidia/*/lib; do
+          [[ -e "$dir/$name"* ]] && return 0
+        done
+        return 1
+      }
       cap=""
       if command -v nvidia-smi >/dev/null 2>&1; then
         cap=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader 2>/dev/null | head -1 | tr -d '. ' || true)
@@ -40,9 +50,9 @@ fetch variant="auto" version="v0.9.6":
         echo "Laya CUDA builds require CUDA 12 runtime libraries; using Vulkan" >&2
         selected=vulkan
       fi
-      if [[ "$selected" == vulkan ]] && ! ldconfig -p 2>/dev/null | grep -q 'libvulkan\.so\.1'; then
-        echo "automatic runtime selection requires CUDA 12 or Vulkan runtime libraries" >&2
-        echo "install libcudart/libcublas or libvulkan, then rerun 'just serve'" >&2
+      if [[ "$selected" == vulkan ]] && ! has_library libvulkan.so.1; then
+        echo "automatic runtime selection could not find Vulkan or CUDA 12 runtime libraries" >&2
+        echo "rebuild the devcontainer, install libvulkan1, or set CUDA_LIB_DIRS and rerun 'just serve'" >&2
         exit 1
       fi
     fi

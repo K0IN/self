@@ -119,14 +119,22 @@ func res(ss ...string) []*regexp.Regexp {
 
 var mmprojRe = regexp.MustCompile(`(?i)mmproj`)
 var splitRe = regexp.MustCompile(`(?i)-\d{5}-of-\d{5}\.gguf$`)
+var sizeRe = regexp.MustCompile(`^(?:\d+(?:\.\d+)?)[bmk]$`)
 
-// DeriveID turns "owner/decider-2b-vision-GGUF" into "decider:2b-vision".
+// DeriveID turns "owner/decider-2b-vision-GGUF" into "decider-vision:2b".
 func DeriveID(repo string) string {
 	name := repo[strings.LastIndexByte(repo, '/')+1:]
 	name = regexp.MustCompile(`(?i)[-_.]?gguf$`).ReplaceAllString(name, "")
 	name = strings.ToLower(name)
-	if i := strings.IndexAny(name, "-_"); i > 0 && i < len(name)-1 {
-		return name[:i] + ":" + name[i+1:]
+	parts := strings.FieldsFunc(name, func(r rune) bool { return r == '-' || r == '_' })
+	for i, part := range parts {
+		if sizeRe.MatchString(part) {
+			modelParts := append([]string{}, parts[:i]...)
+			modelParts = append(modelParts, parts[i+1:]...)
+			if len(modelParts) > 0 {
+				return strings.Join(modelParts, "-") + ":" + part
+			}
+		}
 	}
 	return name + ":latest"
 }

@@ -18,11 +18,43 @@ const esc = value => String(value ?? '').replaceAll('|', '\\|')
 const rows = Object.entries(registry.models ?? {}).map(([id, model]) => {
     const quants = Object.keys(model).filter(key => !['description', 'readme', 'type', 'default', 'capabilities', 'info', 'settings'].includes(key))
     const slug = id.replace(':', '/')
-    return { id, model, quants, slug }
+    const size = model[model.default]?.files?.reduce((total, file) => total + Number(file.size || 0), 0) || 0
+    return {
+        id,
+        model,
+        quants,
+        slug,
+        size: formatBytes(size),
+        capabilities: [...(model.capabilities?.input ?? []), ...(model.capabilities?.output ?? [])]
+    }
 })
 
-const index = `# Model registry\n\nThe registry is the source of truth for downloadable models. The raw YAML is available at [/models.yml](/models.yml).\n\n| Model | Type | Quantizations | Description |\n| --- | --- | --- | --- |\n${rows.map(({ id, model, quants, slug }) => `| [${id}](/registry/${slug}) | ${model.type} | ${quants.join(', ')} | ${esc(model.description)} |`).join('\n')}\n\n## Suggestions\n\n- **kev:0.5b** for low-resource CPU development\n- **kev:0.8b** for a small quality step up\n- **kev:4b** when quality matters more than memory\n- **decider:2b-vision** for text and image decisions\n`
+const catalog = rows.map(({ id, model, quants, slug, size, capabilities }) => ({
+    id,
+    type: model.type,
+    description: model.description,
+    quants,
+    capabilities,
+    size,
+    href: `/self/registry/${slug}`
+}))
+fs.writeFileSync(path.join(publicDir, 'registry.json'), JSON.stringify(catalog, null, 2) + '\n')
+
+const catalogJSON = JSON.stringify(catalog).replaceAll('&', '&amp;').replaceAll('"', '&quot;')
+const index = `# Model registry\n\nThe registry is the source of truth for downloadable models. Search the catalog or [download models.yml](/self/models.yml).\n\n<ModelCatalog :models="${catalogJSON}" />\n`
 fs.writeFileSync(path.join(output, 'index.md'), index)
+
+function formatBytes(bytes) {
+    if (bytes < 1024) return `${bytes} B`
+    const units = ['KiB', 'MiB', 'GiB', 'TiB']
+    let value = bytes
+    let unit = -1
+    do {
+        value /= 1024
+        unit++
+    } while (value >= 1024 && unit < units.length - 1)
+    return `${value >= 100 ? value.toFixed(0) : value.toFixed(1)} ${units[unit]}`
+}
 
 for (const { id, model, quants, slug } of rows) {
     const readmePath = path.join(root, 'models', model.readme)

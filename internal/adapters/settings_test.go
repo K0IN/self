@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -10,7 +11,6 @@ import (
 	"ai-server/internal/errs"
 	"ai-server/internal/localconf"
 	"ai-server/internal/registry"
-	bundled "ai-server/models"
 )
 
 const reg = `version: 1
@@ -131,7 +131,11 @@ func TestResolveSettingsRejects(t *testing.T) {
 
 // Every bundled model's settings must be valid for its adapter.
 func TestBundledRegistrySettings(t *testing.T) {
-	r, err := registry.Parse(bundled.Registry)
+	b, err := os.ReadFile("../../models/registry.yml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, err := registry.Parse(b)
 	if err != nil {
 		t.Fatal(err)
 	}

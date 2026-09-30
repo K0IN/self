@@ -10,9 +10,9 @@ import (
 const sample = `
 version: 1
 models:
-  decider:2b-vision:
+	"decider-vision:2b":
     description: "Decider 2B Vision: decisions about text and one image"
-    readme: readmes/decider/2b-vision.md
+		readme: readmes/decider-vision/2b.md
     type: decision
     default: 4bit
     capabilities:
@@ -59,10 +59,10 @@ func mustParse(t *testing.T, s string) *Registry {
 
 func TestParseValid(t *testing.T) {
 	r := mustParse(t, sample)
-	if got := strings.Join(r.IDs(), ","); got != "decider:2b-vision,kev:4b" {
+	if got := strings.Join(r.IDs(), ","); got != "decider-vision:2b,kev:4b" {
 		t.Fatalf("ids = %s", got)
 	}
-	d := r.Models["decider:2b-vision"]
+	d := r.Models["decider-vision:2b"]
 	if d.Type != TypeDecision || d.Default != "4bit" || len(d.Variants) != 2 {
 		t.Fatalf("bad model: %+v", d)
 	}
@@ -76,7 +76,7 @@ func TestParseValid(t *testing.T) {
 	if d.Variants["4bit"].Size() != 120 {
 		t.Fatalf("variant size = %d", d.Variants["4bit"].Size())
 	}
-	if d.Readme != "readmes/decider/2b-vision.md" || d.Description == "" {
+	if d.Readme != "readmes/decider-vision/2b.md" || d.Description == "" {
 		t.Fatalf("readme/description = %q %q", d.Readme, d.Description)
 	}
 	// single variant => implicit default
@@ -87,15 +87,15 @@ func TestParseValid(t *testing.T) {
 
 func TestResolveDefaultAndOverride(t *testing.T) {
 	r := mustParse(t, sample)
-	res, err := r.Resolve("decider:2b-vision", ResolveOptions{})
+	res, err := r.Resolve("decider-vision:2b", ResolveOptions{})
 	if err != nil || res.Variant.Quant != "4bit" {
 		t.Fatalf("default: %v %+v", err, res.Variant)
 	}
-	res, err = r.Resolve("decider:2b-vision", ResolveOptions{Quant: "8bit"})
+	res, err = r.Resolve("decider-vision:2b", ResolveOptions{Quant: "8bit"})
 	if err != nil || res.Variant.Files[0].Name != "decider-2b-vision.Q8_0.gguf" {
 		t.Fatalf("override: %v %+v", err, res.Variant)
 	}
-	if res.Name() != "decider" || res.Tag() != "2b-vision" {
+	if res.Name() != "decider-vision" || res.Tag() != "2b" {
 		t.Fatalf("name/tag = %s %s", res.Name(), res.Tag())
 	}
 }
@@ -122,7 +122,7 @@ func TestResolveErrors(t *testing.T) {
 
 func TestCapabilities(t *testing.T) {
 	r := mustParse(t, sample)
-	c := r.Models["decider:2b-vision"].Capabilities
+	c := r.Models["decider-vision:2b"].Capabilities
 	if !c.Has(CapVision) || !c.Has(CapChoice) || c.Has(CapMultiImage) {
 		t.Fatalf("caps = %v", c.List())
 	}

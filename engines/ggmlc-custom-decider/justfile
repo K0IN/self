@@ -66,26 +66,34 @@ headers:
 
 # Compile main.cpp against deps/ (Release, Ninja)
 compile variant="cuda-12.8": (deps variant)
+    #!/usr/bin/env bash
+    set -euo pipefail
+    test -f {{deps}}/.tag && test "$(cat {{deps}}/.tag)" = "{{tag}}-{{variant}}"
+    rm -rf {{build_dir}}
     cmake -S . -B {{build_dir}} -G Ninja -DCMAKE_BUILD_TYPE=Release > /dev/null
     cmake --build {{build_dir}}
 
 # Build and install the engine + libraries into the bundle (default: bin/libexec/ai-server)
-build variant="cuda-12.8" target=dest: (compile variant) && (verify target)
+build variant="cuda-12.8" target=dest: (compile variant) && (verify target variant)
     mkdir -p {{target}}/lib
     install -m 0755 {{build_dir}}/ggmlc-custom-decider {{target}}/ggmlc-custom-decider
     cp -P {{deps}}/lib/*.so* {{target}}/lib/
     @echo "Installed {{target}}/ggmlc-custom-decider"
 
-# Warn about missing shared libraries (libcudart/libcublas come from `just runtime`)
-verify target=dest:
+# Warn about missing shared libraries.
+verify target=dest variant="cuda-12.8":
     #!/usr/bin/env bash
     set -uo pipefail
     cd {{target}}
-    missing=$(LD_LIBRARY_PATH=lib ldd ggmlc-custom-decider lib/libggml-cuda.so 2>/dev/null | grep 'not found' | sort -u || true)
+    missing=$(LD_LIBRARY_PATH=lib ldd ggmlc-custom-decider 2>/dev/null | grep 'not found' | sort -u || true)
     if [[ -n "$missing" ]]; then
       echo "WARNING: missing shared libraries:" >&2
       echo "$missing" >&2
-      echo "Run 'just runtime' in the repo root to bundle the CUDA 12 runtime into $(pwd)/lib" >&2
+      if [[ "{{variant}}" == cuda-* ]]; then
+        echo "Run 'just runtime' in the repo root to bundle the CUDA runtime into $(pwd)/lib" >&2
+      else
+        echo "Install the runtime libraries required by the {{variant}} build" >&2
+      fi
     else
       echo "All shared libraries resolved"
     fi

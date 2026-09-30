@@ -42,10 +42,6 @@ unchanged.
 - `criteria`: list or `{key: description}`.
 - `images`: URL string, data URI, or `{url, name, description}`.
 - `model` optional. If set, must match the loaded model.
-- The request `Content-Type`, when present, must start with
-  `application/json`.
-- Request bodies are limited to 32 MiB. Oversize bodies return
-  `image_too_large`.
 
 ## Response
 
@@ -56,7 +52,7 @@ unchanged.
 
 ## Errors
 
-`{"error":{"type":"queue_full","message":"..."}}`
+`{"error":{"type":"queue_full","message":"…"}}`
 
 | type | HTTP |
 | :--- | :--- |
@@ -70,10 +66,6 @@ unchanged.
 | `timeout` | 504 |
 | `internal_error` | 500 |
 
-`/health` returns `200` with `status: "ok"` while the runner is ready. During
-crash or shutdown states it returns `503` with `status: "unavailable"` and the
-current runner state.
-
 ## Acceptance criteria
 
 - Must: unknown question type / missing state -> 400.
@@ -82,6 +74,4 @@ current runner state.
 - Must: wrong `model` -> 404.
 - Must: full queue -> 429.
 - Must: every error uses the shape above (`internal/api/decision` tests with a fake adapter).
-- Must: malformed JSON, unknown fields, missing `state`, non-JSON content, and
-  an oversized body -> 400 or 413 as specified above.
 - Manual: curl examples in README work for every model.
