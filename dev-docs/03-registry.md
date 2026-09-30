@@ -26,7 +26,7 @@
 ## Rules
 
 - Id: `name:tag`. No `/ \ :` or spaces in parts.
-- CLI references may append `@quant`, for example `decider:2b-vision@4bit`.
+- CLI references may append `@quant`, for example `decider-vision:2b@4bit`.
   The `@quant` portion is not part of the registry ID.
 - `type`: only `decision` for now.
 - `capabilities`: `text | vision | multi-image | choice | score | noul`. `multi-image` implies `vision`.
@@ -50,7 +50,7 @@
 | :--- | :--- |
 | `kev:0.5b`, `kev:0.8b`, `kev:4b` | `ggmlc-laya` |
 | `laya:english`, `laya:multilingual`, `laya:typed-decisions` | `ggmlc-laya` |
-| `decider:0.8b`, `decider:4b`, `decider:2b-vision` | `ggmlc-custom-decider` |
+| `decider:0.8b`, `decider:4b`, `decider-vision:2b` | `ggmlc-custom-decider` |
 
 ## Acceptance criteria
 

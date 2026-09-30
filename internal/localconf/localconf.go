@@ -7,7 +7,7 @@
 //	  ggmlc-custom-decider:
 //	    threads: 8
 //	models:
-//	  decider:2b-vision:
+//	  decider-vision:2b:
 //	    settings:                  # all quants of this model
 //	      context_size: 4096
 //	    quants:

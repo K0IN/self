@@ -3,7 +3,7 @@
 ## Goal
 
 - Local AI model server in Go.
-- One command: `self serve decider:2b-vision`.
+- One command: `self serve decider-vision:2b`.
 - First milestone: **decision models only** (System One: `choice`, `score`, `noul`).
 
 ## Scope
@@ -22,7 +22,7 @@ HTTP (chi) -> api/decision -> decision.Service -> Scheduler -> Adapter -> engine
 - Native engine runs as a child process. Talks over stdin/stdout.
 - Adapter = the only Go code that knows an engine's protocol.
 - Registry (YAML) maps a model id to files + adapter. CLI references may add a
-	quant suffix: `self serve decider:2b-vision@4bit`.
+	quant suffix: `self serve decider-vision:2b@4bit`.
 
 ## Packages
 

@@ -21,7 +21,7 @@ The server fetches the registry from `https://k0in.github.io/self/models.yml` at
 
 ## Choose a model
 
-Browse the [model registry](/self/registry/) or run:
+Browse the [model registry](/registry/) or run:
 
 ```bash
 self list

@@ -86,7 +86,7 @@ For example:
 ```bash
 docker run --rm --gpus all -p 9000:9000 -v self-models:/models \
   -e AI_SERVER_PORT=9000 \
-  ghcr.io/<owner>/<repo>:latest serve decider:2b-vision@4bit --host 0.0.0.0
+  ghcr.io/<owner>/<repo>:latest serve decider-vision:2b@4bit --host 0.0.0.0
 ```
 
 ## Models
@@ -99,10 +99,25 @@ models are currently supported:
 | `kev:0.5b`, `kev:0.8b`, `kev:4b` | Text | `choice`, `score`, `noul` |
 | `laya:english`, `laya:multilingual`, `laya:typed-decisions` | Text | `choice`, `score`, `noul` |
 | `decider:0.8b`, `decider:4b` | Text | `choice`, `score`, `noul` |
-| `decider:2b-vision` | Text and one image | `choice`, `score`, `noul` |
+| `decider-vision:2b` | Text and one image | `choice`, `score`, `noul` |
 
 Text-only models reject requests containing images. Model files remain in the
 `/models` volume and are reused on subsequent runs.
+
+The server caches the model registry and per-model `metadata.json` files in
+the `/models` volume. After a model has been downloaded successfully, it can
+be started offline from that cache. A model that has never been downloaded
+still requires one online run to discover its metadata and files.
+
+To run a previously cached model offline, mount the same `/models` volume and
+start the model as usual:
+
+```bash
+docker run --rm --network none --gpus all \
+  -p 8080:8080 \
+  -v self-models:/models \
+  ghcr.io/<owner>/<repo>:latest serve kev:4b
+```
 
 ## HTTP API
 

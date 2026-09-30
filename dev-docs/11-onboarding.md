@@ -36,5 +36,5 @@ just onboard <hf-repo>  ->  edit readme + description  ->  paste into registry.y
 - Must: generated YAML parses as a valid registry (`internal/onboard` tests).
 - Must: mmproj detected, quants bucketed correctly.
 - Must: missing hash never passes the parser.
-- Must: `self check` passes for `kev:0.5b` and `decider:2b-vision@4bit` (verified).
+- Must: `self check` passes for `kev:0.5b` and `decider-vision:2b@4bit` (verified).
 - Manual: onboard works on Mapika/decider-4b-GGUF, mradermacher/decider-0.8b-GGUF, mys/kev-0.8b-GGUF, mradermacher/decider-2b-vision-GGUF.

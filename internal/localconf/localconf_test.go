@@ -12,7 +12,7 @@ adapters:
   ggmlc-custom-decider:
     threads: 8
 models:
-  decider:2b-vision:
+	"decider-vision:2b":
     settings:
       context_size: 4096
     quants:
@@ -25,11 +25,11 @@ func TestParseAndLayers(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	l := c.Layers("decider:2b-vision", "8bit", "ggmlc-custom-decider")
+	l := c.Layers("decider-vision:2b", "8bit", "ggmlc-custom-decider")
 	if len(l) != 3 || l[0].Values["threads"] != 8 || l[1].Values["context_size"] != 4096 || l[2].Values["flash_attn"] != "on" {
 		t.Fatalf("layers = %+v", l)
 	}
-	if got := c.Layers("decider:2b-vision", "4bit", "ggmlc-laya"); len(got) != 1 || got[0].Name != "local model" {
+	if got := c.Layers("decider-vision:2b", "4bit", "ggmlc-laya"); len(got) != 1 || got[0].Name != "local model" {
 		t.Fatalf("other quant/adapter = %+v", got)
 	}
 	if got := c.Layers("kev:4b", "4bit", "ggmlc-laya"); len(got) != 0 {

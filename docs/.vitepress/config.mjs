@@ -8,7 +8,7 @@ export default defineConfig({
     themeConfig: {
         nav: [
             { text: 'Guide', link: '/self/' },
-            { text: 'Models', link: '/self/registry/' },
+            { text: 'Models', link: '/registry/' },
             { text: 'GitHub', link: 'https://github.com/k0in/self' }
         ],
         sidebar: [
@@ -16,7 +16,7 @@ export default defineConfig({
             { text: 'Docker and model paths', link: '/self/docker' },
             { text: 'Local settings', link: '/self/settings' },
             { text: 'CLI and completions', link: '/self/cli' },
-            { text: 'Model registry', link: '/self/registry/' }
+            { text: 'Model registry', link: '/registry/' }
         ],
         search: { provider: 'local' }
     }
