@@ -86,10 +86,11 @@ func remove(args []string) error {
 func loadListRegistry(name string, args []string) (*registry.Registry, models.Store, error) {
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
 	modelsDir := fs.String("models-dir", defaultModelsDir(), "model directory")
+	source := fs.String("registry", config.DefaultRegistry(os.Getenv), "registry URL or file (env AI_SERVER_REGISTRY)")
 	if err := fs.Parse(args); err != nil {
 		return nil, models.Store{}, err
 	}
-	reg, err := app.LoadRegistry(*modelsDir)
+	reg, err := app.LoadRegistry(*source, *modelsDir)
 	return reg, models.Store{Root: *modelsDir}, err
 }
 

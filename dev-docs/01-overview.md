@@ -4,14 +4,50 @@
 
 - Local AI model server in Go.
 - One command: `self serve decider-vision:2b`.
-- First milestone: **decision models only** (System One: `choice`, `score`, `noul`).
+- Model types: decision models (System One: `choice`, `score`, `noul`) and
+  text-to-speech (`audio`).
+
+## Design principles
+
+These decide every new feature. When in doubt, pick the option that keeps
+them.
+
+1. **Engines: plain upstream, as unchanged as possible.**
+   - Best case: an existing upstream engine release, used as published
+     (download the release binary, e.g. upstream Laya). No fork, no patches.
+   - If upstream has no persistent server mode for the model, write the
+     thinnest possible worker that links the **unmodified upstream release
+     libraries** and only adds the SELFIPC1 loop (e.g. `ggmlc-custom-decider`
+     and `ggmlc-audio` on llama.cpp's `libllama`/`libmtmd`). Model logic
+     (architectures, tokenizers, codecs, sampling helpers) stays upstream.
+   - The model is loaded once at start and stays loaded. A one-shot CLI that
+     reloads the model per request is not an engine.
+   - When upstream cannot do something, do not patch it in: record it in 15
+     and wait for (or contribute) the upstream change.
+2. **Public API: an established standard, never a home-grown one.**
+   - Decisions use the System One API; audio (and later text, embeddings, STT)
+     use the OpenAI API: same paths, fields, defaults and error shape. The
+     official SDKs must work unchanged against `self`.
+   - Extensions are additive only (a superset): new optional fields or
+     endpoints, never a changed meaning of a standard field.
+   - A standard feature the engine cannot do returns an explicit error
+     (`unsupported_capability`, 422); it is never silently ignored.
+3. **Models live in the registry.** Every servable model is a registry entry
+   (`models/registry.yml`) with pinned files (`size` + `sha256`), preferably
+   from the upstream publisher's Hugging Face repo. Everything a model needs at
+   run time (projector, default voice) is a pinned registry file too. Adding a
+   model of a supported family is a registry entry and a model card, no code.
+4. **Stateless requests.** A request carries all its data (e.g. a reference
+   voice as bytes). No filesystem paths in the API, no server-side profiles or
+   IDs, no request data written to disk.
 
 ## Scope
 
-- In: decision models, GGUF files, text + one image, CUDA / Vulkan / CPU.
-- Out (later): image gen, TTS, STT, LLM chat, embeddings. A new model type
+- In: decision models (text + images) and text-to-speech, GGUF files,
+  CUDA / Vulkan / CPU.
+- Out (later): image gen, STT, LLM chat, embeddings. A new model type
   slots in without touching the shared code, see "Adding a model type" in 06.
-- Out: non-GGUF formats, localhost HTTP between server and engine.
+- Out: non-GGUF model formats, localhost HTTP between server and engine.
 
 ## Architecture
 
@@ -42,6 +78,7 @@ HTTP (chi) -> api/decision -> decision.Service -> Scheduler -> Adapter -> engine
 | `internal/ipc` | `SELFIPC1` framing |
 | `internal/ggufmeta` | GGUF header reading (abrander/gguf) |
 | `internal/decision` | Types, adapter interface, scheduler, service |
+| `internal/audio` | Audio types and adapter interface |
 | `internal/adapters/*` | Engine adapters |
 | `internal/settings` | Typed engine settings schema |
 | `internal/localconf` | Local `settings.yml` |
@@ -50,11 +87,13 @@ HTTP (chi) -> api/decision -> decision.Service -> Scheduler -> Adapter -> engine
 | `internal/jsonx` | Ordered JSON objects |
 | `internal/api` | Shared HTTP router, errors, health and model routes |
 | `internal/api/decision` | Decision-model HTTP handlers |
+| `internal/api/audio` | OpenAI-compatible speech HTTP handlers |
 | `internal/api/image` | Reserved for future image-model HTTP handlers |
 | `internal/app` | `serve`, `pull`, `check`, `benchmark`, `settings` wiring: shared `target` + HTTP lifecycle, one file per model type |
 | `internal/onboard` | HF repo -> registry entry (library only, no CLI command yet) |
 | `models` | `registry.yml` and model cards (data only) |
 | `engines/ggmlc-custom-decider` | C++ engine |
+| `engines/ggmlc-audio` | C++ text-to-speech engine (same llama.cpp libraries) |
 | `engines/laya` | Recipe that fetches the upstream Laya engine |
 | `tests/models` | Source registry checks and end-to-end model tests |
 | `docs` | VitePress site: user docs + registry pages |
@@ -64,3 +103,4 @@ HTTP (chi) -> api/decision -> decision.Service -> Scheduler -> Adapter -> engine
 - Must: `self serve <model>` downloads, starts the engine, serves HTTP.
 - Must: `go test ./...` and `go vet ./...` pass.
 - Must: no model-specific code outside adapters and the registry.
+- Must: the design principles above hold for every engine, endpoint and model.

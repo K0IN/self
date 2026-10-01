@@ -1,0 +1,36 @@
+# ggmlc-audio engine build: the persistent text-to-speech worker.
+#
+# Links the same prebuilt llama.cpp libraries as the Decider engine
+# (../ggmlc-custom-decider/deps), so both engines share one lib/ in the bundle.
+#
+#   just engine audio                 # variant of the existing decider deps, else cuda-12.8
+#   just engine audio cpu             # or: vulkan, cuda-12.8, cuda-13.4
+
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+deps      := "../ggmlc-custom-decider/deps"
+build_dir := "build"
+dest      := "../../bin/libexec/ai-server"
+
+# Build and install the engine + libraries into the bundle (default: bin/libexec/ai-server)
+build variant="" target=dest:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    v="{{variant}}"
+    if [[ -z "$v" ]]; then
+      v=$(cut -d- -f2- {{deps}}/.tag 2>/dev/null || echo cuda-12.8)
+    fi
+    (cd ../ggmlc-custom-decider && just deps "$v")
+    rm -rf {{build_dir}}
+    cmake -S . -B {{build_dir}} -G Ninja -DCMAKE_BUILD_TYPE=Release > /dev/null
+    cmake --build {{build_dir}}
+    mkdir -p "{{target}}/lib"
+    install -m 0755 {{build_dir}}/ggmlc-audio "{{target}}/ggmlc-audio"
+    cp -P {{deps}}/lib/*.so* "{{target}}/lib/"
+    missing=$(cd "{{target}}" && LD_LIBRARY_PATH=lib ldd ggmlc-audio | grep 'not found' || true)
+    if [[ -n "$missing" ]]; then echo "WARNING: missing shared libraries:" >&2; echo "$missing" >&2; fi
+    echo "Installed {{target}}/ggmlc-audio"
+
+# Remove build output
+clean:
+    rm -rf {{build_dir}}

@@ -38,7 +38,7 @@ Settings, all optional except `SELF_TEST_MODELS`:
 | `SELF_TEST_BIN` | `bin/self` | `self` binary |
 | `SELF_TEST_ENGINE_DIR` | `bin/libexec/ai-server` | engine directory |
 | `SELF_TEST_MODELS_DIR` | `AI_SERVER_MODELS` or `~/.ai-server/models` | model cache |
-| `SELF_TEST_REGISTRY` | published registry | list models from this registry file instead |
+| `SELF_TEST_REGISTRY` | `AI_SERVER_REGISTRY`, else published registry | registry URL or file, also passed to `self` as `--registry` |
 
 ## What is checked
 

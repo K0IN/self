@@ -193,7 +193,7 @@ func parseVariant(t ModelType, quant string, node *yaml.Node) (Variant, error) {
 		return Variant{}, fmt.Errorf("files must list at least one file")
 	}
 	v := Variant{Quant: quant, Adapter: raw.Adapter, Repo: raw.Repo, Settings: raw.Settings}
-	models := 0
+	roles := map[FileRole]bool{}
 	for i, f := range raw.Files {
 		if f.Name == "" {
 			return Variant{}, fmt.Errorf("files[%d]: empty file name", i)
@@ -201,9 +201,6 @@ func parseVariant(t ModelType, quant string, node *yaml.Node) (Variant, error) {
 		clean := path.Clean(f.Name)
 		if clean != f.Name || strings.HasPrefix(clean, "../") || strings.HasPrefix(clean, "/") || strings.Contains(clean, `\`) {
 			return Variant{}, fmt.Errorf("files[%d]: unsafe path %q", i, f.Name)
-		}
-		if !strings.HasSuffix(strings.ToLower(f.Name), ".gguf") {
-			return Variant{}, fmt.Errorf("files[%d]: only GGUF files are supported (%q)", i, f.Name)
 		}
 		role := f.Role
 		if role == "" {
@@ -216,9 +213,21 @@ func parseVariant(t ModelType, quant string, node *yaml.Node) (Variant, error) {
 		if !slices.Contains(modelTypes[t].Roles, role) {
 			return Variant{}, fmt.Errorf("files[%d]: unknown role %q for %s models", i, role, t)
 		}
-		if role == RoleModel {
-			models++
+		ext := strings.ToLower(path.Ext(f.Name))
+		if role == RoleVoice {
+			if ext != ".wav" && ext != ".mp3" {
+				return Variant{}, fmt.Errorf("files[%d]: a voice must be a .wav or .mp3 file (%q)", i, f.Name)
+			}
+		} else if ext != ".gguf" {
+			return Variant{}, fmt.Errorf("files[%d]: only GGUF files are supported (%q)", i, f.Name)
 		}
+		if f.Repo != "" && strings.Count(f.Repo, "/") != 1 {
+			return Variant{}, fmt.Errorf("files[%d]: repo must look like owner/name", i)
+		}
+		if roles[role] {
+			return Variant{}, fmt.Errorf("files[%d]: more than one file with role %s", i, role)
+		}
+		roles[role] = true
 		if f.Size <= 0 {
 			return Variant{}, fmt.Errorf("files[%d] %s: size (bytes) is required", i, f.Name)
 		}
@@ -226,9 +235,9 @@ func parseVariant(t ModelType, quant string, node *yaml.Node) (Variant, error) {
 		if !isSHA256(sum) {
 			return Variant{}, fmt.Errorf("files[%d] %s: sha256 must be 64 hex characters", i, f.Name)
 		}
-		v.Files = append(v.Files, File{Name: f.Name, Role: role, Size: f.Size, SHA256: sum})
+		v.Files = append(v.Files, File{Name: f.Name, Role: role, Repo: f.Repo, Size: f.Size, SHA256: sum})
 	}
-	if models != 1 {
+	if !roles[RoleModel] {
 		return Variant{}, fmt.Errorf("exactly one file with role model is required")
 	}
 	return v, nil
@@ -275,27 +284,29 @@ func isSHA256(s string) bool {
 	return err == nil
 }
 
-// fileEntry is {file, role?, size, sha256}.
+// fileEntry is {file, role?, repo?, size, sha256}.
 type fileEntry struct {
 	Name   string
 	Role   FileRole
+	Repo   string
 	Size   int64
 	SHA256 string
 }
 
 func (f *fileEntry) UnmarshalYAML(n *yaml.Node) error {
 	if n.Kind != yaml.MappingNode {
-		return fmt.Errorf("line %d: file entry must be a mapping {file, size, sha256[, role]}", n.Line)
+		return fmt.Errorf("line %d: file entry must be a mapping {file, size, sha256[, role, repo]}", n.Line)
 	}
 	var m struct {
 		File   string `yaml:"file"`
 		Role   string `yaml:"role"`
+		Repo   string `yaml:"repo"`
 		Size   int64  `yaml:"size"`
 		SHA256 string `yaml:"sha256"`
 	}
 	if err := n.Decode(&m); err != nil {
 		return err
 	}
-	f.Name, f.Role, f.Size, f.SHA256 = m.File, FileRole(m.Role), m.Size, m.SHA256
+	f.Name, f.Role, f.Repo, f.Size, f.SHA256 = m.File, FileRole(m.Role), m.Repo, m.Size, m.SHA256
 	return nil
 }

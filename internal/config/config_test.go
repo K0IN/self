@@ -4,6 +4,8 @@ import (
 	"flag"
 	"io"
 	"testing"
+
+	"ai-server/internal/registry"
 )
 
 func env(m map[string]string) func(string) string { return func(k string) string { return m[k] } }
@@ -59,6 +61,45 @@ func TestPrecedence(t *testing.T) {
 	s, err = ParseServe([]string{"--port", "7000", "kev:4b", "--host", "::1", "--quant", "q8"}, e, io.Discard)
 	if err != nil || s.Addr() != "[::1]:7000" || s.Quant != "q8" {
 		t.Fatalf("cli: %+v %v", s, err)
+	}
+}
+
+func TestRegistrySource(t *testing.T) {
+	s, _ := ParseServe([]string{"kev:4b"}, env(nil), io.Discard)
+	if s.Registry != registry.PublishedURL {
+		t.Fatalf("default registry = %q", s.Registry)
+	}
+	e := env(map[string]string{"AI_SERVER_REGISTRY": "/repo/models/registry.yml"})
+	s, _ = ParseServe([]string{"kev:4b"}, e, io.Discard)
+	if s.Registry != "/repo/models/registry.yml" {
+		t.Fatalf("env registry = %q", s.Registry)
+	}
+	s, _ = ParseServe([]string{"kev:4b", "--registry", "https://example.com/r.yml"}, e, io.Discard)
+	if s.Registry != "https://example.com/r.yml" {
+		t.Fatalf("flag registry = %q", s.Registry)
+	}
+	if _, err := ParseServe([]string{"kev:4b", "--registry", " "}, env(nil), io.Discard); err == nil {
+		t.Fatal("empty --registry accepted")
+	}
+}
+
+func TestVerbose(t *testing.T) {
+	s, _ := ParseServe([]string{"kev:4b"}, env(nil), io.Discard)
+	if s.Verbose {
+		t.Fatal("verbose by default")
+	}
+	on := env(map[string]string{"AI_SERVER_VERBOSE": "1"})
+	if s, _ = ParseServe([]string{"kev:4b"}, on, io.Discard); !s.Verbose {
+		t.Fatal("AI_SERVER_VERBOSE=1 ignored")
+	}
+	if s, _ = ParseServe([]string{"kev:4b", "--verbose=false"}, on, io.Discard); s.Verbose {
+		t.Fatal("--verbose=false did not override the env")
+	}
+	if s, _ = ParseServe([]string{"-v", "kev:4b"}, env(nil), io.Discard); !s.Verbose {
+		t.Fatal("-v ignored")
+	}
+	if _, err := ParseServe([]string{"kev:4b"}, env(map[string]string{"AI_SERVER_VERBOSE": "loud"}), io.Discard); err == nil {
+		t.Fatal("invalid AI_SERVER_VERBOSE accepted")
 	}
 }
 

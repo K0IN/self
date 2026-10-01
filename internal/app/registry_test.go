@@ -63,6 +63,25 @@ func TestLoadRegistryFallsBackToCache(t *testing.T) {
 	}
 }
 
+func TestLoadRegistryLocalFile(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "registry.yml")
+	if err := os.WriteFile(file, []byte(demoRegistry), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	modelsDir := t.TempDir()
+	reg, err := LoadRegistry(file, modelsDir)
+	if err != nil || len(reg.Models) != 1 {
+		t.Fatalf("reg=%v err=%v", reg, err)
+	}
+	// A local registry must not overwrite the cache of the published one.
+	if entries, _ := os.ReadDir(modelsDir); len(entries) != 0 {
+		t.Fatalf("local registry wrote %d cache entries", len(entries))
+	}
+	if _, err := LoadRegistry(filepath.Join(t.TempDir(), "missing.yml"), modelsDir); err == nil {
+		t.Fatal("missing registry file accepted")
+	}
+}
+
 func TestLoadRegistryIgnoresUnwritableCache(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(demoRegistry))

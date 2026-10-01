@@ -50,9 +50,10 @@ Serve flags:
   --queue-size N                  ready-request queue size (default 64)
   --preprocess-concurrency N      concurrent image preprocessing (default 8)
   --runtime-dir DIR               engine directory override (development)
+  --registry URL|FILE             model registry (default https://k0in.github.io/self/models.yml, env AI_SERVER_REGISTRY)
   --allow-http-images             allow plain http:// image URLs
   --allow-private-images          allow image URLs on private/loopback networks
-  -v, --verbose                   show engine and request logs
+  -v, --verbose                   show the engine command, engine and request logs (env AI_SERVER_VERBOSE)
   --set key=value                 engine setting override (repeatable)
   --settings-file FILE            local settings (default ~/.ai-server/settings.yml, env AI_SERVER_SETTINGS)
 

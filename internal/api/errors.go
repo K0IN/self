@@ -25,7 +25,7 @@ func StatusFor(k errs.Kind) int {
 		return http.StatusNotFound
 	case errs.UnsupportedCapability:
 		return http.StatusUnprocessableEntity
-	case errs.ImageTooLarge:
+	case errs.ImageTooLarge, errs.RequestTooLarge:
 		return http.StatusRequestEntityTooLarge
 	case errs.ImageFetchFailed:
 		return http.StatusBadGateway

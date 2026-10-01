@@ -55,6 +55,9 @@ const tailLines = 200
 // terminal signals reach only the parent, which then shuts the child down in
 // order. On Linux the child is also killed if the parent dies.
 func Start(spec Spec) (*Process, error) {
+	if spec.Log != nil {
+		fmt.Fprintf(spec.Log, "%sexec %s\n", spec.LogPrefix, FormatCommand(spec.Path, spec.Args))
+	}
 	cmd := exec.Command(spec.Path, spec.Args...)
 	cmd.Env = append(os.Environ(), spec.Env...)
 	if spec.LibDir != "" {
@@ -220,6 +223,19 @@ func FormatTail(lines []string) string {
 		return ""
 	}
 	return "\n  engine stderr:\n    " + strings.Join(lines, "\n    ")
+}
+
+// FormatCommand renders path and args as one shell-quoted line for logs.
+func FormatCommand(path string, args []string) string {
+	parts := make([]string, 0, len(args)+1)
+	for _, a := range append([]string{path}, args...) {
+		if a != "" && strings.Trim(a, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_./:=,@%+-") == "" {
+			parts = append(parts, a)
+			continue
+		}
+		parts = append(parts, "'"+strings.ReplaceAll(a, "'", `'\''`)+"'")
+	}
+	return strings.Join(parts, " ")
 }
 
 func withLibDir(env []string, dir string) []string {

@@ -72,7 +72,7 @@ The recipes build `self`, make sure the engines exist and run
 | `SELF_TEST_BIN` | `../../bin/self` | `self` binary (build it with `just build`) |
 | `SELF_TEST_ENGINE_DIR` | `../../bin/libexec/ai-server` | `--runtime-dir` |
 | `SELF_TEST_MODELS_DIR` | `$AI_SERVER_MODELS` or `~/.ai-server/models` | model store; missing models are pulled with `self pull` |
-| `SELF_TEST_REGISTRY` | published registry | Registry file used only to select models; `self serve` still resolves against the published registry |
+| `SELF_TEST_REGISTRY` | `AI_SERVER_REGISTRY`, else published registry | Registry URL or file; used to select models and passed to `self serve` / `self pull` as `--registry` |
 
 - Paths are made absolute (a relative `--runtime-dir` breaks the engine start, see 15).
 - Use `-timeout 0` when running `go test` by hand: downloads and model loads exceed the default

@@ -138,26 +138,65 @@ func TestCapabilities(t *testing.T) {
 
 func TestParseRejects(t *testing.T) {
 	bad := map[string]string{
-		"missing default": strings.Replace(sample, "    default: q4\n", "", 1),
-		"bad default":     strings.Replace(sample, "default: q4", "default: q3", 1),
-		"non gguf":        strings.Replace(sample, "kev_4b_ud_q4_k_m.gguf", "model.safetensors", 1),
-		"no size":         strings.Replace(sample, "size: 42, ", "", 1),
-		"bad sha256":      strings.Replace(sample, "size: 42, sha256: "+sumB, "size: 42, sha256: abc", 1),
-		"no sha256":       strings.Replace(sample, ", sha256: "+sumB+"}\n", "}\n", 1),
-		"plain file":      strings.Replace(sample, "- {file: kev_4b_ud_q4_k_m.gguf, size: 42, sha256: "+sumB+"}", "- kev_4b_ud_q4_k_m.gguf", 1),
-		"no readme":       strings.Replace(sample, "    readme: readmes/kev/4b.md\n", "", 1),
-		"inline readme":   strings.Replace(sample, "readme: readmes/kev/4b.md", "readme: \"# Kev\"", 1),
-		"escaping readme": strings.Replace(sample, "readme: readmes/kev/4b.md", "readme: ../../etc/x.md", 1),
-		"url readme":      strings.Replace(sample, "readme: readmes/kev/4b.md", "readme: https://x/y.md", 1),
-		"no description":  strings.Replace(sample, "    description: Kev 4B\n", "", 1),
-		"unsafe path":     strings.Replace(sample, "kev_4b_ud_q4_k_m.gguf", "../evil.gguf", 1),
-		"no adapter":      strings.Replace(sample, "      adapter: ggmlc-laya\n      repo: mys", "      repo: mys", 1),
-		"bad version":     strings.Replace(sample, "version: 1", "version: 2", 1),
-		"no type":         strings.Replace(sample, "    type: decision\n    default: q4", "    default: q4", 1),
-		"unknown role":    strings.Replace(sample, "role: mmproj", "role: vocoder", 1),
+		"missing default":   strings.Replace(sample, "    default: q4\n", "", 1),
+		"bad default":       strings.Replace(sample, "default: q4", "default: q3", 1),
+		"non gguf":          strings.Replace(sample, "kev_4b_ud_q4_k_m.gguf", "model.safetensors", 1),
+		"no size":           strings.Replace(sample, "size: 42, ", "", 1),
+		"bad sha256":        strings.Replace(sample, "size: 42, sha256: "+sumB, "size: 42, sha256: abc", 1),
+		"no sha256":         strings.Replace(sample, ", sha256: "+sumB+"}\n", "}\n", 1),
+		"plain file":        strings.Replace(sample, "- {file: kev_4b_ud_q4_k_m.gguf, size: 42, sha256: "+sumB+"}", "- kev_4b_ud_q4_k_m.gguf", 1),
+		"no readme":         strings.Replace(sample, "    readme: readmes/kev/4b.md\n", "", 1),
+		"inline readme":     strings.Replace(sample, "readme: readmes/kev/4b.md", "readme: \"# Kev\"", 1),
+		"escaping readme":   strings.Replace(sample, "readme: readmes/kev/4b.md", "readme: ../../etc/x.md", 1),
+		"url readme":        strings.Replace(sample, "readme: readmes/kev/4b.md", "readme: https://x/y.md", 1),
+		"no description":    strings.Replace(sample, "    description: Kev 4B\n", "", 1),
+		"unsafe path":       strings.Replace(sample, "kev_4b_ud_q4_k_m.gguf", "../evil.gguf", 1),
+		"no adapter":        strings.Replace(sample, "      adapter: ggmlc-laya\n      repo: mys", "      repo: mys", 1),
+		"bad version":       strings.Replace(sample, "version: 1", "version: 2", 1),
+		"no type":           strings.Replace(sample, "    type: decision\n    default: q4", "    default: q4", 1),
+		"unknown role":      strings.Replace(sample, "role: mmproj", "role: vocoder", 1),
+		"voice on decision": strings.Replace(sample, "role: mmproj", "role: voice", 1),
+		"duplicate role":    strings.Replace(sample, ", role: mmproj}", ", role: model}", 1),
 	}
 	for name, doc := range bad {
 		if _, err := Parse([]byte(doc)); err == nil {
+			t.Errorf("%s: expected error", name)
+		}
+	}
+}
+
+func TestAudioVoiceFile(t *testing.T) {
+	doc := func(voice string) string {
+		return `
+version: 1
+models:
+  tts:en:
+    description: TTS
+    readme: readmes/tts/en.md
+    type: audio
+    capabilities: {input: [text], output: [audio]}
+    bf16:
+      adapter: ggmlc-audio
+      repo: owner/tts-GGUF
+      files:
+        - {file: tts.gguf, size: 10, sha256: ` + sumA + `}
+        - {file: mmproj-tts.gguf, role: mmproj, size: 5, sha256: ` + sumA + `}
+        - ` + voice + `
+`
+	}
+	r := mustParse(t, doc(`{file: voices/default.wav, role: voice, repo: other/voices, size: 3, sha256: `+sumB+`}`))
+	v := r.Models["tts:en"].Variants["bf16"]
+	if f := v.Files[2]; f.Role != RoleVoice || v.RepoOf(f) != "other/voices" || v.RepoOf(v.Files[0]) != "owner/tts-GGUF" {
+		t.Fatalf("files = %+v", v.Files)
+	}
+	for name, voice := range map[string]string{
+		"gguf voice":   `{file: v.gguf, role: voice, size: 3, sha256: ` + sumB + `}`,
+		"wav model":    `{file: v.wav, role: model, size: 3, sha256: ` + sumB + `}`,
+		"wav mmproj":   `{file: v.wav, role: mmproj, size: 3, sha256: ` + sumB + `}`,
+		"bad repo":     `{file: v.wav, role: voice, repo: nope, size: 3, sha256: ` + sumB + `}`,
+		"unsafe voice": `{file: ../v.wav, role: voice, size: 3, sha256: ` + sumB + `}`,
+	} {
+		if _, err := Parse([]byte(doc(voice))); err == nil {
 			t.Errorf("%s: expected error", name)
 		}
 	}

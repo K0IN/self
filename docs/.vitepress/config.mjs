@@ -16,7 +16,18 @@ export default defineConfig({
             { text: 'Docker and model paths', link: '/docker' },
             { text: 'Local settings', link: '/settings' },
             { text: 'CLI and completions', link: '/cli' },
-            { text: 'API reference', link: '/api' },
+            {
+                text: 'API reference',
+                link: '/api/',
+                collapsed: false,
+                items: [
+                    { text: 'Decision', link: '/api/decision' },
+                    { text: 'Audio (text to speech)', link: '/api/audio' },
+                    { text: 'Text generation', link: '/api/text' },
+                    { text: 'Embeddings', link: '/api/embeddings' },
+                    { text: 'Speech to text', link: '/api/stt' }
+                ]
+            },
             { text: 'Examples', link: '/examples' },
             { text: 'Model registry', link: '/registry/' }
         ],

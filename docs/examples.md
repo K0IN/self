@@ -17,7 +17,7 @@ The settings file is optional. It layers machine-specific engine values over the
 
 ## Direct API examples
 
-The full request and response examples are in the [API reference](/api), including curl, Python, JavaScript, text decisions, and vision requests.
+The full request and response examples are in the [API reference](/api/): the [decision API](/api/decision) (curl, Python, JavaScript, text and vision requests) and the [audio API](/api/audio) (text to speech, voice cloning, OpenAI SDK).
 
 A minimal request looks like this:
 

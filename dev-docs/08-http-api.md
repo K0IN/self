@@ -23,6 +23,9 @@ unchanged.
 | GET | `/v1/models` | `{"object":"list","data":[<model>]}` (one entry today) |
 | POST | `/v1/systemone` | Answer questions |
 | POST | `/v1/decide` | Alias of `/v1/systemone` |
+| POST | `/v1/audio/speech` | Synthesize text as WAV audio for an audio model |
+| POST | `/v1/audio/voice` | Normalize an inline WAV/MP3 voice payload |
+| POST | `/v1/audio/voices` | Alias for `/v1/audio/voice` |
 
 Unknown routes return 400 `invalid_request`; a wrong method returns 405
 (`Allow: GET, POST`) with the same body shape.
@@ -49,6 +52,69 @@ Unknown routes return 400 `invalid_request`; a wrong method returns 405
   - `noul`: no `criteria`.
 - `images`: URL string, data URI, or `{url, name, description}` (see 10).
 - `model` optional. If set, must match the loaded model.
+
+### Audio speech
+
+Audio models expose an OpenAI-compatible request shape with a WAV response:
+
+```json
+{
+  "model": "qwen3-tts:1.7b",
+  "input": "Welcome home.",
+  "voice": {"audio": "<base64 MP3 or WAV>", "format": "mp3"},
+  "language": "en",
+  "response_format": "wav"
+}
+```
+
+`voice` may be an OpenAI built-in voice name (`alloy`, `ash`, ... all select the
+model's default voice) or an object with inline `audio` and `format`. `model` may
+be the loaded model ID or an OpenAI TTS model name (`tts-1`, `tts-1-hd`,
+`gpt-4o-mini-tts`), so the official OpenAI SDKs work unchanged (verified with
+`openai-go` v1.12.0). The
+server-specific `ref_audio` field accepts only base64 audio or a `data:` URL
+in JSON; filesystem paths are rejected. The endpoint also accepts
+`multipart/form-data`: every field is a form field and `ref_audio` is an
+uploaded file (unknown form fields -> 400). Reference audio must be MP3 or WAV;
+the format comes from the magic bytes (`RIFF…WAVE`, `ID3` or an MP3 frame sync),
+so a declared `format` is only a fallback.
+Multipart bodies are read in memory with `Request.MultipartReader` (never
+`ParseMultipartForm`, which spills large files to temp files on disk).
+`response_format` accepts OpenAI's `mp3`,
+`opus`, `aac`, `flac`, `wav`, and `pcm` values at the request boundary, while
+the `ggmlc-audio` engine can produce only `wav`; other formats return
+422, and an omitted format yields WAV. `stream_format` accepts OpenAI's `audio` and `sse` values at the request
+boundary; streaming currently returns 422. The request body is limited to 32
+MiB (413 `request_too_large`) and input text to 4096 characters. `instructions` and speeds other than
+`1` are accepted as standard fields but return 422 because the engine does not
+implement those controls.
+
+### Stateless voice payloads
+
+Turn a recording into a reusable voice object without storing it. The body may
+be a form upload (`audio_sample`, as in OpenAI's create-voice API, or `file`),
+the raw file (`Content-Type: audio/*` or `application/octet-stream`), or JSON:
+
+```json
+POST /v1/audio/voice
+{"audio":"<base64 MP3 or WAV>","format":"mp3"}
+```
+
+The response contains the recording as base64. Supply that payload on
+each speech request:
+
+```json
+{"input":"Hello.","voice":{"audio":"<base64>","format":"mp3"},"response_format":"wav"}
+```
+
+No voice data is stored by the API or the engine: the recording travels as an
+IPC attachment and is decoded in memory for that one request. llama.cpp's
+Qwen3-TTS pipeline conditions on the reference audio itself and has no API to
+export or import a speaker vector, so the reusable client-owned payload is the
+stateless voice representation. There is also no speaker-name or
+voice-description input (ggml-org publishes only the Qwen3-TTS Base GGUF), so
+OpenAI voice names select the default voice; named and described voices need
+Qwen3-TTS CustomVoice/VoiceDesign support in llama.cpp first.
 
 ## Response
 

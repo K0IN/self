@@ -126,9 +126,11 @@ docker run --rm --network none --gpus all \
 
 ## HTTP API
 
-See the full [OpenAI-style API reference](docs/api.md) for endpoint examples,
+See the full [OpenAI-style API reference](docs/api/index.md) for endpoint examples,
 request and response fields, image inputs, Python and JavaScript clients, and
-error responses.
+error responses. It has one page per modality: [decision](docs/api/decision.md),
+[audio](docs/api/audio.md), and the planned [text](docs/api/text.md),
+[embeddings](docs/api/embeddings.md) and [speech to text](docs/api/stt.md).
 
 ### Health
 

@@ -5,9 +5,9 @@
 #   <name>:<tag>:
 #     description:   one line (shown by `self ls-remote` and on the overview page)
 #     readme:        model card, Markdown file relative to this file (readmes/<name>/<tag>.md)
-#     type:          decision            (only mode in this milestone)
+#     type:          decision | audio
 #     default:       quant used when --quant is not given
-#     capabilities:  text | vision | multi-image | choice | score | noul
+#     capabilities:  text | vision | multi-image | choice | score | noul | audio
 #     info:          descriptive metadata (family, parameters, architecture,
 #                    base_model, source, license, languages, context_length,
 #                    max_options, homepage). max_options also caps requests.
@@ -16,9 +16,11 @@
 #                    overridden per quant (`settings:` under the quant) and
 #                    at run time with `self serve <id> --set key=value`.
 #     <quant>:
-#       adapter:     engine adapter (ggmlc-laya | ggmlc-custom-decider)
+#       adapter:     engine adapter (ggmlc-laya | ggmlc-custom-decider | ggmlc-audio)
 #       repo:        Hugging Face repo (owner/name)
-#       files:       - {file, size, sha256[, role: model|mmproj]}
+#       files:       - {file, size, sha256[, role: model|mmproj|voice][, repo]}
+#                    role voice (audio only): .wav/.mp3 reference voice used
+#                    when a request has none. repo: per-file repo override.
 #       settings:    optional per-quant settings (override the model's)
 #
 # size (bytes) and sha256 pin the exact upstream file. A download that does
@@ -27,6 +29,145 @@
 version: 1
 
 models:
+  qwen3-tts:1.7b:
+    description: "Qwen3-TTS 1.7B Base: multilingual text-to-speech with reference audio"
+    readme: readmes/qwen3-tts/1.7b.md
+    type: audio
+    default: q4
+    capabilities:
+      input: [text]
+      output: [audio]
+    info:
+      family: qwen3-tts
+      parameters: 1.7B
+      architecture: qwen3tts
+      base_model: Qwen/Qwen3-TTS-12Hz-1.7B-Base
+      source: Qwen/Qwen3-TTS-12Hz-1.7B-Base
+      license: apache-2.0
+    q4:
+      adapter: ggmlc-audio
+      repo: ggml-org/Qwen3-TTS-12Hz-1.7B-Base-GGUF
+      files:
+        - {file: Qwen3-TTS-12Hz-1.7B-Base-Q4_K_M.gguf, size: 1035965280, sha256: 8d18c94acb2addd042f97da63c98be144eafa76d0d9495177eab65130cf85129}
+        - {file: mmproj-Qwen3-TTS-12Hz-1.7B-Base-Q8_0.gguf, role: mmproj, size: 446422912, sha256: 6fd65188839bcd6ecc91b277ad471e22a0edfada4699a0fe82f1165c18cfcce2}
+    q8:
+      adapter: ggmlc-audio
+      repo: ggml-org/Qwen3-TTS-12Hz-1.7B-Base-GGUF
+      files:
+        - {file: Qwen3-TTS-12Hz-1.7B-Base-Q8_0.gguf, size: 1847874400, sha256: ac7931aeb2e7aad1a6ed6602d353a5679c9d096b18ce8204ac730a8408d572e1}
+        - {file: mmproj-Qwen3-TTS-12Hz-1.7B-Base-Q8_0.gguf, role: mmproj, size: 446422912, sha256: 6fd65188839bcd6ecc91b277ad471e22a0edfada4699a0fe82f1165c18cfcce2}
+    bf16:
+      adapter: ggmlc-audio
+      repo: ggml-org/Qwen3-TTS-12Hz-1.7B-Base-GGUF
+      files:
+        - {file: Qwen3-TTS-12Hz-1.7B-Base-bf16.gguf, size: 3472593760, sha256: 0322c634ad5d3282524bc45bff030ab3f6f2a32ba14d5e7dace7eed75ecede46}
+        - {file: mmproj-Qwen3-TTS-12Hz-1.7B-Base-bf16.gguf, role: mmproj, size: 669081472, sha256: b9503e95e44705739cf82c15ce909b040b96a31ad79d02cf4dc5e1484399265d}
+
+  # --- Pocket TTS (Kyutai; one model per language, llama.cpp GGUFs by EryriLabs) ---
+  # The model needs a reference voice; the `voice` file is used when a request has none.
+
+  pocket-tts:en:
+    description: "Pocket TTS English: small CPU-friendly text-to-speech with voice cloning"
+    readme: readmes/pocket-tts/pocket-tts.md
+    type: audio
+    default: bf16
+    capabilities:
+      input: [text]
+      output: [audio]
+    info: {family: pocket-tts, parameters: 80M, architecture: pockettts, base_model: kyutai/pocket-tts, source: kyutai/pocket-tts, license: cc-by-4.0, languages: [en]}
+    bf16:
+      adapter: ggmlc-audio
+      repo: EryriLabs/pocket-tts-GGUF
+      files:
+        - {file: pocket-tts-en.gguf, size: 159390816, sha256: 9cca37ab8f3da366a1864919214fbd545f45609d8f1167d1fb302cebea515d63}
+        - {file: mmproj-pocket-tts-en.gguf, role: mmproj, size: 59858080, sha256: ccb1b6a55a7df0d4f96adff04ae3b9cd99c070edc98f6c84af5adb6d46a64cfc}
+        - {file: unmute-prod-website/default_voice.wav, role: voice, repo: kyutai/tts-voices, size: 480044, sha256: 27157be84054d6ce8af7a1ebca827c73d1d8fc38842f979d3fae207c92b1a9ae}
+
+  pocket-tts:de:
+    description: "Pocket TTS German: small CPU-friendly text-to-speech with voice cloning"
+    readme: readmes/pocket-tts/pocket-tts.md
+    type: audio
+    default: bf16
+    capabilities:
+      input: [text]
+      output: [audio]
+    info: {family: pocket-tts, parameters: 80M, architecture: pockettts, base_model: kyutai/pocket-tts, source: kyutai/pocket-tts, license: cc-by-4.0, languages: [de]}
+    bf16:
+      adapter: ggmlc-audio
+      repo: EryriLabs/pocket-tts-GGUF
+      files:
+        - {file: german/pocket-tts-german.gguf, size: 159391264, sha256: 7b797a22f993183fc5f496d4bf8207c03c6e527e8909b998fb35580ee49458fe}
+        - {file: german/mmproj-pocket-tts-german.gguf, role: mmproj, size: 59858080, sha256: 6ef66b0cf7a68f5973a2a4a8ded1a9c2532ecddd8b445a00e5fe3469cca11ca3}
+        - {file: unmute-prod-website/default_voice.wav, role: voice, repo: kyutai/tts-voices, size: 480044, sha256: 27157be84054d6ce8af7a1ebca827c73d1d8fc38842f979d3fae207c92b1a9ae}
+
+  pocket-tts:es:
+    description: "Pocket TTS Spanish: small CPU-friendly text-to-speech with voice cloning"
+    readme: readmes/pocket-tts/pocket-tts.md
+    type: audio
+    default: bf16
+    capabilities:
+      input: [text]
+      output: [audio]
+    info: {family: pocket-tts, parameters: 80M, architecture: pockettts, base_model: kyutai/pocket-tts, source: kyutai/pocket-tts, license: cc-by-4.0, languages: [es]}
+    bf16:
+      adapter: ggmlc-audio
+      repo: EryriLabs/pocket-tts-GGUF
+      files:
+        - {file: spanish/pocket-tts-spanish.gguf, size: 159392320, sha256: aa823005551f4600e3ab7a871aa023cfbb268aaef2bfb812654ad349da351d51}
+        - {file: spanish/mmproj-pocket-tts-spanish.gguf, role: mmproj, size: 59858080, sha256: 3fe3df5e6a569eb0a85cb6adaf6526652f8308ad9c011044777f547891ddb8c5}
+        - {file: unmute-prod-website/default_voice.wav, role: voice, repo: kyutai/tts-voices, size: 480044, sha256: 27157be84054d6ce8af7a1ebca827c73d1d8fc38842f979d3fae207c92b1a9ae}
+
+  pocket-tts:fr:
+    description: "Pocket TTS French (24 layers): text-to-speech with voice cloning"
+    readme: readmes/pocket-tts/pocket-tts.md
+    type: audio
+    default: bf16
+    capabilities:
+      input: [text]
+      output: [audio]
+    info: {family: pocket-tts, parameters: 300M, architecture: pockettts, base_model: kyutai/pocket-tts, source: kyutai/pocket-tts, license: cc-by-4.0, languages: [fr]}
+    bf16:
+      adapter: ggmlc-audio
+      repo: EryriLabs/pocket-tts-GGUF
+      files:
+        - {file: french/pocket-tts-french.gguf, size: 612681760, sha256: 73db75f9ead052c3b488ff1e3aea4a1558ce9d22ebcb7bd6489687fb89c62a1c}
+        - {file: french/mmproj-pocket-tts-french.gguf, role: mmproj, size: 59858080, sha256: ef157baf2b7c422caa2f66bee1f0b14829348ede347e1c756cb306925c23b8b7}
+        - {file: unmute-prod-website/default_voice.wav, role: voice, repo: kyutai/tts-voices, size: 480044, sha256: 27157be84054d6ce8af7a1ebca827c73d1d8fc38842f979d3fae207c92b1a9ae}
+
+  pocket-tts:it:
+    description: "Pocket TTS Italian: small CPU-friendly text-to-speech with voice cloning"
+    readme: readmes/pocket-tts/pocket-tts.md
+    type: audio
+    default: bf16
+    capabilities:
+      input: [text]
+      output: [audio]
+    info: {family: pocket-tts, parameters: 80M, architecture: pockettts, base_model: kyutai/pocket-tts, source: kyutai/pocket-tts, license: cc-by-4.0, languages: [it]}
+    bf16:
+      adapter: ggmlc-audio
+      repo: EryriLabs/pocket-tts-GGUF
+      files:
+        - {file: italian/pocket-tts-italian.gguf, size: 159391488, sha256: 3e1b54accfefc85952c782aa3aedd5396cf5fcfb979ac1ab3f66e6c39e11b722}
+        - {file: italian/mmproj-pocket-tts-italian.gguf, role: mmproj, size: 59858080, sha256: 46f0a614c23c2fac6bd3dcf93202b227333b2fd67096abbfb4fb3d4ec78f4434}
+        - {file: unmute-prod-website/default_voice.wav, role: voice, repo: kyutai/tts-voices, size: 480044, sha256: 27157be84054d6ce8af7a1ebca827c73d1d8fc38842f979d3fae207c92b1a9ae}
+
+  pocket-tts:pt:
+    description: "Pocket TTS Portuguese: small CPU-friendly text-to-speech with voice cloning"
+    readme: readmes/pocket-tts/pocket-tts.md
+    type: audio
+    default: bf16
+    capabilities:
+      input: [text]
+      output: [audio]
+    info: {family: pocket-tts, parameters: 80M, architecture: pockettts, base_model: kyutai/pocket-tts, source: kyutai/pocket-tts, license: cc-by-4.0, languages: [pt]}
+    bf16:
+      adapter: ggmlc-audio
+      repo: EryriLabs/pocket-tts-GGUF
+      files:
+        - {file: portuguese/pocket-tts-portuguese.gguf, size: 159392416, sha256: 9095778496f6fc09b1c9b537b20b3ecbd7ec2820db658410e5a7901170131207}
+        - {file: portuguese/mmproj-pocket-tts-portuguese.gguf, role: mmproj, size: 59858080, sha256: 0f17b5c44e5800e5c61bf6188eed66d1f668c913fb6ff58a160d7e4fc57e0db2}
+        - {file: unmute-prod-website/default_voice.wav, role: voice, repo: kyutai/tts-voices, size: 480044, sha256: 27157be84054d6ce8af7a1ebca827c73d1d8fc38842f979d3fae207c92b1a9ae}
+
   # --- Kev (Qwen-based System One decision models, compiled with ggmlc) ---
   kev:0.5b:
     description: "Kev 0.5b: Qwen2.5-0.5B-based System One decision model (ggmlc)"
