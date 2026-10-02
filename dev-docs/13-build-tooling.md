@@ -58,7 +58,8 @@ Environment: `GGMLC_VERSION` (Laya release, default `v0.9.6`), `MODEL` (default
 ## Engine build (`engines/`)
 
 - `mod engine "engines"` in the root justfile. `engines/justfile` is the dispatcher and
-  declares the modules `decider` (`engines/ggmlc-custom-decider/justfile`) and `laya`
+  declares the modules `decider` (`engines/ggmlc-custom-decider/justfile`), `clef` (`engines/clef/justfile`, links the
+  decider's `deps/`, built right after it by `engine build`) and `laya`
   (`engines/laya/justfile`). List: `just --list engine`.
 - No bash scripts.
 
@@ -75,13 +76,21 @@ Environment: `GGMLC_VERSION` (Laya release, default `v0.9.6`), `MODEL` (default
 The same recipes are reachable as `just engine decider <recipe>` and
 `just engine laya fetch`.
 
-- Decider and audio variants: `cuda-12.8` (Decider default), `cuda-13.4`, `vulkan`, `cpu`.
+- Decider and audio variants: `cuda-12.8` (default of `just engine build`), `cuda-13.4`
+  (default of `just engine-decider` and so of `just setup` / `just serve`: the dev container is CUDA 13),
+  `vulkan`, `cpu`.
   Both engines share `engines/ggmlc-custom-decider/deps` and the bundle `lib/`, so
   build them with the same variant; `just engine audio` without a variant reuses
   the one in `deps/.tag`.
 - llama.cpp version: `LLAMA_CPP_TAG` (default `b11256`).
 - `deps/` skipped if tag + variant unchanged (`deps/.tag`).
 - `verify` only warns about libraries it cannot resolve.
+- The variant must match the host's CUDA major. ggml skips a CUDA backend whose runtime
+  libraries are missing (`libcudart.so.12` on a CUDA 13 host) without an error and runs on the
+  CPU: the engine still starts, it is just 50-100x slower. `clef` reports the device it uses
+  (`Device` line of `self serve`, `device` of the ready frame) and logs a warning when no GPU
+  backend loaded. `bootstrap` only builds missing engines, so after changing the variant run
+  `just engine-decider` once.
 
 ## Runtime (`just runtime`)
 
@@ -98,7 +107,7 @@ The same recipes are reachable as `just engine decider <recipe>` and
 
 ```
 self
-libexec/ai-server/{laya, ggmlc-custom-decider, ggmlc-audio, lib/}
+libexec/ai-server/{laya, ggmlc-custom-decider, ggmlc-audio, clef, lib/}
 ```
 
 In a checkout this is `bin/self` + `bin/libexec/ai-server/`. There is no
@@ -116,7 +125,7 @@ release tarball recipe; releases are container images.
 
   | Variant | Base | Decider engine | Laya |
   | :--- | :--- | :--- | :--- |
-  | `cuda-13` | CUDA 13 | `cpu` | `vulkan` |
+  | `cuda-13` | CUDA 13 | `cuda-13.4` | `vulkan` |
   | `cuda-12` | CUDA 12 | `cuda-12.8` | `vulkan` |
   | `cpu` | Ubuntu 24.04 | `cpu` | `vulkan` |
 

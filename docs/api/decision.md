@@ -52,7 +52,7 @@ Named questions to answer. Each key becomes the answer key in the response.
 
 <ApiField name="model" type="string" optional>
 
-Must match the loaded model ID when provided.
+Ignored: the server runs one model. Accepted so SDK clients work unchanged.
 
 </ApiField>
 
@@ -309,7 +309,7 @@ curl http://localhost:8080/v1/systemone \
     "state": "Inspect this image and decide whether the package is damaged.",
     "images": [
       {
-        "url": "https://example.com/package.jpg",
+        "url": "https://upload.wikimedia.org/wikipedia/commons/b/b7/Damaged_fragile_parcel_delivered_to_doorstep.jpg",
         "name": "package",
         "description": "Front camera image of the delivered package"
       }

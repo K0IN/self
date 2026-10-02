@@ -94,6 +94,7 @@ HTTP (chi) -> api/decision -> decision.Service -> Scheduler -> Adapter -> engine
 | `models` | `registry.yml` and model cards (data only) |
 | `engines/ggmlc-custom-decider` | C++ engine |
 | `engines/ggmlc-audio` | C++ text-to-speech engine (same llama.cpp libraries) |
+| `engines/clef` | C++ engine for Clef Flash (backbone via llama.cpp + native joint head) |
 | `engines/laya` | Recipe that fetches the upstream Laya engine |
 | `tests/models` | Source registry checks and end-to-end model tests |
 | `docs` | VitePress site: user docs + registry pages |

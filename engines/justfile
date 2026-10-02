@@ -4,18 +4,22 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 
 mod decider "ggmlc-custom-decider"
 mod audioengine "ggmlc-audio"
+mod clef "clef"
 mod laya "laya"
 
 default:
     @just --list
 
-# Build the custom Decider engine.
+# Build the engines: the custom Decider engine and the Clef engine.
 build variant="cuda-12.8" target="":
     #!/usr/bin/env bash
+    set -euo pipefail
     if [[ -n "{{target}}" ]]; then
       just decider build "{{variant}}" "{{target}}"
+      just clef build "{{target}}"
     else
       just decider build "{{variant}}"
+      just clef build
     fi
 
 deps variant="cuda-12.8":
@@ -23,12 +27,14 @@ deps variant="cuda-12.8":
 
 compile variant="cuda-12.8":
     just decider compile "{{variant}}"
+    just clef compile
 
 verify target="../../bin/libexec/ai-server":
     just decider verify "{{target}}"
 
 clean:
     just decider clean
+    just clef clean
 
 # Fetch the upstream Laya runtime.
 runtime variant="auto" version="v0.9.6":

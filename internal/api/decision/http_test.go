@@ -136,6 +136,16 @@ func TestInfoRoutes(t *testing.T) {
 	}
 }
 
+func TestSystemOneIgnoresModel(t *testing.T) {
+	srv := setup(t, textCaps, nil, 4, newFake())
+	for _, model := range []string{"other", "test:1b", ""} {
+		status, m := post(t, srv.URL, `{"state":"x","model":"`+model+`","questions":{"q":{"type":"noul","instructions":"x"}}}`)
+		if status != 200 || m["model"] != "test:1b" {
+			t.Errorf("model %q: got %d %v", model, status, m)
+		}
+	}
+}
+
 func TestSystemOneText(t *testing.T) {
 	f := newFake()
 	srv := setup(t, textCaps, nil, 4, f)
@@ -174,7 +184,6 @@ func TestSystemOneErrors(t *testing.T) {
 		{`{"state":"x","questions":{"q":{"type":"score","instructions":"x","criteria":["a","b"]}}}`, 422, "unsupported_capability"},
 		{`{"state":"x","questions":{"q":{"type":"choice","instructions":"x","criteria":["a","b","c"]}}}`, 422, "unsupported_capability"},
 		{`{"state":"x","images":["https://example.com/a.png"],"questions":{"q":{"type":"noul","instructions":"x"}}}`, 422, "unsupported_capability"},
-		{`{"state":"x","model":"other","questions":{"q":{"type":"noul","instructions":"x"}}}`, 404, "model_not_found"},
 	}
 	for _, c := range cases {
 		status, m := post(t, srv.URL, c.body)

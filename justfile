@@ -34,7 +34,7 @@ runtime variant="auto":
     just engine runtime {{variant}} {{ggmlc}}
 
 [private]
-engine-decider variant="cuda-12.8":
+engine-decider variant="cuda-13.4":
     just engine build {{variant}}
 
 [private]
@@ -45,7 +45,7 @@ bootstrap:
             rm -f "{{engine_dir}}/laya"
             just runtime
         fi
-        if [[ ! -x "{{engine_dir}}/ggmlc-custom-decider" ]]; then
+        if [[ ! -x "{{engine_dir}}/ggmlc-custom-decider" || ! -x "{{engine_dir}}/clef" ]]; then
             just engine-decider
         fi
         if [[ ! -x "{{engine_dir}}/ggmlc-audio" ]]; then

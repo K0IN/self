@@ -190,8 +190,8 @@ Text to synthesize, up to 4096 characters.
 
 <ApiField name="model" type="string" optional>
 
-The loaded model ID or an OpenAI TTS model name (`tts-1`, `tts-1-hd`,
-`gpt-4o-mini-tts`), so the official OpenAI SDKs work unchanged.
+Ignored: the server runs one model. Accepted so the official OpenAI SDKs work
+unchanged.
 
 </ApiField>
 

@@ -51,7 +51,7 @@ Unknown routes return 400 `invalid_request`; a wrong method returns 405
   - `score`: `criteria` is a non-empty list of level descriptions.
   - `noul`: no `criteria`.
 - `images`: URL string, data URI, or `{url, name, description}` (see 10).
-- `model` optional. If set, must match the loaded model.
+- `model` optional and ignored (accepted so SDK clients work): a server runs one model.
 
 ### Audio speech
 
@@ -69,8 +69,7 @@ Audio models expose an OpenAI-compatible request shape with a WAV response:
 
 `voice` may be an OpenAI built-in voice name (`alloy`, `ash`, ... all select the
 model's default voice) or an object with inline `audio` and `format`. `model` may
-be the loaded model ID or an OpenAI TTS model name (`tts-1`, `tts-1-hd`,
-`gpt-4o-mini-tts`), so the official OpenAI SDKs work unchanged (verified with
+be anything (it is ignored), so the official OpenAI SDKs work unchanged (verified with
 `openai-go` v1.12.0). The
 server-specific `ref_audio` field accepts only base64 audio or a `data:` URL
 in JSON; filesystem paths are rejected. The endpoint also accepts
@@ -148,7 +147,7 @@ Qwen3-TTS CustomVoice/VoiceDesign support in llama.cpp first.
 - Must: unknown question type / missing state -> 400.
 - Must: images on a text-only model -> 422.
 - Must: more options than `max_options` -> 422.
-- Must: wrong `model` -> 404.
+- Must: a `model` in the request is ignored (any value is accepted).
 - Must: full queue -> 429.
 - Must: every error uses the shape above (`internal/api/decision` tests with a fake adapter).
 - Must: the served API matches this file for every model (end-to-end tests `api: *`, see 14).

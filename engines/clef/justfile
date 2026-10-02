@@ -1,0 +1,34 @@
+# clef engine build (Cloudflare Clef Flash).
+#
+# Links the same prebuilt llama.cpp libraries as the Decider engine, so the
+# Decider build (`just engine build`) runs first and provides deps/ and lib/.
+#
+# Recipes run in this directory (engines/clef).
+
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+deps      := "../ggmlc-custom-decider/deps"
+build_dir := "build"
+dest      := "../../bin/libexec/ai-server"
+
+default:
+    @just --list
+
+# Compile main.cpp against the Decider engine's deps/ (Release, Ninja)
+compile:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    test -f {{deps}}/.tag || { echo "llama.cpp deps are missing: build the Decider engine first" >&2; exit 1; }
+    rm -rf {{build_dir}}
+    cmake -S . -B {{build_dir}} -G Ninja -DCMAKE_BUILD_TYPE=Release > /dev/null
+    cmake --build {{build_dir}}
+
+# Build and install the engine into the bundle (default: bin/libexec/ai-server)
+build target=dest: compile
+    mkdir -p {{target}}
+    install -m 0755 {{build_dir}}/clef {{target}}/clef
+    @echo "Installed {{target}}/clef"
+
+# Remove build output
+clean:
+    rm -rf {{build_dir}}

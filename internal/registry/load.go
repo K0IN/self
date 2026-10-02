@@ -214,11 +214,16 @@ func parseVariant(t ModelType, quant string, node *yaml.Node) (Variant, error) {
 			return Variant{}, fmt.Errorf("files[%d]: unknown role %q for %s models", i, role, t)
 		}
 		ext := strings.ToLower(path.Ext(f.Name))
-		if role == RoleVoice {
+		switch {
+		case role == RoleVoice:
 			if ext != ".wav" && ext != ".mp3" {
 				return Variant{}, fmt.Errorf("files[%d]: a voice must be a .wav or .mp3 file (%q)", i, f.Name)
 			}
-		} else if ext != ".gguf" {
+		case role == RoleHead:
+			if ext != ".safetensors" {
+				return Variant{}, fmt.Errorf("files[%d]: a head must be a .safetensors file (%q)", i, f.Name)
+			}
+		case ext != ".gguf":
 			return Variant{}, fmt.Errorf("files[%d]: only GGUF files are supported (%q)", i, f.Name)
 		}
 		if f.Repo != "" && strings.Count(f.Repo, "/") != 1 {
