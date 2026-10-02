@@ -7,7 +7,6 @@ package adapters
 
 import (
 	"ai-server/internal/adapters/audio"
-	"ai-server/internal/adapters/clef"
 	"ai-server/internal/adapters/customdecider"
 	"ai-server/internal/adapters/ggmlclaya"
 	"ai-server/internal/adapters/selfipc"
@@ -39,7 +38,6 @@ type AudioEntry struct {
 }
 
 var decisionAdapters = map[string]DecisionEntry{
-	"ggmlc-clef": {Base: Base{Engine: clef.Engine, Settings: clef.Settings}, New: clef.New},
 	// Upstream ggmlc Laya daemon: ggmlc-compiled decision GGUFs (Kev, Laya).
 	"ggmlc-laya": {Base: Base{Engine: ggmlclaya.Engine, Settings: ggmlclaya.Settings}, New: ggmlclaya.New},
 	// Our llama.cpp-based engine for Decider checkpoints (+ vision via mmproj).
