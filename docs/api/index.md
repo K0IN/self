@@ -236,7 +236,6 @@ Errors use a stable envelope with a machine-readable `type` and a human-readable
 | Status | Error types | Meaning |
 | --- | --- | --- |
 | `400` | `invalid_request` | Invalid JSON, unknown fields, wrong content type, or an unknown route. |
-| `404` | `model_not_found`, `quant_not_found` | Requested model does not match the loaded model or registry. |
 | `405` | `invalid_request` | Wrong HTTP method for the route. |
 | `413` | `image_too_large`, `request_too_large` | Request body exceeds 32 MiB. |
 | `422` | `unsupported_capability` | The loaded model cannot answer the requested question, image input, audio format, stream, speed, or instruction request. |

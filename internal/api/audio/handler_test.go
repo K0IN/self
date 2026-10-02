@@ -128,7 +128,6 @@ func TestSpeechRejectsBeforeSynthesis(t *testing.T) {
 		status int
 	}{
 		"format":   {`{"input":"hello","response_format":"mp3"}`, http.StatusUnprocessableEntity},
-		"model":    {`{"input":"hello","model":"other"}`, http.StatusNotFound},
 		"voice":    {`{"input":"hello","voice":"robot"}`, http.StatusBadRequest},
 		"path":     {`{"input":"hello","ref_audio":"/tmp/speaker.mp3"}`, http.StatusBadRequest},
 		"stream":   {`{"input":"hello","stream_format":"sse"}`, http.StatusUnprocessableEntity},
@@ -149,8 +148,9 @@ func TestSpeechRejectsBeforeSynthesis(t *testing.T) {
 }
 
 func TestOpenAIClientRequest(t *testing.T) {
-	// The request the OpenAI SDK sends with only model, input and voice set.
-	for _, model := range []string{"tts-1", "tts-1-hd", "gpt-4o-mini-tts", "test-tts"} {
+	// The request the OpenAI SDK sends with only model, input and voice set;
+	// the model name is ignored.
+	for _, model := range []string{"tts-1", "tts-1-hd", "gpt-4o-mini-tts", "test-tts", "something-else"} {
 		service := &fakeService{}
 		router := chi.NewRouter()
 		New(service).Mount(router)

@@ -47,10 +47,6 @@ func (h *Handler) systemOne(w http.ResponseWriter, r *http.Request) {
 		api.WriteError(w, err)
 		return
 	}
-	if req.Model != "" && req.Model != h.svc.ModelID() {
-		api.WriteError(w, errs.New(errs.ModelNotFound, "model %q is not loaded (this server serves %q)", req.Model, h.svc.ModelID()))
-		return
-	}
 	in := dom.SystemOneInput{State: req.State, Questions: req.Questions}
 	for _, im := range req.Images {
 		in.Images = append(in.Images, dom.ImageSource{URL: im.URL, Name: im.Name, Description: im.Description})

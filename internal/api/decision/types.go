@@ -14,8 +14,7 @@ type SystemOneRequest struct {
 	State     json.RawMessage `json:"state"`
 	Images    []ImageInput    `json:"images,omitempty"`
 	Questions dom.Questions   `json:"questions"`
-	// Model is accepted for TypeSafe SDK compatibility and must match the
-	// loaded model when set.
+	// Model is accepted for SDK compatibility and ignored: a server runs one model.
 	Model string `json:"model,omitempty"`
 }
 

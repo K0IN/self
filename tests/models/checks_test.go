@@ -78,6 +78,7 @@ func modelChecks() []check {
 		check{"limits: max options accepted", checkMaxOptions},
 		check{"limits: too many options rejected", checkTooManyOptions},
 		check{"api: invalid requests rejected", checkInvalidRequests},
+		check{"api: model field is ignored", checkModelIgnored},
 		check{"queue: concurrent requests", checkConcurrent},
 		check{"vision: text-only model rejects images", checkTextOnlyRejectsImages},
 		check{"vision: solid colors", checkColors},
@@ -318,6 +319,19 @@ func checkTooManyOptions(ctx context.Context, e *env) (string, error) {
 	return fmt.Sprintf("%d options -> 422", n), nil
 }
 
+// checkModelIgnored: one server runs one model, so the model named in a request is not checked.
+func checkModelIgnored(ctx context.Context, e *env) (string, error) {
+	if err := requireTypes(e, true, false, false); err != nil {
+		return "", err
+	}
+	req := textRequest(ticketText, routingQuestions())
+	req.Model = "nope:1b"
+	if _, err := e.c.decide(ctx, req); err != nil {
+		return "", err
+	}
+	return "model nope:1b ignored", nil
+}
+
 func checkInvalidRequests(ctx context.Context, e *env) (string, error) {
 	valid := string(routingQuestions())
 	const json = "application/json"
@@ -326,7 +340,6 @@ func checkInvalidRequests(ctx context.Context, e *env) (string, error) {
 		status                  int
 		typ                     string
 	}{
-		{"unknown model", json, `{"model":"nope:1b","state":"x","questions":` + valid + `}`, 404, "model_not_found"},
 		{"unknown field", json, `{"state":"x","questions":` + valid + `,"bogus":1}`, 400, "invalid_request"},
 		{"missing state", json, `{"questions":` + valid + `}`, 400, "invalid_request"},
 		{"no questions", json, `{"state":"x","questions":{}}`, 400, "invalid_request"},

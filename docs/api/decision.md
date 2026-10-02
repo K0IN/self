@@ -52,7 +52,7 @@ Named questions to answer. Each key becomes the answer key in the response.
 
 <ApiField name="model" type="string" optional>
 
-Must match the loaded model ID when provided.
+Ignored: the server runs one model. Accepted so SDK clients work unchanged.
 
 </ApiField>
 

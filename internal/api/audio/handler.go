@@ -21,9 +21,6 @@ import (
 // MaxBodyBytes bounds request bodies, inline reference audio included.
 const MaxBodyBytes = 32 << 20
 
-// openAIModels are OpenAI TTS model names accepted as aliases for the loaded model.
-var openAIModels = map[string]bool{"tts-1": true, "tts-1-hd": true, "gpt-4o-mini-tts": true}
-
 // openAIVoices are OpenAI built-in voices; they select the model's default voice.
 var openAIVoices = map[string]bool{
 	"alloy": true, "ash": true, "ballad": true, "cedar": true, "coral": true, "echo": true, "fable": true,
@@ -45,7 +42,7 @@ type Handler struct {
 func New(svc Service) *Handler { return &Handler{svc: svc} }
 
 type request struct {
-	Model          string          `json:"model"`
+	Model          string          `json:"model"` // accepted and ignored: a server runs one model
 	Input          string          `json:"input"`
 	Voice          json.RawMessage `json:"voice"`
 	Instructions   string          `json:"instructions"`
@@ -69,10 +66,6 @@ func (h *Handler) speech(w http.ResponseWriter, r *http.Request) {
 	req, err := decode(r, w)
 	if err != nil {
 		apiroot.WriteError(w, err)
-		return
-	}
-	if req.Model != "" && req.Model != h.svc.ModelID() && !openAIModels[req.Model] && !strings.HasPrefix(req.Model, "gpt-4o-mini-tts-") {
-		apiroot.WriteError(w, errs.New(errs.ModelNotFound, "model %q is not loaded", req.Model))
 		return
 	}
 	voice, err := parseVoice(req.Voice, req.RefAudio, req.refUpload)
