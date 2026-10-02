@@ -66,7 +66,7 @@ models:
   # --- Pocket TTS (Kyutai; one model per language, llama.cpp GGUFs by EryriLabs) ---
   # The model needs a reference voice; the `voice` file is used when a request has none.
 
-  pocket-tts:en:
+  pocket-tts-en:100m:
     description: "Pocket TTS English: small CPU-friendly text-to-speech with voice cloning"
     readme: readmes/pocket-tts/pocket-tts.md
     type: audio
@@ -83,7 +83,7 @@ models:
         - {file: mmproj-pocket-tts-en.gguf, role: mmproj, size: 59858080, sha256: ccb1b6a55a7df0d4f96adff04ae3b9cd99c070edc98f6c84af5adb6d46a64cfc}
         - {file: unmute-prod-website/default_voice.wav, role: voice, repo: kyutai/tts-voices, size: 480044, sha256: 27157be84054d6ce8af7a1ebca827c73d1d8fc38842f979d3fae207c92b1a9ae}
 
-  pocket-tts:de:
+  pocket-tts-de:100m:
     description: "Pocket TTS German: small CPU-friendly text-to-speech with voice cloning"
     readme: readmes/pocket-tts/pocket-tts.md
     type: audio
@@ -100,7 +100,7 @@ models:
         - {file: german/mmproj-pocket-tts-german.gguf, role: mmproj, size: 59858080, sha256: 6ef66b0cf7a68f5973a2a4a8ded1a9c2532ecddd8b445a00e5fe3469cca11ca3}
         - {file: unmute-prod-website/default_voice.wav, role: voice, repo: kyutai/tts-voices, size: 480044, sha256: 27157be84054d6ce8af7a1ebca827c73d1d8fc38842f979d3fae207c92b1a9ae}
 
-  pocket-tts:es:
+  pocket-tts-es:100m:
     description: "Pocket TTS Spanish: small CPU-friendly text-to-speech with voice cloning"
     readme: readmes/pocket-tts/pocket-tts.md
     type: audio
@@ -117,7 +117,7 @@ models:
         - {file: spanish/mmproj-pocket-tts-spanish.gguf, role: mmproj, size: 59858080, sha256: 3fe3df5e6a569eb0a85cb6adaf6526652f8308ad9c011044777f547891ddb8c5}
         - {file: unmute-prod-website/default_voice.wav, role: voice, repo: kyutai/tts-voices, size: 480044, sha256: 27157be84054d6ce8af7a1ebca827c73d1d8fc38842f979d3fae207c92b1a9ae}
 
-  pocket-tts:fr:
+  pocket-tts-fr:100m:
     description: "Pocket TTS French (24 layers): text-to-speech with voice cloning"
     readme: readmes/pocket-tts/pocket-tts.md
     type: audio
@@ -134,7 +134,7 @@ models:
         - {file: french/mmproj-pocket-tts-french.gguf, role: mmproj, size: 59858080, sha256: ef157baf2b7c422caa2f66bee1f0b14829348ede347e1c756cb306925c23b8b7}
         - {file: unmute-prod-website/default_voice.wav, role: voice, repo: kyutai/tts-voices, size: 480044, sha256: 27157be84054d6ce8af7a1ebca827c73d1d8fc38842f979d3fae207c92b1a9ae}
 
-  pocket-tts:it:
+  pocket-tts-it:100m:
     description: "Pocket TTS Italian: small CPU-friendly text-to-speech with voice cloning"
     readme: readmes/pocket-tts/pocket-tts.md
     type: audio
@@ -151,7 +151,7 @@ models:
         - {file: italian/mmproj-pocket-tts-italian.gguf, role: mmproj, size: 59858080, sha256: 46f0a614c23c2fac6bd3dcf93202b227333b2fd67096abbfb4fb3d4ec78f4434}
         - {file: unmute-prod-website/default_voice.wav, role: voice, repo: kyutai/tts-voices, size: 480044, sha256: 27157be84054d6ce8af7a1ebca827c73d1d8fc38842f979d3fae207c92b1a9ae}
 
-  pocket-tts:pt:
+  pocket-tts-pt:100m:
     description: "Pocket TTS Portuguese: small CPU-friendly text-to-speech with voice cloning"
     readme: readmes/pocket-tts/pocket-tts.md
     type: audio
