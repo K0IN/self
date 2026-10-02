@@ -69,6 +69,9 @@
   - `ggmlc-audio` has been run on CPU only; the `cuda-12.8`, `cuda-13.4` and
     `vulkan` builds are not tested yet.
   - Sampling settings apply to the whole engine, not per request.
-  - Pocket TTS: one fixed default voice; the named voices in
-    `kyutai/tts-voices` are not mapped to OpenAI voice names.
+  - Pocket TTS: one default voice per language model (en `alba`, fr `estelle`, the
+    others Kyutai's `default_voice.wav`); the named voices in `kyutai/tts-voices`
+    work as `ref_audio` but are not mapped to OpenAI voice names. The
+    language voices `giovanni`, `lola`, `juergen` and `rafael` are in the gated
+    `kyutai/pocket-tts` repo (needs `HF_TOKEN`), so no registry entry pins them.
   - Non-WAV output, streaming, `instructions` and `speed` are not implemented.

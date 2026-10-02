@@ -99,7 +99,7 @@ models:
 | `laya:english`, `laya:multilingual`, `laya:typed-decisions` | `ggmlc-laya` |
 | `decider:0.8b`, `decider:4b`, `decider-vision:2b` | `ggmlc-custom-decider` |
 | `qwen3-tts:1.7b` | `ggmlc-audio` |
-| `pocket-tts:en`, `:de`, `:es`, `:fr`, `:it`, `:pt` | `ggmlc-audio` (with a default `voice` file) |
+| `pocket-tts-en:100m`, `-de`, `-es`, `-fr`, `-it`, `-pt` (each `:100m`) | `ggmlc-audio` (with a default `voice` file) |
 
 ## Acceptance criteria
 

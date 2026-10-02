@@ -161,6 +161,77 @@ console.log(await response.json())
 
 :::
 
+<div class="api-label">Example response for the curl request</div>
+
+```json
+{
+  "model": "kev:0.5b",
+  "answers": {
+    "department": {
+      "type": "choice",
+      "choice": "billing",
+      "probabilities": { "billing": 0.94, "technical": 0.06 },
+      "confidence": 0.94
+    },
+    "refund_required": {
+      "type": "noul",
+      "noul": 0.91,
+      "confidence": 0.91
+    }
+  },
+  "usage": {
+    "input_tokens": 31,
+    "output_tokens": 0,
+    "images": 0,
+    "latency_ms": 24.7
+  }
+}
+```
+
+<div class="api-label">Example response for the Python request</div>
+
+```json
+{
+  "model": "kev:0.5b",
+  "answers": {
+    "priority": {
+      "type": "choice",
+      "choice": "high",
+      "probabilities": { "low": 0.08, "high": 0.92 },
+      "confidence": 0.92
+    }
+  },
+  "usage": {
+    "input_tokens": 18,
+    "output_tokens": 0,
+    "images": 0,
+    "latency_ms": 19.3
+  }
+}
+```
+
+<div class="api-label">Example response for the JavaScript request</div>
+
+```json
+{
+  "model": "kev:0.5b",
+  "answers": {
+    "billing": {
+      "type": "choice",
+      "choice": "yes",
+      "probabilities": { "yes": 0.88, "no": 0.12 },
+      "confidence": 0.88
+    }
+  },
+  "usage": {
+    "input_tokens": 15,
+    "output_tokens": 0,
+    "images": 0,
+    "latency_ms": 17.9
+  }
+}
+```
+
 </div>
 </div>
 
@@ -321,6 +392,27 @@ curl http://localhost:8080/v1/systemone \
       }
     }
   }'
+```
+
+<div class="api-label">Example response</div>
+
+```json
+{
+  "model": "decider-vision:2b",
+  "answers": {
+    "damaged": {
+      "type": "noul",
+      "noul": 0.87,
+      "confidence": 0.87
+    }
+  },
+  "usage": {
+    "input_tokens": 118,
+    "output_tokens": 0,
+    "images": 1,
+    "latency_ms": 642.1
+  }
+}
 ```
 
 </div>

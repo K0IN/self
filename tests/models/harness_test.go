@@ -282,9 +282,9 @@ func TestRealRegistrySelectsEveryDecisionModel(t *testing.T) {
 		t.Fatalf("unexpected audio model: %+v", audio)
 	}
 	for _, lang := range []string{"en", "de", "es", "fr", "it", "pt"} {
-		p, err := reg.Resolve("pocket-tts:"+lang, registry.ResolveOptions{})
+		p, err := reg.Resolve("pocket-tts-"+lang+":100m", registry.ResolveOptions{})
 		if err != nil || p.Variant.Adapter != "ggmlc-audio" || len(p.Variant.Files) != 3 || p.Variant.Files[2].Role != registry.RoleVoice {
-			t.Fatalf("pocket-tts:%s: %v %+v", lang, err, p.Variant)
+			t.Fatalf("pocket-tts-%s: %v %+v", lang, err, p.Variant)
 		}
 	}
 }

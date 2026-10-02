@@ -28,7 +28,6 @@ export default defineConfig({
                     { text: 'Speech to text', link: '/api/stt' }
                 ]
             },
-            { text: 'Examples', link: '/examples' },
             { text: 'Model registry', link: '/registry/' }
         ],
         search: { provider: 'local' }

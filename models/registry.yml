@@ -132,7 +132,7 @@ models:
       files:
         - {file: french/pocket-tts-french.gguf, size: 612681760, sha256: 73db75f9ead052c3b488ff1e3aea4a1558ce9d22ebcb7bd6489687fb89c62a1c}
         - {file: french/mmproj-pocket-tts-french.gguf, role: mmproj, size: 59858080, sha256: ef157baf2b7c422caa2f66bee1f0b14829348ede347e1c756cb306925c23b8b7}
-        - {file: developpeuse-3.wav, role: voice, repo: kyutai/tts-voices, size: 1282324, sha256: d14dc373ead723bc818d8970d271b876aa02833673cabd97aea859444a8cdc3a}
+        - {file: unmute-prod-website/developpeuse-3.wav, role: voice, repo: kyutai/tts-voices, size: 1282324, sha256: d14dc373ead723bc818d8970d271b876aa02833673cabd97aea859444a8cdc3a}
 
   pocket-tts-it:100m:
     description: "Pocket TTS Italian: small CPU-friendly text-to-speech with voice cloning"

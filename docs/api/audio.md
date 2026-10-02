@@ -8,9 +8,20 @@ aside: false
 
 # Audio API (text to speech)
 
-Audio models expose an OpenAI-compatible speech endpoint. Start an audio model,
-such as `qwen3-tts:1.7b` or `pocket-tts:en`, before sending requests. The
-endpoint returns WAV audio and does not require an API key.
+Audio models expose an OpenAI-compatible speech endpoint. Start one of these
+audio models before sending requests:
+
+| Model | Language |
+| --- | --- |
+| `qwen3-tts:1.7b` | Multilingual |
+| `pocket-tts-en:100m` | English |
+| `pocket-tts-de:100m` | German |
+| `pocket-tts-es:100m` | Spanish |
+| `pocket-tts-fr:100m` | French |
+| `pocket-tts-it:100m` | Italian |
+| `pocket-tts-pt:100m` | Portuguese |
+
+The endpoint returns WAV audio and does not require an API key.
 
 The official OpenAI SDKs work unchanged: point their base URL at
 `http://localhost:8080/v1`. OpenAI model names (`tts-1`, `tts-1-hd`,
@@ -43,7 +54,7 @@ from openai import OpenAI
 
 client = OpenAI(base_url="http://localhost:8080/v1", api_key="unused")
 with client.audio.speech.with_streaming_response.create(
-    model="tts-1",
+    model="qwen3-tts:1.7b",
     voice="alloy",
     input="Hello from the local speech model.",
     response_format="wav",
@@ -74,8 +85,9 @@ Named speakers and voices described in text are not available yet. Qwen3-TTS
 has them in separate model variants (CustomVoice and VoiceDesign), but
 llama.cpp b11256 supports only the Base model, and its TTS engine accepts only
 a language and a reference recording. Pocket TTS models speak one language
-each (`pocket-tts:en`, `:de`, `:es`, `:fr`, `:it`, `:pt`); a recording in any
-language works as the reference.
+each (`pocket-tts-en:100m`, `pocket-tts-de:100m`, `pocket-tts-es:100m`,
+`pocket-tts-fr:100m`, `pocket-tts-it:100m`, `pocket-tts-pt:100m`); a recording
+in any language works as the reference.
 
 </div>
 <div class="api-example">
@@ -95,6 +107,17 @@ curl http://localhost:8080/v1/audio/speech \
   -o hello.wav
 ```
 
+<div class="api-label">Ready-made voice (Kyutai)</div>
+
+```bash
+curl -L -o merchant.wav \
+  https://huggingface.co/kyutai/tts-voices/resolve/main/alba-mackenna/merchant.wav
+curl http://localhost:8080/v1/audio/speech \
+  -F input='Hello!' \
+  -F ref_audio=@merchant.wav \
+  -o hello.wav
+```
+
 </div>
 </div>
 
@@ -104,7 +127,9 @@ curl http://localhost:8080/v1/audio/speech \
 ## Examples
 
 Copy-paste examples against a server started with
-`self serve qwen3-tts:1.7b`. Each one writes a WAV file you can play.
+`self serve qwen3-tts:1.7b`. Each one writes a WAV file you can play. Replace
+the model ID in the start command with any ID from the model list above to use
+another audio model.
 
 **Speak some text** with the default voice.
 
@@ -242,7 +267,8 @@ bundled llama.cpp TTS runtime does not currently expose instruction control.
 
 <ApiField name="language" type="string" optional>
 
-Language passed to Qwen3-TTS, for example `en`, `de`, `fr`, or `ja`.
+Language passed to Qwen3-TTS, for example `en`, `de`, `fr`, or `ja`. Pocket
+TTS models speak one fixed language, chosen by the model you start.
 
 </ApiField>
 
