@@ -46,7 +46,9 @@
 - Offline start needs a registry cache from one earlier online run (no bundled registry). The cache can be outdated.
 - `--runtime-dir` must be an absolute path: the engine starts in its own directory.
 - Engine build tested on Linux x86_64 only.
-- Container images: the `cuda-13` image bundles the CPU build of the Decider engine, and all images use the Vulkan build of Laya.
+- Clef has no prompt cache: every request evaluates its whole prompt (state, images, schema). On a GPU
+  that is a few hundred ms; on a CPU-only host a request with an image and ~800 tokens takes about 30 s.
+  An engine bundle built for another CUDA major than the host also runs on the CPU (see 13).
 - The docs build (`docs/generate-registry.mjs`) does not list `max_images` as a reserved model key; a registry model that sets it would be rendered with a bogus quant.
 
 ## Open points

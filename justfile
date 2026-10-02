@@ -34,7 +34,7 @@ runtime variant="auto":
     just engine runtime {{variant}} {{ggmlc}}
 
 [private]
-engine-decider variant="cuda-12.8":
+engine-decider variant="cuda-13.4":
     just engine build {{variant}}
 
 [private]

@@ -24,6 +24,20 @@
 - A request that gets no answer within 2 minutes kills the engine; the request fails with `runtime_crashed`.
 - No auto restart. Leave that to systemd / Podman / k8s.
 
+## Models stay loaded
+
+- `self serve` starts one engine process per served model and keeps it for the whole run; a
+  request never starts a process or loads weights. The ready handshake only completes once the
+  weights, the context and the projector are loaded, so the first request is as warm as the rest
+  (apart from a few hundred ms of one-time GPU kernel setup).
+- Engines (`ggmlc-custom-decider`, `clef`, `ggmlc-audio`; Laya is a daemon) then answer request
+  frames in a loop. The only per-request state they reset is the KV cache.
+- If requests are slow while the engine stays up, it is compute, not loading: check the device
+  first (`Device` line at startup, or `ps` showing the same engine PID and a growing elapsed time
+  while latency stays flat; see 13 for a bundle that silently runs on the CPU).
+- Reference (`clef-flash:9b`, 828 tokens with one image): about 0.35 s on an RTX 5090, about 30 s on
+  16 CPU cores.
+
 ## SELFIPC1 framing (`internal/ipc`)
 
 ```

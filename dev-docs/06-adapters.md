@@ -82,6 +82,10 @@
   larger of p and 1-p.
 - Up to 32 options per question and 4 images. The state is truncated to fit `context_size` (as upstream does).
 - Head parity: logits match the reference PyTorch head to ~1e-6 (float32) on random inputs.
+- Resident for the life of the process: backbone, projector, head weights (float32, ~0.5 GB) and the
+  mapped output embedding. Per request: clear the KV cache, evaluate the whole prompt in decodes of at most
+  512 positions (llama.cpp also computes vocabulary logits for every output position, so this bounds
+  memory), then run the head on the CPU. No prefix cache. The engine reports the device it really uses.
 
 ## Settings (`internal/settings`)
 

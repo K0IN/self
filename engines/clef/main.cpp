@@ -359,6 +359,7 @@ public:
         mtmd_helper_log_set(log_cb, nullptr);
         load_backends();
         llama_backend_init();
+        device_ = pick_device();
 
         threads_ = opt_.threads > 0 ? opt_.threads : int(std::max(1u, std::thread::hardware_concurrency()));
 
@@ -423,7 +424,7 @@ public:
         return ojson{{"type", "ready"},
                      {"protocol", 1},
                      {"model", name[0] ? name : "clef-flash"},
-                     {"device", opt_.device},
+                     {"device", device_},
                      {"capabilities",
                       {{"text", true},
                        {"choice", true},
@@ -612,6 +613,27 @@ public:
     }
 
 private:
+    // The GPU the backbone runs on, "cpu" otherwise. ggml skips a GPU backend
+    // that cannot load (e.g. lib/ built for another CUDA major) without a word.
+    std::string pick_device() const {
+        if (opt_.device == "cpu") return "cpu";
+        std::vector<ggml_backend_dev_t> gpus;
+        for (size_t i = 0; i < ggml_backend_dev_count(); ++i) {
+            ggml_backend_dev_t d = ggml_backend_dev_get(i);
+            const auto t = ggml_backend_dev_type(d);
+            if (t == GGML_BACKEND_DEVICE_TYPE_GPU || t == GGML_BACKEND_DEVICE_TYPE_IGPU) gpus.push_back(d);
+        }
+        if (gpus.empty()) {
+            logf("WARNING: no usable GPU backend, running on the CPU (device %s); the engine's lib/ must match the installed CUDA runtime or Vulkan driver",
+                 opt_.device.c_str());
+            return "cpu";
+        }
+        size_t pick = 0;
+        const auto colon = opt_.device.find(':');
+        if (colon != std::string::npos) pick = std::min(gpus.size() - 1, size_t(std::atoi(opt_.device.c_str() + colon + 1)));
+        return std::string(ggml_backend_dev_name(gpus[pick])) + " (" + ggml_backend_dev_description(gpus[pick]) + ")";
+    }
+
     static std::vector<double> softmax(const clef::Vec& z) {
         std::vector<double> p(z.size());
         double m = -INFINITY;
@@ -695,6 +717,7 @@ private:
 
     Options opt_;
     int threads_ = 1;
+    std::string device_ = "cpu";
     llama_model* model_ = nullptr;
     llama_context* ctx_ = nullptr;
     const llama_vocab* vocab_ = nullptr;
