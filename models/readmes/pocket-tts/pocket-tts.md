@@ -6,6 +6,7 @@ short recording and runs comfortably on a CPU. Each language is its own model
 the weights. French is the 24-layer checkpoint (about 300M parameters), the
 others have about 80M.
 
+Source: [kyutai-labs/pocket-tts](https://github.com/kyutai-labs/pocket-tts).
 Model files: [kyutai/pocket-tts](https://huggingface.co/kyutai/pocket-tts).
 GGUF artifacts: [EryriLabs/pocket-tts-GGUF](https://huggingface.co/EryriLabs/pocket-tts-GGUF),
 converted with llama.cpp's own converter and loaded by the unmodified llama.cpp
