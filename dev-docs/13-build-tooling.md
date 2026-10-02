@@ -58,7 +58,8 @@ Environment: `GGMLC_VERSION` (Laya release, default `v0.9.6`), `MODEL` (default
 ## Engine build (`engines/`)
 
 - `mod engine "engines"` in the root justfile. `engines/justfile` is the dispatcher and
-  declares the modules `decider` (`engines/ggmlc-custom-decider/justfile`) and `laya`
+  declares the modules `decider` (`engines/ggmlc-custom-decider/justfile`), `clef` (`engines/clef/justfile`, links the
+  decider's `deps/`, built right after it by `engine build`) and `laya`
   (`engines/laya/justfile`). List: `just --list engine`.
 - No bash scripts.
 
@@ -98,7 +99,7 @@ The same recipes are reachable as `just engine decider <recipe>` and
 
 ```
 self
-libexec/ai-server/{laya, ggmlc-custom-decider, ggmlc-audio, lib/}
+libexec/ai-server/{laya, ggmlc-custom-decider, ggmlc-audio, clef, lib/}
 ```
 
 In a checkout this is `bin/self` + `bin/libexec/ai-server/`. There is no

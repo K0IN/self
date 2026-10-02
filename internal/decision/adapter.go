@@ -13,6 +13,8 @@ type ModelFiles struct {
 	Model string
 	// MMProj is an optional multimodal projector GGUF.
 	MMProj string
+	// Head is an optional trained decision head artifact.
+	Head string
 }
 
 // RuntimeConfig configures an adapter's engine.

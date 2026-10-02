@@ -69,11 +69,12 @@ models:
 - `default` required if more than one quant.
 - Per quant: `adapter` (must be a known adapter, checked at resolve time),
   `repo` (`owner/name`), `files`, optional `settings`.
-- Files: GGUF only, clean relative paths. Exception: the audio `voice` role is a
-  `.wav` or `.mp3` file.
+- Files: GGUF only, clean relative paths. Exceptions: the audio `voice` role is a
+  `.wav` or `.mp3` file; the decision `head` role is a `.safetensors` file.
 - Optional per-file `repo` (`owner/name`) when a file lives in another repo than
-  the quant's (e.g. a default voice from `kyutai/tts-voices`).
-- Roles are per type. Decision: `model` (exactly one) and `mmproj` (optional).
+  the quant's (e.g. a default voice from `kyutai/tts-voices`, a head published by the model author).
+- Roles are per type. Decision: `model` (exactly one), `mmproj` (optional) and
+  `head` (optional trained decision head, used by `clef`).
   Audio: `model`, `mmproj` (required by `ggmlc-audio`) and `voice` (optional
   default reference voice, used when a request sends none). Each role at most
   once. The first file may omit `role` (it is the model); additional files must

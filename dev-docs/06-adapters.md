@@ -72,6 +72,17 @@
   such as non-WAV output, SSE, instructions, and non-default speed must return
   `unsupported_capability` rather than being silently ignored.
 
+## `clef`
+
+- Engine: `engines/clef` (C++, see below). Go side: `selfipc` + `internal/adapters/clef`.
+- Spec: args `--model <m> --head <h> --device <d> [--mmproj <p>]` + settings. The `head` role file is `joint_head.safetensors`.
+- The engine ports Cloudflare's `JointSchemaHead` (`head.hpp`, float32 CPU) and encodes requests like the reference
+  `encode_record`: llama.cpp (+ mtmd for images) returns the last hidden state of every position, the head scores all
+  options of all questions jointly. Answers: `choice` confidence = probability of the chosen option, `noul` confidence =
+  larger of p and 1-p.
+- Up to 32 options per question and 4 images. The state is truncated to fit `context_size` (as upstream does).
+- Head parity: logits match the reference PyTorch head to ~1e-6 (float32) on random inputs.
+
 ## Settings (`internal/settings`)
 
 - Each adapter has a typed schema: name, flag, type, bounds / enum.
@@ -88,6 +99,7 @@
 | Adapter | Keys |
 | :--- | :--- |
 | `ggmlc-custom-decider` | `context_size`, `threads`, `temperature`, `gpu_layers`, `flash_attn`, `image_min_tokens`, `image_max_tokens` |
+| `clef` | `context_size`, `threads`, `gpu_layers` |
 | `ggmlc-laya` | `threads`, `cuda_graph` (context is compiled into the GGUF; `cuda_graph` defaults to on for `auto` / `cuda` devices) |
 
 Types, bounds, and defaults are in the schemas (`customdecider.Settings`,

@@ -168,6 +168,36 @@ models:
         - {file: portuguese/mmproj-pocket-tts-portuguese.gguf, role: mmproj, size: 59858080, sha256: 0f17b5c44e5800e5c61bf6188eed66d1f668c913fb6ff58a160d7e4fc57e0db2}
         - {file: unmute-prod-website/default_voice.wav, role: voice, repo: kyutai/tts-voices, size: 480044, sha256: 27157be84054d6ce8af7a1ebca827c73d1d8fc38842f979d3fae207c92b1a9ae}
 
+  clef-flash:9b:
+    description: "Clef Flash 9B: multimodal typed decisions with a joint schema head"
+    readme: readmes/clef-flash/9b.md
+    type: decision
+    default: q4
+    capabilities:
+      input: [text, vision, multi-image]
+      output: [choice, score, noul]
+    max_images: 4
+    info:
+      family: clef
+      parameters: 9B
+      architecture: qwen3.5 + joint schema head
+      base_model: Qwen/Qwen3.5-9B
+      source: Cloudflare/clef-flash
+      license: apache-2.0
+      languages: [en]
+      context_length: 16384
+      max_options: 32
+      homepage: "https://huggingface.co/Cloudflare/clef-flash"
+    settings:
+      context_size: 16384
+    q4:
+      adapter: clef
+      repo: bartowski/Cloudflare_clef-flash-GGUF
+      files:
+        - {file: Cloudflare_clef-flash-Q4_K_M.gguf, size: 5841052992, sha256: 45f803cbcb6144784653bc31cde957e0d184d963a5198d423dc589a79e178d45}
+        - {file: mmproj-Cloudflare_clef-flash-f16.gguf, role: mmproj, size: 918165984, sha256: c8a6e9e00e1baf6433c4874dbc73bed2a56e887bcbb582fffcb00b533bc638dd}
+        - {file: joint_head.safetensors, role: head, repo: Cloudflare/clef-flash, size: 243538016, sha256: 19cdcec8c81dc9212be320fff47462ab342fbc1278be4368fb3da71241cf5ba0}
+
   # --- Kev (Qwen-based System One decision models, compiled with ggmlc) ---
   kev:0.5b:
     description: "Kev 0.5b: Qwen2.5-0.5B-based System One decision model (ggmlc)"

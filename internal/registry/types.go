@@ -28,7 +28,7 @@ type typeSpec struct {
 var modelTypes = map[ModelType]typeSpec{
 	TypeDecision: {
 		Capabilities: []Capability{CapText, CapVision, CapMultiImage, CapChoice, CapScore, CapNoul},
-		Roles:        []FileRole{RoleModel, RoleMMProj},
+		Roles:        []FileRole{RoleModel, RoleMMProj, RoleHead},
 	},
 	TypeAudio: {
 		Capabilities: []Capability{CapText, CapAudio},
@@ -127,6 +127,8 @@ const (
 	RoleMMProj FileRole = "mmproj"
 	// RoleVoice is a WAV/MP3 reference voice used when a request brings none.
 	RoleVoice FileRole = "voice"
+	// RoleHead is a trained decision head (safetensors) that a decision engine needs next to the GGUF.
+	RoleHead FileRole = "head"
 )
 
 // File is one downloadable artifact of a variant. Size and SHA256 pin the

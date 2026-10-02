@@ -45,7 +45,7 @@ bootstrap:
             rm -f "{{engine_dir}}/laya"
             just runtime
         fi
-        if [[ ! -x "{{engine_dir}}/ggmlc-custom-decider" ]]; then
+        if [[ ! -x "{{engine_dir}}/ggmlc-custom-decider" || ! -x "{{engine_dir}}/clef" ]]; then
             just engine-decider
         fi
         if [[ ! -x "{{engine_dir}}/ggmlc-audio" ]]; then
@@ -55,10 +55,6 @@ bootstrap:
 # Serve a model.
 serve m=model *flags="": build bootstrap
     {{bin}}/self serve {{m}} --port {{port}} {{flags}}
-
-# Run Bartowski's Clef Flash GGUF with a separately installed llama-server.
-serve-clef *flags="":
-    llama-server -hf bartowski/Cloudflare_clef-flash-GGUF:Q4_K_M --port {{port}} {{flags}}
 
 # gofmt + go vet + tests
 check:

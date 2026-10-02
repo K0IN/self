@@ -38,7 +38,7 @@ func startDecision(ctx context.Context, cfg config.Serve, t target, files models
 	defer cancel()
 	err = adapter.Start(startCtx, decision.RuntimeConfig{
 		ModelID:    t.res.ID(),
-		Files:      decision.ModelFiles{Model: files[registry.RoleModel], MMProj: files[registry.RoleMMProj]},
+		Files:      decision.ModelFiles{Model: files[registry.RoleModel], MMProj: files[registry.RoleMMProj], Head: files[registry.RoleHead]},
 		Device:     cfg.Device,
 		EnginePath: engine.Path,
 		LibDir:     engine.LibDir,

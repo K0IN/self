@@ -26,6 +26,7 @@ There are no `just test`, `just test-race`, or `just test-integration` recipes.
 | `internal/adapters/ggmlclaya` | GGUF compatibility, settings args, response translation |
 | `internal/adapters/selfipc` | Handshake, crash, protocol errors against a fake engine (the test binary re-executes itself when `SELFIPC_FAKE` is set) |
 | `internal/adapters/customdecider` | Model check, engine args |
+| `internal/adapters/clef` | Engine args, model check |
 | `internal/settings`, `internal/localconf` | Schema validation, local settings file |
 | `internal/runtime` | Engine search order; `Supervisor` handshake, watchdog and crash reports against a fake engine (the test binary re-executes itself when `RUNTIME_TEST_ENGINE` is set) |
 | `internal/onboard` | Bucketing, adapter pick, YAML valid |
