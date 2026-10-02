@@ -56,6 +56,10 @@ bootstrap:
 serve m=model *flags="": build bootstrap
     {{bin}}/self serve {{m}} --port {{port}} {{flags}}
 
+# Run Bartowski's Clef Flash GGUF with a separately installed llama-server.
+serve-clef *flags="":
+    llama-server -hf bartowski/Cloudflare_clef-flash-GGUF:Q4_K_M --port {{port}} {{flags}}
+
 # gofmt + go vet + tests
 check:
     test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
