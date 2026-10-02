@@ -13,12 +13,23 @@ converted with llama.cpp's own converter and loaded by the unmodified llama.cpp
 libraries in the `ggmlc-audio` engine. License: CC-BY-4.0.
 
 The model needs a reference voice: without one it produces almost no audio.
-Each entry therefore also downloads Kyutai's default voice
-([kyutai/tts-voices](https://huggingface.co/kyutai/tts-voices),
-`unmute-prod-website/default_voice.wav`), which is used when a request sends no
-voice. OpenAI voice names (`alloy`, ...) also select this default voice; they do
-not select a different named speaker. The default voice is used by omitting
-`voice` from the request:
+Each language model uses the first voice listed in Kyutai's
+[generate command documentation](https://github.com/kyutai-labs/pocket-tts#the-generate-command)
+as its bundled default:
+
+| Language | Default voice | Reference |
+| --- | --- | --- |
+| English | `alba` | [alba](https://huggingface.co/kyutai/tts-voices/blob/main/alba-mackenna/casual.wav) |
+| Italian | `giovanni` | [giovanni](https://huggingface.co/kyutai/pocket-tts/blob/add_lang_not_documented/common_voice_it_36520747-enhanced-v2.mp3) |
+| Spanish | `lola` | [lola](https://huggingface.co/kyutai/pocket-tts/blob/add_lang_not_documented/common_voice_es_19762977-enhanced-v2.mp3) |
+| German | `juergen` | [juergen](https://huggingface.co/kyutai/pocket-tts/blob/add_lang_not_documented/de-DE-juergen.mp3) |
+| Portuguese | `rafael` | [rafael](https://huggingface.co/kyutai/pocket-tts/blob/add_lang_not_documented/g-Vi8PgmSY0-enhanced-v2.wav) |
+| French | `estelle` | [estelle](https://huggingface.co/kyutai/tts-voices/blob/main/unmute-prod-website/developpeuse-3.wav) |
+
+When a request sends no `voice`, the server uses the default for the selected
+language model. OpenAI voice names (`alloy`, ...) also select that model default;
+they do not select a different named speaker. For example, an English request
+uses `alba` automatically:
 
 ```bash
 curl http://localhost:8080/v1/audio/speech \

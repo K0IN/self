@@ -134,11 +134,12 @@ const (
 // File is one downloadable artifact of a variant. Size and SHA256 pin the
 // exact upstream bytes; downloads that do not match are rejected.
 type File struct {
-	Name   string
-	Role   FileRole
-	Repo   string // Hugging Face repo when it differs from the variant's
-	Size   int64  // bytes, > 0
-	SHA256 string // lowercase hex, 64 chars
+	Name     string
+	Role     FileRole
+	Repo     string // Hugging Face repo when it differs from the variant's
+	Revision string // Hugging Face revision; main when empty
+	Size     int64  // bytes, > 0
+	SHA256   string // lowercase hex, 64 chars
 }
 
 // RepoOf returns the repo a file is downloaded from.

@@ -21,7 +21,7 @@ func Ensure(ctx context.Context, s Store, d *Downloader, r registry.Resolved, ne
 				p = newProgress()
 			}
 			pin := Pin{Size: f.Size, SHA256: f.SHA256}
-			if err := d.DownloadPinned(ctx, d.FileURL(r.Variant.RepoOf(f), f.Name), dest, pin, p); err != nil {
+			if err := d.DownloadPinned(ctx, d.FileURL(r.Variant.RepoOf(f), f.Revision, f.Name), dest, pin, p); err != nil {
 				return out, err
 			}
 		}

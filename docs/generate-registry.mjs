@@ -44,7 +44,7 @@ const catalog = rows.map(({ id, model, quants, slug, size, capabilities }) => ({
                 name: file.file,
                 size: formatBytes(Number(file.size || 0)),
                 sha256: file.sha256,
-                url: `https://huggingface.co/${file.repo ?? variant.repo}/blob/main/${file.file}`
+                url: `https://huggingface.co/${file.repo ?? variant.repo}/blob/${file.revision ?? 'main'}/${file.file}`
             }))
         }
     }),
@@ -81,7 +81,7 @@ for (const { id, model, quants, slug } of rows) {
         const repoCell = `[${variant.repo}](https://huggingface.co/${variant.repo})`
         files.forEach((file, index) => {
             const first = index === 0
-            const fileUrl = `https://huggingface.co/${file.repo ?? variant.repo}/blob/main/${file.file}`
+            const fileUrl = `https://huggingface.co/${file.repo ?? variant.repo}/blob/${file.revision ?? 'main'}/${file.file}`
             lines.push(`| ${first ? quantCell : ''} | ${first ? variant.adapter : ''} | ${first ? repoCell : ''} | [\`${file.file}\`](${fileUrl}) | ${formatBytes(Number(file.size || 0))} | \`${file.sha256}\` |`)
         })
     }

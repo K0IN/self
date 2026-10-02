@@ -73,6 +73,8 @@ models:
   `.wav` or `.mp3` file; the decision `head` role is a `.safetensors` file.
 - Optional per-file `repo` (`owner/name`) when a file lives in another repo than
   the quant's (e.g. a default voice from `kyutai/tts-voices`, a head published by the model author).
+- Optional per-file `revision` selects a Hugging Face branch, tag, or commit; it
+  defaults to `main`.
 - Roles are per type. Decision: `model` (exactly one), `mmproj` (optional) and
   `head` (optional trained decision head, used by `clef`).
   Audio: `model`, `mmproj` (required by `ggmlc-audio`) and `voice` (optional

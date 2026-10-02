@@ -81,7 +81,7 @@ models:
       files:
         - {file: pocket-tts-en.gguf, size: 159390816, sha256: 9cca37ab8f3da366a1864919214fbd545f45609d8f1167d1fb302cebea515d63}
         - {file: mmproj-pocket-tts-en.gguf, role: mmproj, size: 59858080, sha256: ccb1b6a55a7df0d4f96adff04ae3b9cd99c070edc98f6c84af5adb6d46a64cfc}
-        - {file: unmute-prod-website/default_voice.wav, role: voice, repo: kyutai/tts-voices, size: 480044, sha256: 27157be84054d6ce8af7a1ebca827c73d1d8fc38842f979d3fae207c92b1a9ae}
+        - {file: alba-mackenna/casual.wav, role: voice, repo: kyutai/tts-voices, size: 958542, sha256: 46264e83cb99115c3d210260e029117566d9c64f20266d10daa78107759ede3e}
 
   pocket-tts-de:100m:
     description: "Pocket TTS German: small CPU-friendly text-to-speech with voice cloning"
@@ -132,7 +132,7 @@ models:
       files:
         - {file: french/pocket-tts-french.gguf, size: 612681760, sha256: 73db75f9ead052c3b488ff1e3aea4a1558ce9d22ebcb7bd6489687fb89c62a1c}
         - {file: french/mmproj-pocket-tts-french.gguf, role: mmproj, size: 59858080, sha256: ef157baf2b7c422caa2f66bee1f0b14829348ede347e1c756cb306925c23b8b7}
-        - {file: unmute-prod-website/default_voice.wav, role: voice, repo: kyutai/tts-voices, size: 480044, sha256: 27157be84054d6ce8af7a1ebca827c73d1d8fc38842f979d3fae207c92b1a9ae}
+        - {file: developpeuse-3.wav, role: voice, repo: kyutai/tts-voices, size: 1282324, sha256: d14dc373ead723bc818d8970d271b876aa02833673cabd97aea859444a8cdc3a}
 
   pocket-tts-it:100m:
     description: "Pocket TTS Italian: small CPU-friendly text-to-speech with voice cloning"

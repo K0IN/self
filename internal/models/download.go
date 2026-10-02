@@ -62,13 +62,16 @@ func NewDownloader() *Downloader {
 	}
 }
 
-// FileURL returns the resolve URL of a repo file on the main revision.
-func (d *Downloader) FileURL(repo, file string) string {
+// FileURL returns the resolve URL of a repo file on the requested revision.
+func (d *Downloader) FileURL(repo, revision, file string) string {
+	if revision == "" {
+		revision = "main"
+	}
 	parts := strings.Split(file, "/")
 	for i, p := range parts {
 		parts[i] = url.PathEscape(p)
 	}
-	return fmt.Sprintf("%s/%s/resolve/main/%s", d.BaseURL, repo, strings.Join(parts, "/"))
+	return fmt.Sprintf("%s/%s/resolve/%s/%s", d.BaseURL, repo, url.PathEscape(revision), strings.Join(parts, "/"))
 }
 
 // Progress receives download progress. total is -1 when unknown.

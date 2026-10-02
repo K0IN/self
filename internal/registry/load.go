@@ -240,7 +240,7 @@ func parseVariant(t ModelType, quant string, node *yaml.Node) (Variant, error) {
 		if !isSHA256(sum) {
 			return Variant{}, fmt.Errorf("files[%d] %s: sha256 must be 64 hex characters", i, f.Name)
 		}
-		v.Files = append(v.Files, File{Name: f.Name, Role: role, Repo: f.Repo, Size: f.Size, SHA256: sum})
+		v.Files = append(v.Files, File{Name: f.Name, Role: role, Repo: f.Repo, Revision: f.Revision, Size: f.Size, SHA256: sum})
 	}
 	if !roles[RoleModel] {
 		return Variant{}, fmt.Errorf("exactly one file with role model is required")
@@ -289,13 +289,14 @@ func isSHA256(s string) bool {
 	return err == nil
 }
 
-// fileEntry is {file, role?, repo?, size, sha256}.
+// fileEntry is {file, role?, repo?, revision?, size, sha256}.
 type fileEntry struct {
-	Name   string
-	Role   FileRole
-	Repo   string
-	Size   int64
-	SHA256 string
+	Name     string
+	Role     FileRole
+	Repo     string
+	Revision string
+	Size     int64
+	SHA256   string
 }
 
 func (f *fileEntry) UnmarshalYAML(n *yaml.Node) error {
@@ -303,15 +304,16 @@ func (f *fileEntry) UnmarshalYAML(n *yaml.Node) error {
 		return fmt.Errorf("line %d: file entry must be a mapping {file, size, sha256[, role, repo]}", n.Line)
 	}
 	var m struct {
-		File   string `yaml:"file"`
-		Role   string `yaml:"role"`
-		Repo   string `yaml:"repo"`
-		Size   int64  `yaml:"size"`
-		SHA256 string `yaml:"sha256"`
+		File     string `yaml:"file"`
+		Role     string `yaml:"role"`
+		Repo     string `yaml:"repo"`
+		Revision string `yaml:"revision"`
+		Size     int64  `yaml:"size"`
+		SHA256   string `yaml:"sha256"`
 	}
 	if err := n.Decode(&m); err != nil {
 		return err
 	}
-	f.Name, f.Role, f.Repo, f.Size, f.SHA256 = m.File, FileRole(m.Role), m.Repo, m.Size, m.SHA256
+	f.Name, f.Role, f.Repo, f.Revision, f.Size, f.SHA256 = m.File, FileRole(m.Role), m.Repo, m.Revision, m.Size, m.SHA256
 	return nil
 }
