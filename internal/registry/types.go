@@ -14,6 +14,7 @@ type ModelType string
 
 const (
 	TypeDecision ModelType = "decision"
+	TypeAudio    ModelType = "audio"
 )
 
 // typeSpec is what the registry accepts for one model type.
@@ -29,6 +30,10 @@ var modelTypes = map[ModelType]typeSpec{
 		Capabilities: []Capability{CapText, CapVision, CapMultiImage, CapChoice, CapScore, CapNoul},
 		Roles:        []FileRole{RoleModel, RoleMMProj},
 	},
+	TypeAudio: {
+		Capabilities: []Capability{CapText, CapAudio},
+		Roles:        []FileRole{RoleModel, RoleMMProj, RoleVoice},
+	},
 }
 
 // Capability is a typed registry capability.
@@ -41,6 +46,7 @@ const (
 	CapChoice     Capability = "choice"
 	CapScore      Capability = "score"
 	CapNoul       Capability = "noul"
+	CapAudio      Capability = "audio"
 )
 
 // Capabilities separates accepted input features from produced output types.
@@ -119,6 +125,8 @@ type FileRole string
 const (
 	RoleModel  FileRole = "model"
 	RoleMMProj FileRole = "mmproj"
+	// RoleVoice is a WAV/MP3 reference voice used when a request brings none.
+	RoleVoice FileRole = "voice"
 )
 
 // File is one downloadable artifact of a variant. Size and SHA256 pin the
@@ -126,8 +134,17 @@ const (
 type File struct {
 	Name   string
 	Role   FileRole
+	Repo   string // Hugging Face repo when it differs from the variant's
 	Size   int64  // bytes, > 0
 	SHA256 string // lowercase hex, 64 chars
+}
+
+// RepoOf returns the repo a file is downloaded from.
+func (v Variant) RepoOf(f File) string {
+	if f.Repo != "" {
+		return f.Repo
+	}
+	return v.Repo
 }
 
 // Variant is one quantization of a model.

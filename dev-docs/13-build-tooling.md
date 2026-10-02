@@ -7,6 +7,7 @@ build and runtime tasks. `just` with no arguments lists the public recipes.
 
 ```text
 just setup      # bin/self + Laya engine + Decider engine
+just engine audio cpu  # persistent ggmlc-audio TTS engine, CPU libs
 just serve      # serve kev:0.5b (build + bootstrap first)
 just check      # gofmt + go vet + go test
 ```
@@ -19,7 +20,13 @@ aliases `self` to `go run ./cmd/self`.
 `just setup` builds `bin/self`, downloads the upstream Laya runtime, and builds
 the bundled custom decision runtime. `just bootstrap` (private) checks the
 installed runtimes and builds only missing ones (Laya is re-fetched when it does
-not start). Runtime artifacts are placed under `bin/libexec/ai-server/`.
+not start; `ggmlc-audio` is built with `AUDIO_VARIANT`, default: the variant
+already in the Decider deps).
+Runtime artifacts are placed under `bin/libexec/ai-server/`.
+
+Every recipe exports `AI_SERVER_REGISTRY=<repo>/models/registry.yml` and
+`AI_SERVER_VERBOSE=1` (unless already set), so `just serve` and `just test-model`
+use the checked-out registry and print the engine command and logs.
 
 ## `just` (root `justfile`)
 
@@ -63,11 +70,15 @@ Environment: `GGMLC_VERSION` (Laya release, default `v0.9.6`), `MODEL` (default
 | `just engine verify [target]` | ldd check for missing libs |
 | `just engine clean` | Remove `build/`, `deps/` |
 | `just engine runtime [variant] [version]` | Fetch upstream Laya (= `just engine laya fetch`) |
+| `just engine audio [variant] [target]` | Build `ggmlc-audio` against the shared deps and install it with the libraries |
 
 The same recipes are reachable as `just engine decider <recipe>` and
 `just engine laya fetch`.
 
-- Decider variants: `cuda-12.8` (default), `vulkan`, `cpu`.
+- Decider and audio variants: `cuda-12.8` (Decider default), `cuda-13.4`, `vulkan`, `cpu`.
+  Both engines share `engines/ggmlc-custom-decider/deps` and the bundle `lib/`, so
+  build them with the same variant; `just engine audio` without a variant reuses
+  the one in `deps/.tag`.
 - llama.cpp version: `LLAMA_CPP_TAG` (default `b11256`).
 - `deps/` skipped if tag + variant unchanged (`deps/.tag`).
 - `verify` only warns about libraries it cannot resolve.
@@ -87,7 +98,7 @@ The same recipes are reachable as `just engine decider <recipe>` and
 
 ```
 self
-libexec/ai-server/{laya, ggmlc-custom-decider, lib/}
+libexec/ai-server/{laya, ggmlc-custom-decider, ggmlc-audio, lib/}
 ```
 
 In a checkout this is `bin/self` + `bin/libexec/ai-server/`. There is no

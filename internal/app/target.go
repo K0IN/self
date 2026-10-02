@@ -30,7 +30,7 @@ type target struct {
 }
 
 func resolveTarget(cfg config.Serve) (target, error) {
-	reg, err := LoadRegistry(cfg.ModelsDir)
+	reg, err := LoadRegistry(cfg.Registry, cfg.ModelsDir)
 	if err != nil {
 		return target{}, err
 	}
@@ -76,7 +76,7 @@ func download(ctx context.Context, cfg config.Serve, res registry.Resolved, out 
 // Pull downloads a model without starting it, whatever its type, and returns
 // the local paths of its files in registry order.
 func Pull(ctx context.Context, cfg config.Serve, out io.Writer, isTTY bool) ([]string, error) {
-	reg, err := LoadRegistry(cfg.ModelsDir)
+	reg, err := LoadRegistry(cfg.Registry, cfg.ModelsDir)
 	if err != nil {
 		return nil, err
 	}

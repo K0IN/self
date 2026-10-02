@@ -8,12 +8,16 @@
   the file to `docs/public/models.yml` (see 12), so a change reaches `self`
   only after the Pages deploy on push to `main`.
 - `self` fetches that URL at run time (`registry.Fetch`: 30 s timeout, 16 MiB limit).
-  There is no bundled copy. `tests/models` uses the same call.
+  There is no bundled copy.
+- `--registry URL|FILE` / `AI_SERVER_REGISTRY` picks another source. An http(s) URL behaves
+  like the published one (cache + offline fallback below). A file is read as-is, never cached,
+  and has no fallback, so it cannot replace the cached published registry. `just` and the dev
+  container set it to `models/registry.yml`; `tests/models` passes the same source to `self`.
 - Model cards: `models/readmes/<name>/<tag>.md`.
 
 ## Offline cache
 
-- `app.LoadRegistry` fetches the published registry (`registry.Fetch`), then `models.SaveRegistry` writes the exact
+- For URL sources, `app.LoadRegistry` fetches the document (`registry.Fetch`), then `models.SaveRegistry` writes the exact
   response to `<models-dir>/.registry.yml` (atomic rename) plus `<name>/<tag>/metadata.json` per model.
 - Fetch error, non-2xx, or unparsable document -> `models.LoadRegistryCache` and a `slog` warning.
   Applies to every command that loads the registry (`serve`, `pull`, `ls`, `ls-remote`, `settings`, `check`).
@@ -50,7 +54,7 @@ models:
 - Id: `name:tag`. No `/ \ :` or spaces in parts.
 - CLI references may append `@quant`, for example `decider-vision:2b@q4`.
   The `@quant` portion is not part of the registry ID.
-- `type`: only `decision` for now. Types and what each accepts (capabilities, file roles) are declared
+- `type`: `decision` or `audio`. Types and what each accepts (capabilities, file roles) are declared
   in `modelTypes` in `internal/registry/types.go`. A model of a type this build does not know is skipped
   without judging its other fields (`Registry.Skipped`), so a registry that gained a type still loads for
   older clients. `self ls-remote` lists skipped ids as needing a newer `self`. A missing `type` is an error.
@@ -65,9 +69,15 @@ models:
 - `default` required if more than one quant.
 - Per quant: `adapter` (must be a known adapter, checked at resolve time),
   `repo` (`owner/name`), `files`, optional `settings`.
-- Files: GGUF only, clean relative paths.
-- Roles are per type. Decision: `model` (exactly one) and `mmproj` (optional). The first file may omit
-  `role` (it is the model); additional files must name a role.
+- Files: GGUF only, clean relative paths. Exception: the audio `voice` role is a
+  `.wav` or `.mp3` file.
+- Optional per-file `repo` (`owner/name`) when a file lives in another repo than
+  the quant's (e.g. a default voice from `kyutai/tts-voices`).
+- Roles are per type. Decision: `model` (exactly one) and `mmproj` (optional).
+  Audio: `model`, `mmproj` (required by `ggmlc-audio`) and `voice` (optional
+  default reference voice, used when a request sends none). Each role at most
+  once. The first file may omit `role` (it is the model); additional files must
+  name a role.
 - `size` (> 0) and `sha256` (64 hex) required on every file.
 - `description`: one line, required.
 - `readme`: relative `.md` path, required. No inline text, no URLs, no `../`.
@@ -85,6 +95,8 @@ models:
 | `kev:0.5b`, `kev:0.8b`, `kev:4b` | `ggmlc-laya` |
 | `laya:english`, `laya:multilingual`, `laya:typed-decisions` | `ggmlc-laya` |
 | `decider:0.8b`, `decider:4b`, `decider-vision:2b` | `ggmlc-custom-decider` |
+| `qwen3-tts:1.7b` | `ggmlc-audio` |
+| `pocket-tts:en`, `:de`, `:es`, `:fr`, `:it`, `:pt` | `ggmlc-audio` (with a default `voice` file) |
 
 ## Acceptance criteria
 

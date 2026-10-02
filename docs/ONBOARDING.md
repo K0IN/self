@@ -1,19 +1,21 @@
 # Onboarding new models
 
 Goal: a new model is a **registry entry**, not new code. Code is only needed
-when a model needs an engine or readout that does not exist yet.
+when a model needs an engine or readout that does not exist yet. Decision and
+audio models use the same registry, download verification, runtime discovery,
+and one-model-per-server lifecycle.
 
 ```
   Hugging Face repo
         │  write the entry by hand          (size + sha256 from the Hub's LFS metadata)
         ▼
   registry entry  ──paste──►  models/registry.yml
-        │  just check-model <name:tag>      (download, start engine, probe questions)
+      │  self check <name:tag>            (decision probes; audio uses smoke test)
         ▼
   ok / FAIL with a reason
         │  just serve <name:tag>
         ▼
-  POST /v1/systemone
+    POST /v1/systemone or /v1/audio/speech
 ```
 
 ## 1. Add the entry
@@ -28,6 +30,22 @@ Copy an existing entry in `models/registry.yml` and adjust it:
 | :--- | :--- | :--- |
 | `ggmlc.graph_spec` + `ggmlc.decision` or `laya.*` | `ggmlc-laya` | upstream `laya daemon` |
 | any llama.cpp architecture (`qwen35`, `qwen3`, `llama`, …) | `ggmlc-custom-decider` | `engines/ggmlc-custom-decider` |
+
+Audio entries use:
+
+| Model family | Type | Adapter | Engine |
+| :--- | :--- | :--- | :--- |
+| Qwen3-TTS, Pocket TTS | `audio` | `ggmlc-audio` | `engines/ggmlc-audio` (persistent worker, model stays loaded) |
+
+Audio models that need a reference voice (Pocket TTS) also pin a default voice
+as a third file: `{file: <path>.wav, role: voice, repo: <owner/name>, size, sha256}`.
+It is used when a request sends no voice. `repo` is only needed when the file
+lives in another repository than the model.
+
+Audio GGUFs normally require two files: the language/backbone GGUF with the
+default `model` role and the matching projector GGUF with `role: mmproj`.
+Keep model and projector quantization compatible. Use exact LFS `size` and
+`sha256` pins for both files.
 
 - pins every file with its exact `size` and `sha256` (from the Hub's LFS
   metadata);
@@ -86,6 +104,19 @@ engine starts. Effective settings are printed at startup and returned by
 | `threads` | int | `--threads` | 4 |
 | `cuda_graph` | bool | `--cuda-graph` | on for `auto`/`cuda` devices |
 
+`ggmlc-audio` (sampling applies to every request of the running engine):
+
+| Key | Type | Flag | Default |
+| :--- | :--- | :--- | :--- |
+| `context_size` | int 512–262144 | `--ctx` | 4096 |
+| `threads` | int | `--threads` | half the cores |
+| `gpu_layers` | int, -1 = all | `--gpu-layers` | -1 |
+| `temperature` | float | `--temperature` | 0.8 |
+| `top_p` | float 0–1 | `--top-p` | 0.95 |
+| `top_k` | int, 1 = greedy | `--top-k` | 40 |
+| `frames` | int | `--max-frames` | 512 |
+| `seed` | int | `--seed` | random |
+
 New settings: add a `settings.Param` to the adapter's schema
 (`internal/adapters/<adapter>/…`) and the flag to the engine.
 
@@ -97,8 +128,10 @@ repo is updated on purpose, take the new pins into `registry.yml`.
 
 ## 2. Verify it
 
+Decision models use the standard probes:
+
 ```bash
-just check-model decider:4b
+self check decider:4b
 ```
 
 `self check` downloads the default quant, starts the engine exactly like
@@ -116,6 +149,41 @@ production:
 All probes passed. decider:4b is ready: self serve decider:4b
 ```
 
+Audio models use a smoke test because their output is binary audio rather than
+decision probabilities:
+
+```bash
+self pull qwen3-tts:1.7b
+self serve qwen3-tts:1.7b --device cpu --port 8080
+```
+
+In another terminal, send an OpenAI-shaped request:
+
+```bash
+curl http://127.0.0.1:8080/v1/audio/speech \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"qwen3-tts:1.7b","input":"Smoke test","response_format":"wav"}' \
+  --output smoke.wav
+head -c 4 smoke.wav   # RIFF
+```
+
+For voice cloning, send inline base64 MP3/WAV data in `voice.audio` or the
+server extension `ref_audio`. Filesystem paths are rejected and the server
+does not retain voice profiles:
+
+```json
+{
+  "input": "Read this in the reference voice.",
+  "voice": {"audio": "<base64 MP3 or WAV>", "format": "mp3"},
+  "response_format": "wav"
+}
+```
+
+The smoke test must verify `Content-Type: audio/wav`, a valid RIFF/WAV body,
+and that a second request succeeds without restarting the engine. The engine
+loads the model once (`Loading model...` appears once in the log), so the
+engine PID (`pgrep -f ggmlc-audio`) must be the same after both requests.
+
 ## 3. Serve it
 
 ```bash
@@ -130,6 +198,10 @@ just serve decider:4b
 | New engine that speaks SELFIPC1 | one `selfipc.Spec` (command line + optional GGUF check) and one line in `internal/adapters/registry.go` |
 | Engine with its own protocol | a package under `internal/adapters/<name>/` implementing `decision.Adapter` (see `ggmlclaya`) |
 | New model *mode* (image gen, TTS, …) | a new typed interface (`image.Adapter`, …); registry, downloads, runtime, IPC are reused |
+
+Audio implementation requirements:
+
+- Audio must: model/projector load during `Start`, not per request; two sequential synthesis requests use one supervised worker process; voice audio travels as an IPC attachment; no voice path or persistent voice profile is accepted.
 
 ### SELFIPC1 engine contract
 

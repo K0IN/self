@@ -4,7 +4,7 @@
 # backends); nothing from llama.cpp is compiled and no CUDA toolkit is needed.
 #
 #   just engine build                      # default: cuda-12.8, installs into ../../bin/libexec/ai-server
-#   just engine build vulkan               # or: cpu
+#   just engine build vulkan               # or: cuda-13.4, cpu
 #   just engine deps cuda-12.8 b11300      # other llama.cpp release
 #   just engine deps cuda-13.4             # CUDA 13 runtime
 #   just engine clean

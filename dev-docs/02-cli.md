@@ -18,15 +18,19 @@ No arguments (or `self help`) prints the usage text and exits 0.
 
 `pull`, `check`, `benchmark`, and `settings` accept the same flags as `serve`
 (`benchmark` adds its own, below). `ls`,
-`ls-remote`, and `rm` only take `--models-dir` (`rm` also `--quant`).
+`ls-remote`, and `rm` only take `--models-dir` (`rm` also `--quant`; `ls` and `ls-remote` also `--registry`).
 
 ## Flags
 
 - `--host` (127.0.0.1), `--port` (8080), `--quant`, `--models-dir` (~/.ai-server/models).
 - `--device`: `auto | cpu | cuda | cuda:N | metal | vulkan | vulkan:N`.
 - `--queue-size` (64, 1-100000), `--preprocess-concurrency` (8, 1-1024).
-- `--runtime-dir`, `--allow-http-images`, `--allow-private-images`,
-  `--verbose` / `-v`.
+- `--runtime-dir`, `--allow-http-images`, `--allow-private-images`.
+- `--verbose` / `-v` (env `AI_SERVER_VERBOSE`): print the exact engine command line
+  (`[engine] exec …`, settings rendered as flags) at startup, then engine stderr and request logs.
+  `just` sets `AI_SERVER_VERBOSE=1`; `--verbose=false` or `AI_SERVER_VERBOSE=0` turns it off.
+- `--registry URL|FILE` (env `AI_SERVER_REGISTRY`): model registry, default the published
+  `https://k0in.github.io/self/models.yml` (see 03).
 - `--set key=value` (repeatable): engine setting override, highest precedence (see 06).
 - `--settings-file FILE`: local settings (default `~/.ai-server/settings.yml`).
 - Flags may come before or after the model reference. Exactly one model is required.
@@ -101,7 +105,7 @@ The `justfile` provides a few development wrappers (see 13 for all recipes):
 ## Config rules
 
 - Precedence: CLI > env > defaults.
-- Env: `AI_SERVER_HOST`, `AI_SERVER_PORT`, `AI_SERVER_MODELS`, `AI_SERVER_RUNTIME_DIR`, `AI_SERVER_SETTINGS`, `HF_TOKEN`, `HF_ENDPOINT`.
+- Env: `AI_SERVER_HOST`, `AI_SERVER_PORT`, `AI_SERVER_MODELS`, `AI_SERVER_RUNTIME_DIR`, `AI_SERVER_SETTINGS`, `AI_SERVER_REGISTRY`, `AI_SERVER_VERBOSE`, `HF_TOKEN`, `HF_ENDPOINT`.
   `AI_SERVER_MODELS` also applies to `ls`, `ls-remote`, and `rm`.
 - Terminal UX (progress, status) goes to stderr. stdout stays clean, so
   `self pull` output can be scripted; `ls`, `ls-remote`, and `settings` write

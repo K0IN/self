@@ -14,6 +14,11 @@ ggmlc       := env_var_or_default("GGMLC_VERSION", "v0.9.6")
 model       := env_var_or_default("MODEL", "kev:0.5b")
 port        := env_var_or_default("PORT", "8080")
 
+# Dev runs use the checked-out registry, not the published one.
+export AI_SERVER_REGISTRY := env_var_or_default("AI_SERVER_REGISTRY", justfile_directory() / "models/registry.yml")
+# Dev runs print the engine command and engine/request logs; AI_SERVER_VERBOSE=0 turns it off.
+export AI_SERVER_VERBOSE := env_var_or_default("AI_SERVER_VERBOSE", "1")
+
 default:
     @just --list
 
@@ -42,6 +47,9 @@ bootstrap:
         fi
         if [[ ! -x "{{engine_dir}}/ggmlc-custom-decider" ]]; then
             just engine-decider
+        fi
+        if [[ ! -x "{{engine_dir}}/ggmlc-audio" ]]; then
+            just engine audio "${AUDIO_VARIANT:-}"
         fi
 
 # Serve a model.

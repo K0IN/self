@@ -3,6 +3,7 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 mod decider "ggmlc-custom-decider"
+mod audioengine "ggmlc-audio"
 mod laya "laya"
 
 default:
@@ -32,3 +33,7 @@ clean:
 # Fetch the upstream Laya runtime.
 runtime variant="auto" version="v0.9.6":
     just laya fetch "{{variant}}" "{{version}}"
+
+# Build the persistent audio (TTS) engine; variant defaults to the one in the decider deps.
+audio variant="" target="../../bin/libexec/ai-server":
+    just audioengine build "{{variant}}" "{{target}}"

@@ -25,6 +25,7 @@ const (
 	UnsupportedImage      Kind = "unsupported_image"
 	ImageFetchFailed      Kind = "image_fetch_failed"
 	ImageTooLarge         Kind = "image_too_large"
+	RequestTooLarge       Kind = "request_too_large"
 	QueueFull             Kind = "queue_full"
 	Timeout               Kind = "timeout"
 	ShuttingDown          Kind = "shutting_down"

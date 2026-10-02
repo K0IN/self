@@ -255,7 +255,7 @@ func TestSelectTargets(t *testing.T) {
 	}
 }
 
-func TestRealRegistrySelectsEveryModel(t *testing.T) {
+func TestRealRegistrySelectsEveryDecisionModel(t *testing.T) {
 	data, err := os.ReadFile("../../models/registry.yml")
 	if err != nil {
 		t.Fatal(err)
@@ -265,7 +265,26 @@ func TestRealRegistrySelectsEveryModel(t *testing.T) {
 		t.Fatal(err)
 	}
 	res, err := selectTargets(reg, "", "default")
-	if err != nil || len(res) != len(reg.Models) {
-		t.Fatalf("%d targets for %d models: %v", len(res), len(reg.Models), err)
+	decisionCount := 0
+	for _, model := range reg.Models {
+		if model.Type == registry.TypeDecision {
+			decisionCount++
+		}
+	}
+	if err != nil || len(res) != decisionCount {
+		t.Fatalf("%d targets for %d decision models: %v", len(res), decisionCount, err)
+	}
+	audio, err := reg.Resolve("qwen3-tts:1.7b", registry.ResolveOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if audio.Model.Type != registry.TypeAudio || audio.Variant.Adapter != "ggmlc-audio" || len(audio.Variant.Files) != 2 {
+		t.Fatalf("unexpected audio model: %+v", audio)
+	}
+	for _, lang := range []string{"en", "de", "es", "fr", "it", "pt"} {
+		p, err := reg.Resolve("pocket-tts:"+lang, registry.ResolveOptions{})
+		if err != nil || p.Variant.Adapter != "ggmlc-audio" || len(p.Variant.Files) != 3 || p.Variant.Files[2].Role != registry.RoleVoice {
+			t.Fatalf("pocket-tts:%s: %v %+v", lang, err, p.Variant)
+		}
 	}
 }

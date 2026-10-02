@@ -6,19 +6,24 @@ aside: false
 <div class="api-row">
 <div class="api-doc">
 
-# API reference
+# Decision API
 
-`self` exposes a small, OpenAI-style JSON API for typed decisions. The server is model-specific: start one model, then send requests to that model through the same base URL.
+Decision models answer typed questions about a state in one pass: `choice`,
+`score` and `noul` (calibrated yes/no). Vision-capable decision models also
+accept images. Start a decision model, such as `kev:0.5b` or
+`decider-vision:2b`, before sending requests.
 
-No API key is required by the server. Put it behind your own network boundary or reverse proxy when exposing it beyond localhost.
+Health, model metadata and the error format are shared by all modalities; see
+the [API overview](/api/).
 
 </div>
 <div class="api-example">
 
-<div class="api-label">Base URL</div>
+<div class="api-label">Endpoints</div>
 
 ```text
-http://localhost:8080
+POST /v1/systemone
+POST /v1/decide
 ```
 
 </div>
@@ -27,201 +32,7 @@ http://localhost:8080
 <div class="api-row">
 <div class="api-doc">
 
-## Health
-
-### `GET /health`
-
-Returns runner readiness. The HTTP status is `200` when ready and `503` otherwise.
-
-#### Response body
-
-<ApiField name="status" type="string">
-
-`ok` while the model is ready, `unavailable` during shutdown or after an engine failure.
-
-</ApiField>
-
-<ApiField name="model" type="string">
-
-ID of the loaded model.
-
-</ApiField>
-
-<ApiField name="runner" type="string">
-
-Runner state, for example `ready`.
-
-</ApiField>
-
-</div>
-<div class="api-example">
-
-<div class="api-label">Example request</div>
-
-```bash
-curl http://localhost:8080/health
-```
-
-<div class="api-label">Response</div>
-
-```json
-{
-  "status": "ok",
-  "model": "kev:0.5b",
-  "runner": "ready"
-}
-```
-
-</div>
-</div>
-
-<div class="api-row">
-<div class="api-doc">
-
-## Model metadata
-
-### `GET /v1/model`
-
-Returns the loaded model and effective settings.
-
-#### Response body
-
-<ApiField name="id" type="string">
-
-Registry ID of the loaded model.
-
-</ApiField>
-
-<ApiField name="object" type="string">
-
-Always `model`.
-
-</ApiField>
-
-<ApiField name="type" type="string">
-
-Model type, for example `decision`.
-
-</ApiField>
-
-<ApiField name="quant" type="string">
-
-Quantization the model was loaded with.
-
-</ApiField>
-
-<ApiField name="capabilities" type="object">
-
-What the model accepts and produces.
-
-- `input.text`, `input.vision`, `input.multi_image` and `input.max_images` describe accepted inputs.
-- `output.choice`, `output.score` and `output.noul` say which question types can be answered, and `output.max_options` is the largest number of options per question.
-
-</ApiField>
-
-<ApiField name="info" type="object" optional>
-
-Model details from the registry, such as `family`, `parameters`, `context_length` and `license`.
-
-</ApiField>
-
-<ApiField name="settings" type="object" optional>
-
-Effective engine settings, such as `threads`.
-
-</ApiField>
-
-</div>
-<div class="api-example">
-
-<div class="api-label">Example request</div>
-
-```bash
-curl http://localhost:8080/v1/model
-```
-
-<div class="api-label">Response</div>
-
-```json
-{
-  "id": "kev:0.5b",
-  "object": "model",
-  "type": "decision",
-  "quant": "q4",
-  "capabilities": {
-    "input": {"text": true, "vision": false, "multi_image": false, "max_images": 0},
-    "output": {"choice": true, "score": true, "noul": true, "max_options": 16}
-  },
-  "info": {
-    "family": "kev",
-    "parameters": "0.5B",
-    "context_length": 2048,
-    "license": "apache-2.0"
-  },
-  "settings": {
-    "threads": 4
-  }
-}
-```
-
-</div>
-</div>
-
-<div class="api-row">
-<div class="api-doc">
-
-### `GET /v1/models`
-
-Returns an OpenAI-style model list. The server currently loads one model per process.
-
-#### Response body
-
-<ApiField name="object" type="string">
-
-Always `list`.
-
-</ApiField>
-
-<ApiField name="data" type="array">
-
-Model objects with `id`, `object`, `type` and `quant`, as in `GET /v1/model`.
-
-</ApiField>
-
-</div>
-<div class="api-example">
-
-<div class="api-label">Example request</div>
-
-```bash
-curl http://localhost:8080/v1/models
-```
-
-<div class="api-label">Response</div>
-
-```json
-{
-  "object": "list",
-  "data": [
-    {
-      "id": "kev:0.5b",
-      "object": "model",
-      "type": "decision",
-      "quant": "q4"
-    }
-  ]
-}
-```
-
-</div>
-</div>
-
-<div class="api-row">
-<div class="api-doc">
-
-## Decisions
-
-### `POST /v1/systemone`
+## `POST /v1/systemone`
 
 The canonical decision endpoint. The `/v1/decide` path is an equivalent alias. Requests must use `Content-Type: application/json`, and unknown JSON fields are rejected.
 
@@ -460,7 +271,7 @@ Runtime usage and latency counters.
 <div class="api-row">
 <div class="api-doc">
 
-### Vision input
+## Vision input
 
 Vision models accept an image as an HTTPS URL or a data URI. An image can also be an object with optional `name` and `description` fields.
 
@@ -518,20 +329,17 @@ curl http://localhost:8080/v1/systemone \
 <div class="api-row">
 <div class="api-doc">
 
-## Errors
+## Decision errors
 
-Errors use a stable envelope with a machine-readable `type` and a human-readable `message`.
+Besides the [shared errors](/api/#errors), decision requests return:
 
 | Status | Error types | Meaning |
 | --- | --- | --- |
-| `400` | `invalid_request`, `unsupported_image` | Invalid JSON, fields, content type, or image input. |
-| `404` | `model_not_found`, `quant_not_found` | Requested model does not match the loaded model or registry. |
+| `400` | `unsupported_image` | The image is not an HTTPS URL or a JPEG, PNG, or WebP data URI. |
 | `413` | `image_too_large` | Request body exceeds 32 MiB. |
-| `422` | `unsupported_capability` | The loaded model cannot answer the requested question or image input. |
+| `422` | `unsupported_capability` | More options than the model supports, or images on a text-only model. |
 | `429` | `queue_full` | The request queue is full. |
 | `502` | `image_fetch_failed` | A remote image could not be fetched or decoded. |
-| `503` | runtime errors | The model engine is unavailable, crashed, or shutting down. |
-| `504` | `timeout` | The model did not answer before the request deadline. |
 
 </div>
 <div class="api-example">
@@ -541,8 +349,8 @@ Errors use a stable envelope with a machine-readable `type` and a human-readable
 ```json
 {
   "error": {
-    "type": "invalid_request",
-    "message": "state is required"
+    "type": "unsupported_capability",
+    "message": "The loaded decision model does not support image input."
   }
 }
 ```

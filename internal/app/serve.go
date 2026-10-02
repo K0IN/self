@@ -34,6 +34,8 @@ func Serve(ctx context.Context, cfg config.Serve, out io.Writer, isTTY bool) err
 	switch t.res.Model.Type {
 	case registry.TypeDecision:
 		return serveDecision(ctx, cfg, t, out, isTTY)
+	case registry.TypeAudio:
+		return serveAudio(ctx, cfg, t, out, isTTY)
 	}
 	return errs.New(errs.UnsupportedModel, "model type %q cannot be served yet", t.res.Model.Type)
 }
@@ -60,6 +62,12 @@ type runningModel struct {
 }
 
 func serveHTTP(ctx context.Context, cfg config.Serve, out io.Writer, m runningModel) error {
+	if m.Fail == nil {
+		m.Fail = func(error) {}
+	}
+	if m.Drain == nil {
+		m.Drain = func() {}
+	}
 	level := slog.LevelWarn
 	if cfg.Verbose {
 		level = slog.LevelDebug

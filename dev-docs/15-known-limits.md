@@ -2,7 +2,27 @@
 
 ## Limits
 
-- Decision models only.
+- Audio requests run one at a time on the loaded model; parallel requests queue.
+  Measured on CPU (`--device cpu`), engine ready in under 1 s after the files
+  are cached: Qwen3-TTS q4 about 4 s per short sentence, Pocket TTS about
+  0.7 s (French, 24 layers: about 1.8 s).
+- Audio `seed`: the same seed reproduces the output of a fresh engine, but not
+  of a later request in the same process (the audio projector keeps its own RNG
+  state). `top_k: 1` (greedy) is fully reproducible.
+- Audio output is WAV at 24 kHz, also when OpenAI's default `mp3` is implied by
+  an omitted `response_format`. Explicit non-WAV formats return 422.
+- Audio `instructions` and non-default `speed` are rejected because the
+  engine does not implement those controls.
+- OpenAI built-in voice names (`alloy`, ...) all map to the model's default voice
+  (Qwen3-TTS: the model's own; Pocket TTS: the registry `voice` file).
+- Pocket TTS without any reference voice produces almost no audio; that is why
+  its registry entries pin Kyutai's `default_voice.wav`. Its GGUFs come from
+  `EryriLabs/pocket-tts-GGUF` (converted with llama.cpp's own converter);
+  Kyutai and ggml-org publish none. Welsh (community-trained) is not listed.
+  Other Pocket TTS GGUFs (`idle-intelligence`, `cstr`, `Serveurperso`) are for
+  other engines and do not load in llama.cpp.
+- Decision and audio models cannot be served together; one model is loaded per
+  server process.
 - Decider engine: max 10 options per choice question, 2-10 levels per score question, 1 image, plain layout only (no `"layout": "chat"`).
   Temperature defaults to 1.0; per-model values from `decider_config.json` are not read (use the `temperature` setting).
 - Laya: option limit comes from the GGUF (16 by default), text only.
@@ -20,9 +40,9 @@
 - Nothing aggregates `benchmarks/*.json` yet (no comparison table or docs page).
 - Engines do not report the device they run on (`Device auto`), so the GPU memory the load adds is
   the only sign of GPU use.
-- `self` always loads the published registry (`https://k0in.github.io/self/models.yml`). There is no flag or
-  environment variable to use a local registry file, so a new entry cannot be run with `self` (or `just test-model`)
-  before the Pages deploy.
+- `self` loads the published registry (`https://k0in.github.io/self/models.yml`) unless `--registry` /
+  `AI_SERVER_REGISTRY` names another URL or file. `just` and the dev container point it at
+  `models/registry.yml`, so a new entry can be tested before the Pages deploy.
 - Offline start needs a registry cache from one earlier online run (no bundled registry). The cache can be outdated.
 - `--runtime-dir` must be an absolute path: the engine starts in its own directory.
 - Engine build tested on Linux x86_64 only.
@@ -42,3 +62,11 @@
 - Engine crash seen once during manual testing (server on :8080, cause unknown).
   - Likely the engine binary was replaced by a rebuild while running.
   - Check with `just serve kev:0.5b --verbose` if it happens again.
+
+- Audio open points:
+  - `ggmlc-audio` has been run on CPU only; the `cuda-12.8`, `cuda-13.4` and
+    `vulkan` builds are not tested yet.
+  - Sampling settings apply to the whole engine, not per request.
+  - Pocket TTS: one fixed default voice; the named voices in
+    `kyutai/tts-voices` are not mapped to OpenAI voice names.
+  - Non-WAV output, streaming, `instructions` and `speed` are not implemented.

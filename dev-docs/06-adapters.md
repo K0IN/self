@@ -33,6 +33,45 @@
 - Model check before start: the GGUF has an architecture and an embedded tokenizer, is not a ggmlc graph (-> use `ggmlc-laya`) and not a `clip` projector; an mmproj file must be a `clip` GGUF.
 - Capabilities come from the engine's `ready` frame.
 
+## `ggmlc-audio` (`internal/adapters/audio`)
+
+- Engine: our C++ worker `engines/ggmlc-audio/main.cpp`, linked against the same
+  prebuilt llama.cpp `libllama`, `libmtmd` and GGML libraries as the Decider
+  engine (`engines/ggmlc-custom-decider/deps`).
+- Registry adapter name: `ggmlc-audio`; model files use the `model` and `mmproj`
+  roles (the projector is required, `Start` fails with `unsupported_model`
+  without it).
+- Lifecycle, same as `ggmlc-custom-decider`: `Start` runs
+  `runtime.Start` + `runtime.Supervise` + `runtime.Handshake`. The worker loads
+  the model, context and projector once and then sends
+  `{"type":"ready","protocol":1,"device":…,"audio":{"pipeline":"qwen3tts","sample_rate":24000}}`.
+  `Synthesize` sends one SELFIPC1 request and waits with `Supervisor.Await`
+  (5 minute timeout, then the worker is killed: `runtime_crashed`). `Close`
+  closes stdin and waits for the exit.
+- Request: `{"id":N,"method":"synthesize","params":{"input","language","speaker_attachment":0}}`.
+  The reference voice (MP3/WAV bytes) is attachment 0 and is decoded in memory
+  with `mtmd_helper_bitmap_init_from_buf`. No path is ever sent.
+- Default voice: when the registry variant has a `voice` file, `Start` reads it
+  into memory once and `Synthesize` sends it whenever a request has no voice
+  (Pocket TTS produces almost no audio without one). The engine stays generic:
+  it only ever sees an attachment.
+- Per request the worker clears the KV cache and creates a fresh
+  `mtmd_helper_gen_audio` state and sampler chain. The model stays loaded.
+- Response: `{"id":N,"result":{"sample_rate","frames","samples","latency_ms"}}`
+  with the WAV as attachment 0; the adapter checks the `RIFF` magic. An engine
+  error frame `{"error":{"type":"invalid_request",…}}` maps to 400, other types
+  to `internal_error` (500). The worker survives a failed request.
+- Settings: `context_size` (`--ctx`), `threads`, `gpu_layers`, `temperature`,
+  `top_p`, `top_k`, `frames` (`--max-frames`), `seed`.
+- Requests run one at a time (scheduler queue); parallel HTTP requests wait.
+- Tests: `internal/adapters/audio/adapter_test.go` uses the test binary as a
+  fake engine and checks that two requests are answered by the same process.
+- Reference voice data is request-scoped and stateless. No filesystem path or
+  server-side voice profile belongs in the API or adapter contract.
+- OpenAI speech fields remain accepted at HTTP; unsupported runtime features
+  such as non-WAV output, SSE, instructions, and non-default speed must return
+  `unsupported_capability` rather than being silently ignored.
+
 ## Settings (`internal/settings`)
 
 - Each adapter has a typed schema: name, flag, type, bounds / enum.
@@ -71,6 +110,10 @@ Everything below is new code beside the decision code; nothing shared changes sh
 4. HTTP: `internal/api/<type>` with a `Mount(chi.Router) api.ModelInfo`. Router, `/health`, `/v1/model` come from `internal/api`.
 5. `internal/app/<type>.go`: a `serve<Type>` that runs `resolveTarget` output through `locate`, `describe`, `download`, starts the engine and hands a `runningModel` to `serveHTTP`; plus one `case` in `Serve`. `models.Ensure` returns files by role (`models.Files`).
 6. Engine under `engines/` with a `just` recipe.
+
+For audio specifically, also add the persistent native worker, its CMake link
+target, the SELFIPC1 request/response schema, attachment limits, ready-handshake
+parser, and an integration test that proves two requests use one process.
 
 No change: `pull`, `ls`, `ls-remote`, `rm`, settings layering, `self settings`, downloads and the store layout.
 `check`, `benchmark` and `tests/models` are decision-only until the type gets its own probes and checks.

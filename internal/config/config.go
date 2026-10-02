@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"ai-server/internal/registry"
 )
 
 // Serve holds options for `self serve`.
@@ -24,9 +26,11 @@ type Serve struct {
 	QueueSize             int
 	PreprocessConcurrency int
 	RuntimeDir            string
-	AllowHTTPImages       bool
-	AllowPrivateImages    bool
-	Verbose               bool
+	// Registry is a registry document URL or local file.
+	Registry           string
+	AllowHTTPImages    bool
+	AllowPrivateImages bool
+	Verbose            bool
 	// Set holds `--set key=value` engine setting overrides (win over the
 	// registry and the local settings file).
 	Set []string
@@ -67,6 +71,14 @@ func DefaultModelsDir() string {
 	return filepath.Join(home, ".ai-server", "models")
 }
 
+// DefaultRegistry is AI_SERVER_REGISTRY, else the published registry.
+func DefaultRegistry(getenv func(string) string) string {
+	if v := getenv("AI_SERVER_REGISTRY"); v != "" {
+		return v
+	}
+	return registry.PublishedURL
+}
+
 var deviceRE = regexp.MustCompile(`^(auto|cpu|cuda|cuda:\d+|metal|vulkan|vulkan:\d+)$`)
 
 // ParseServe parses `self serve` arguments. getenv is os.Getenv in
@@ -103,6 +115,14 @@ func ParseServeWith(args []string, getenv func(string) string, stderr io.Writer,
 	if v := getenv("AI_SERVER_RUNTIME_DIR"); v != "" {
 		s.RuntimeDir = v
 	}
+	s.Registry = DefaultRegistry(getenv)
+	if v := getenv("AI_SERVER_VERBOSE"); v != "" {
+		b, err := strconv.ParseBool(v)
+		if err != nil {
+			return s, fmt.Errorf("AI_SERVER_VERBOSE: invalid boolean %q", v)
+		}
+		s.Verbose = b
+	}
 	if v := getenv("AI_SERVER_SETTINGS"); v != "" {
 		s.SettingsFile = v
 	}
@@ -116,10 +136,11 @@ func ParseServeWith(args []string, getenv func(string) string, stderr io.Writer,
 	fs.IntVar(&s.QueueSize, "queue-size", s.QueueSize, "max ready requests waiting for the model")
 	fs.IntVar(&s.PreprocessConcurrency, "preprocess-concurrency", s.PreprocessConcurrency, "concurrent image fetch/decode/resize jobs")
 	fs.StringVar(&s.RuntimeDir, "runtime-dir", s.RuntimeDir, "engine directory override (development; env AI_SERVER_RUNTIME_DIR)")
+	fs.StringVar(&s.Registry, "registry", s.Registry, "registry URL or file (env AI_SERVER_REGISTRY)")
 	fs.BoolVar(&s.AllowHTTPImages, "allow-http-images", false, "allow plain http:// image URLs")
 	fs.BoolVar(&s.AllowPrivateImages, "allow-private-images", false, "allow image URLs resolving to private/loopback addresses")
-	fs.BoolVar(&s.Verbose, "verbose", false, "show engine logs and request logs")
-	fs.BoolVar(&s.Verbose, "v", false, "shorthand for --verbose")
+	fs.BoolVar(&s.Verbose, "verbose", s.Verbose, "show the engine command, engine logs and request logs (env AI_SERVER_VERBOSE)")
+	fs.BoolVar(&s.Verbose, "v", s.Verbose, "shorthand for --verbose")
 	fs.StringVar(&s.SettingsFile, "settings-file", s.SettingsFile, "local engine settings file (default ~/.ai-server/settings.yml; env AI_SERVER_SETTINGS)")
 	fs.Var(multiFlag{&s.Set}, "set", "engine setting override key=value (repeatable), e.g. --set context_size=4096")
 	if extra != nil {
@@ -163,8 +184,12 @@ func ParseServeWith(args []string, getenv func(string) string, stderr io.Writer,
 			return s, fmt.Errorf("--set %q: want key=value", kv)
 		}
 	}
+	if strings.TrimSpace(s.Registry) == "" {
+		return s, fmt.Errorf("--registry must not be empty")
+	}
 	s.ModelsDir = expandHome(s.ModelsDir)
 	s.RuntimeDir = expandHome(s.RuntimeDir)
+	s.Registry = expandHome(s.Registry)
 	s.SettingsFileExplicit = s.SettingsFile != ""
 	s.SettingsFile = expandHome(s.SettingsFile)
 	return s, nil

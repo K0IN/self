@@ -6,9 +6,11 @@
 package adapters
 
 import (
+	"ai-server/internal/adapters/audio"
 	"ai-server/internal/adapters/customdecider"
 	"ai-server/internal/adapters/ggmlclaya"
 	"ai-server/internal/adapters/selfipc"
+	domaudio "ai-server/internal/audio"
 	"ai-server/internal/decision"
 	"ai-server/internal/errs"
 	"ai-server/internal/localconf"
@@ -30,11 +32,21 @@ type DecisionEntry struct {
 	New decision.Factory
 }
 
+type AudioEntry struct {
+	Base
+	New domaudio.Factory
+}
+
 var decisionAdapters = map[string]DecisionEntry{
 	// Upstream ggmlc Laya daemon: ggmlc-compiled decision GGUFs (Kev, Laya).
 	"ggmlc-laya": {Base: Base{Engine: ggmlclaya.Engine, Settings: ggmlclaya.Settings}, New: ggmlclaya.New},
 	// Our llama.cpp-based engine for Decider checkpoints (+ vision via mmproj).
 	"ggmlc-custom-decider": {Base: Base{Engine: customdecider.Engine, Settings: customdecider.Settings}, New: selfipc.Factory(customdecider.Spec)},
+}
+
+var audioAdapters = map[string]AudioEntry{
+	// Our persistent llama.cpp text-to-speech engine (Qwen3-TTS, Pocket TTS).
+	"ggmlc-audio": {Base: Base{Engine: audio.Engine, Settings: audio.Settings}, New: audio.New},
 }
 
 // Lookup returns the parts of adapter name that do not depend on the model
@@ -44,8 +56,19 @@ func Lookup(t registry.ModelType, name string) (Base, error) {
 	case registry.TypeDecision:
 		e, err := Decision(name)
 		return e.Base, err
+	case registry.TypeAudio:
+		e, err := Audio(name)
+		return e.Base, err
 	}
 	return Base{}, errs.New(errs.UnsupportedModel, "no adapters for model type %q", t)
+}
+
+func Audio(name string) (AudioEntry, error) {
+	e, ok := audioAdapters[name]
+	if !ok {
+		return AudioEntry{}, errs.New(errs.UnsupportedModel, "unknown audio adapter %q", name)
+	}
+	return e, nil
 }
 
 // ResolveSettings merges registry settings (model, then quant) with CLI

@@ -39,10 +39,14 @@ func loadE2EConfig(t *testing.T) e2eConfig {
 		bin:       getenv("SELF_TEST_BIN", "../../bin/self"),
 		engineDir: getenv("SELF_TEST_ENGINE_DIR", "../../bin/libexec/ai-server"),
 		modelsDir: getenv("SELF_TEST_MODELS_DIR", getenv("AI_SERVER_MODELS", appconfig.DefaultModelsDir())),
-		registry:  os.Getenv("SELF_TEST_REGISTRY"),
+		registry:  getenv("SELF_TEST_REGISTRY", appconfig.DefaultRegistry(os.Getenv)),
 	}
 	// The engine runs from its own directory, so relative paths would break.
-	for _, p := range []*string{&cfg.bin, &cfg.engineDir, &cfg.modelsDir} {
+	paths := []*string{&cfg.bin, &cfg.engineDir, &cfg.modelsDir}
+	if !strings.Contains(cfg.registry, "://") {
+		paths = append(paths, &cfg.registry)
+	}
+	for _, p := range paths {
 		abs, err := filepath.Abs(*p)
 		if err != nil {
 			t.Fatal(err)
@@ -86,7 +90,7 @@ func testModel(t *testing.T, cfg e2eConfig, res registry.Resolved) {
 	started := time.Now()
 	proc, err := startServe(cfg.bin, []string{
 		"serve", res.ID(), "--quant", res.Variant.Quant, "--models-dir", cfg.modelsDir,
-		"--runtime-dir", cfg.engineDir, "--device", cfg.device,
+		"--runtime-dir", cfg.engineDir, "--device", cfg.device, "--registry", cfg.registry,
 	}, nil)
 	if err != nil {
 		t.Fatalf("cannot start self serve: %v", err)
@@ -138,7 +142,7 @@ func ensureDownloaded(t *testing.T, cfg e2eConfig, res registry.Resolved) {
 		return
 	}
 	t.Logf("downloading %.2f GiB", float64(res.Variant.Size())/(1<<30))
-	cmd := exec.CommandContext(t.Context(), cfg.bin, "pull", res.ID(), "--quant", res.Variant.Quant, "--models-dir", cfg.modelsDir)
+	cmd := exec.CommandContext(t.Context(), cfg.bin, "pull", res.ID(), "--quant", res.Variant.Quant, "--models-dir", cfg.modelsDir, "--registry", cfg.registry)
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("download failed: %v", err)
@@ -154,14 +158,13 @@ func installed(store imodels.Store, res registry.Resolved) bool {
 	return true
 }
 
-// loadRegistry reads the published registry, the one `self` uses, unless a
-// registry file is given.
-func loadRegistry(file string) (*registry.Registry, error) {
-	if file == "" {
-		reg, _, err := registry.Fetch(&http.Client{Timeout: 30 * time.Second}, registry.PublishedURL)
+// loadRegistry reads the registry `self` is started with: a URL or a file.
+func loadRegistry(source string) (*registry.Registry, error) {
+	if strings.Contains(source, "://") {
+		reg, _, err := registry.Fetch(&http.Client{Timeout: 30 * time.Second}, source)
 		return reg, err
 	}
-	data, err := os.ReadFile(file)
+	data, err := os.ReadFile(source)
 	if err != nil {
 		return nil, err
 	}
