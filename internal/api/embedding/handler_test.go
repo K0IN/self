@@ -65,12 +65,20 @@ func TestSimilarityReturnsCosineScoresInReferenceOrder(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
 	}
-	var scores []float32
-	if err := json.Unmarshal(response.Body.Bytes(), &scores); err != nil {
+	var result struct {
+		Similarities []float32 `json:"similarities"`
+		Usage        struct {
+			LatencyMS float64 `json:"latency_ms"`
+		} `json:"usage"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &result); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if len(scores) != 3 || scores[0] != 1 || scores[1] != 0 || scores[2] != -1 {
-		t.Fatalf("scores = %v, want [1 0 -1]", scores)
+	if len(result.Similarities) != 3 || result.Similarities[0] != 1 || result.Similarities[1] != 0 || result.Similarities[2] != -1 {
+		t.Fatalf("scores = %v, want [1 0 -1]", result.Similarities)
+	}
+	if result.Usage.LatencyMS < 0 {
+		t.Fatalf("latency_ms = %v, want non-negative", result.Usage.LatencyMS)
 	}
 	if got := strings.Join(svc.inputs, ","); got != "reference,same,different,opposite" {
 		t.Fatalf("embed order = %q", got)

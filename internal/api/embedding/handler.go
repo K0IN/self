@@ -10,6 +10,7 @@ import (
 	"math"
 	"net/http"
 	"strings"
+	"time"
 
 	apiroot "ai-server/internal/api"
 	"ai-server/internal/errs"
@@ -52,6 +53,7 @@ type similarityRequest struct {
 }
 
 func (h *Handler) embeddings(w http.ResponseWriter, r *http.Request) {
+	started := time.Now()
 	req, err := decode(w, r)
 	if err != nil {
 		apiroot.WriteError(w, err)
@@ -70,11 +72,12 @@ func (h *Handler) embeddings(w http.ResponseWriter, r *http.Request) {
 	}
 	apiroot.WriteJSON(w, http.StatusOK, map[string]any{
 		"object": "list", "data": data, "model": h.svc.ModelID(),
-		"usage": map[string]int{"prompt_tokens": totalTokens, "total_tokens": totalTokens},
+		"usage": map[string]any{"prompt_tokens": totalTokens, "total_tokens": totalTokens, "latency_ms": elapsedMS(started)},
 	})
 }
 
 func (h *Handler) similarity(w http.ResponseWriter, r *http.Request) {
+	started := time.Now()
 	var req similarityRequest
 	if err := decodeJSON(w, r, &req); err != nil {
 		apiroot.WriteError(w, err)
@@ -94,14 +97,15 @@ func (h *Handler) similarity(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	inputVector, _, err := h.svc.Embed(r.Context(), req.Input)
+	inputVector, inputTokens, err := h.svc.Embed(r.Context(), req.Input)
 	if err != nil {
 		apiroot.WriteError(w, err)
 		return
 	}
 	scores := make([]float32, len(req.Ref))
+	totalTokens := inputTokens
 	for i, text := range req.Ref {
-		refVector, _, err := h.svc.Embed(r.Context(), text)
+		refVector, tokens, err := h.svc.Embed(r.Context(), text)
 		if err != nil {
 			apiroot.WriteError(w, err)
 			return
@@ -112,8 +116,16 @@ func (h *Handler) similarity(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		scores[i] = score
+		totalTokens += tokens
 	}
-	apiroot.WriteJSON(w, http.StatusOK, scores)
+	apiroot.WriteJSON(w, http.StatusOK, map[string]any{
+		"similarities": scores,
+		"usage":        map[string]any{"prompt_tokens": totalTokens, "total_tokens": totalTokens, "latency_ms": elapsedMS(started)},
+	})
+}
+
+func elapsedMS(started time.Time) float64 {
+	return float64(time.Since(started).Microseconds()) / 1000
 }
 
 func cosine(left, right []float32) (float32, error) {

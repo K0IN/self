@@ -118,7 +118,7 @@ console.log(await response.json())
   "object": "list",
   "data": [{"object": "embedding", "embedding": [0.0123, -0.0456], "index": 0}],
   "model": "nomic:1.5",
-  "usage": {"prompt_tokens": 4, "total_tokens": 4}
+  "usage": {"prompt_tokens": 4, "total_tokens": 4, "latency_ms": 12.4}
 }
 ```
 
@@ -152,7 +152,8 @@ Model used to create the embeddings.
 <ApiField name="usage" type="object">
 
 Token counts returned by llama.cpp: `prompt_tokens` and `total_tokens`. For a
-batch request, they cover all supplied input strings.
+batch request, they cover all supplied input strings. `latency_ms` is the total
+time spent handling the request, including embedding inference.
 
 </ApiField>
 
@@ -225,11 +226,16 @@ curl http://localhost:8080/similarity \
 <div class="api-label">Response</div>
 
 ```json
-[0.91, 0.08]
+{
+  "similarities": [0.91, 0.08],
+  "usage": {"prompt_tokens": 10, "total_tokens": 10, "latency_ms": 24.7}
+}
 ```
 
-The response is a JSON array of numbers. A score of `1` means identical vector
-direction, `0` means orthogonal vectors, and `-1` means opposite direction.
+`similarities` contains one score per reference string. A score of `1` means
+identical vector direction, `0` means orthogonal vectors, and `-1` means
+opposite direction. `usage.latency_ms` is the total time spent handling the
+request, including all embedding calls.
 Missing or empty fields, empty reference strings, unknown fields, mismatched
 embedding dimensions, and zero-magnitude vectors return an error.
 
