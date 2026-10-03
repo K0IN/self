@@ -188,50 +188,6 @@ console.log(await response.json())
 }
 ```
 
-<div class="api-label">Example response for the Python request</div>
-
-```json
-{
-  "model": "kev:0.5b",
-  "answers": {
-    "priority": {
-      "type": "choice",
-      "choice": "high",
-      "probabilities": { "low": 0.08, "high": 0.92 },
-      "confidence": 0.92
-    }
-  },
-  "usage": {
-    "input_tokens": 18,
-    "output_tokens": 0,
-    "images": 0,
-    "latency_ms": 19.3
-  }
-}
-```
-
-<div class="api-label">Example response for the JavaScript request</div>
-
-```json
-{
-  "model": "kev:0.5b",
-  "answers": {
-    "billing": {
-      "type": "choice",
-      "choice": "yes",
-      "probabilities": { "yes": 0.88, "no": 0.12 },
-      "confidence": 0.88
-    }
-  },
-  "usage": {
-    "input_tokens": 15,
-    "output_tokens": 0,
-    "images": 0,
-    "latency_ms": 17.9
-  }
-}
-```
-
 </div>
 </div>
 
