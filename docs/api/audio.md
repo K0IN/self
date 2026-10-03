@@ -8,33 +8,21 @@ aside: false
 
 # Audio API (text to speech)
 
-Audio models expose an OpenAI-compatible speech endpoint. Start one of these
-audio models before sending requests:
-
-| Model | Language |
-| --- | --- |
-| `qwen3-tts:1.7b` | Multilingual |
-| `pocket-tts-en:100m` | English |
-| `pocket-tts-de:100m` | German |
-| `pocket-tts-es:100m` | Spanish |
-| `pocket-tts-fr:100m` | French |
-| `pocket-tts-it:100m` | Italian |
-| `pocket-tts-pt:100m` | Portuguese |
+Audio models expose an OpenAI-compatible speech endpoint. Start an audio model
+before sending requests.
 
 The endpoint returns WAV audio and does not require an API key.
 
 The official OpenAI SDKs work unchanged: point their base URL at
-`http://localhost:8080/v1`. OpenAI model names (`tts-1`, `tts-1-hd`,
-`gpt-4o-mini-tts`) select the loaded model, and built-in voice names select its
-default voice.
+`http://localhost:8080/v1`. The SDK's model field selects the already-loaded
+audio model, and built-in voice names select its default voice.
 
 Health, model metadata and the error format are shared by all modalities; see
 the [API overview](/api/).
 
 The model is loaded once when the server starts and stays loaded, so a request
-only pays for generation (on CPU, per short sentence: about 4 s for
-`qwen3-tts:1.7b` q4, under 1 s for `pocket-tts`). Requests are processed one at
-a time; concurrent requests wait in a queue.
+only pays for generation. Requests are processed one at a time; concurrent
+requests wait in a queue.
 
 </div>
 <div class="api-example">
@@ -54,7 +42,7 @@ from openai import OpenAI
 
 client = OpenAI(base_url="http://localhost:8080/v1", api_key="unused")
 with client.audio.speech.with_streaming_response.create(
-    model="qwen3-tts:1.7b",
+  model="audio-model",
     voice="alloy",
     input="Hello from the local speech model.",
     response_format="wav",
