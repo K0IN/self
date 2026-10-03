@@ -48,7 +48,7 @@ RUN set -eu; \
         done; \
         missing=$(ldd laya clef ggmlc-custom-decider ggmlc-audio llama-server lib/*.so* | grep 'not found' || true); \
         case "$CUDA_VARIANT" in \
-            cuda-*) missing=$(printf '%s\n' "$missing" | grep -v '^[[:space:]]*libcuda\\.so\\.1 => not found$' || true) ;; \
+            cuda-*) missing=$(printf '%s\n' "$missing" | grep -Fv 'libcuda.so.1 => not found' || true) ;; \
         esac; \
         test -z "$missing" || { printf '%s\n' "$missing" >&2; exit 1; }
 
