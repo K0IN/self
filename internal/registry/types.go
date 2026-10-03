@@ -15,6 +15,7 @@ type ModelType string
 const (
 	TypeDecision ModelType = "decision"
 	TypeAudio    ModelType = "audio"
+	TypeText     ModelType = "text"
 )
 
 // typeSpec is what the registry accepts for one model type.
@@ -33,6 +34,10 @@ var modelTypes = map[ModelType]typeSpec{
 	TypeAudio: {
 		Capabilities: []Capability{CapText, CapAudio},
 		Roles:        []FileRole{RoleModel, RoleMMProj, RoleVoice},
+	},
+	TypeText: {
+		Capabilities: []Capability{CapText, CapVision, CapMultiImage},
+		Roles:        []FileRole{RoleModel, RoleMMProj},
 	},
 }
 

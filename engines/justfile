@@ -10,16 +10,19 @@ mod laya "laya"
 default:
     @just --list
 
-# Build the engines: the custom Decider engine and the Clef engine.
+# Build all native engines, including the bundled upstream llama-server.
 build variant="cuda-12.8" target="":
     #!/usr/bin/env bash
     set -euo pipefail
     if [[ -n "{{target}}" ]]; then
-      just decider build "{{variant}}" "{{target}}"
-      just clef build "{{target}}"
+            bundle=$(realpath -m "{{target}}")
+            just decider build "{{variant}}" "$bundle"
+            just clef build "$bundle"
+            just audioengine build "{{variant}}" "$bundle"
     else
       just decider build "{{variant}}"
       just clef build
+            just audioengine build "{{variant}}"
     fi
 
 deps variant="cuda-12.8":
@@ -29,8 +32,11 @@ compile variant="cuda-12.8":
     just decider compile "{{variant}}"
     just clef compile
 
-verify target="../../bin/libexec/ai-server":
-    just decider verify "{{target}}"
+verify target="../bin/libexec/ai-server" variant="cuda-12.8":
+    just decider verify "$(realpath '{{target}}')" "{{variant}}"
+    test -x "{{target}}/laya"
+    test -x "{{target}}/clef"
+    test -x "{{target}}/ggmlc-audio"
 
 clean:
     just decider clean

@@ -13,6 +13,30 @@
   `runtime.Handshake` (first message, or start error with exit status + stderr tail, killed on cancel),
   `Supervisor.Await` (one answer under a watchdog), `CrashErr` and `Close`. The adapter owns only its protocol.
 
+## `llama-server` (text)
+
+- Engine: the unmodified upstream `llama-server` executable from the same
+  llama.cpp release bundle as the other engines.
+- `self` creates a private Unix domain socket path in a `0700` temporary
+  directory and passes it via `--host` when starting `llama-server` with the
+  selected GGUF and settings. Its HTTP client uses Unix `DialContext`. Windows
+  falls back to an allocated loopback TCP port with `--host 127.0.0.1`.
+- `self` waits for `GET /v1/models` and exposes the public OpenAI routes from
+  its own HTTP server. The internal engine endpoint is never exposed publicly.
+  After the child exits, idle HTTP connections are closed and the temporary
+  socket directory is removed; it is also removed if the child fails to start.
+- Chat uses `POST /v1/chat/completions`; streaming SSE is forwarded through the
+  typed text adapter. The public embeddings model type and endpoint are not
+  implemented yet.
+- The runtime bundle copies every `lib*.so*` from the release archive. The
+  server and dynamic GGML backend modules otherwise fail to load.
+- Do not add a custom generation or embedding loop when llama.cpp's upstream
+  server already implements the OpenAI contract.
+- Models with a registry `mmproj` file pass `--mmproj` to `llama-server`. The
+  adapter preprocesses bounded images in memory and sends them as OpenAI image
+  content. Registered Qwen3.5 and Gemma 4 models therefore advertise text and
+  vision input.
+
 ## `ggmlc-laya`
 
 - Engine: upstream `laya daemon` from monatis/ggmlc (`GGMLC_VERSION`, default v0.9.6), installed by `just runtime` / `just setup`.
@@ -113,8 +137,11 @@ schema in sync with the flags in `engines/ggmlc-custom-decider/main.cpp`.
 ## Adding an engine
 
 1. Engine speaks SELFIPC1 -> write a spec only (like `customdecider`).
-2. Other protocol -> new package under `internal/adapters/`.
-3. Add one entry to `decisionAdapters` in `internal/adapters/registry.go`.
+2. Engine is an upstream HTTP server -> use a private Unix domain socket when
+  supported, with private loopback TCP as the Windows fallback, and adapt its
+  established API in `internal/adapters/` (see `llama-server` above).
+3. Other protocol -> new package under `internal/adapters/`.
+4. Add one entry to the appropriate adapter table in `internal/adapters/registry.go`.
 
 ## Adding a model type (for example TTS)
 

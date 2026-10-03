@@ -37,7 +37,15 @@ libs variant:
       cpu)       asset="llama-{{tag}}-bin-ubuntu-x64.tar.gz" ;;
       *) echo "unknown variant {{variant}} (cuda-12.8 | cuda-13.4 | vulkan | cpu)" >&2; exit 1 ;;
     esac
-    if [[ -f {{deps}}/.tag && "$(cat {{deps}}/.tag)" == "{{tag}}-{{variant}}" ]]; then
+    complete=true
+    for lib in libllama.so libllama-common.so libllama-server-impl.so libmtmd.so libggml.so libggml-base.so libggml-cpu-x64.so; do
+      [[ -e "{{deps}}/lib/$lib" ]] || complete=false
+    done
+    case "{{variant}}" in
+      cuda-*) [[ -e {{deps}}/lib/libggml-cuda.so ]] || complete=false ;;
+      vulkan) [[ -e {{deps}}/lib/libggml-vulkan.so ]] || complete=false ;;
+    esac
+    if [[ -f {{deps}}/.tag && "$(cat {{deps}}/.tag)" == "{{tag}}-{{variant}}" && "$complete" == true && -x {{deps}}/llama-server ]]; then
       echo "deps/lib up to date ({{tag}}, {{variant}})"; exit 0
     fi
     tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
@@ -46,17 +54,26 @@ libs variant:
     tar -xzf "$tmp/l.tgz" -C "$tmp"
     src=$(find "$tmp" -maxdepth 2 -name 'libllama.so*' -printf '%h\n' | head -1)
     rm -rf {{deps}}/lib && mkdir -p {{deps}}/lib
-    cp -P "$src"/libllama.so* "$src"/libmtmd.so* "$src"/libggml*.so* {{deps}}/lib/
+    cp -P "$src"/lib*.so* {{deps}}/lib/
+    install -m 0755 "$src/llama-server" {{deps}}/llama-server
     echo "{{tag}}-{{variant}}" > {{deps}}/.tag
     echo "deps/lib ready: $(ls {{deps}}/lib | wc -l) files"
 
-# Public headers of the same llama.cpp tag + nlohmann/json
+# Public headers of the same llama.cpp tag + nlohmann/json; common/ headers (chat templates, sampler) for the text engine
 [private]
 headers:
     #!/usr/bin/env bash
     set -euo pipefail
-    mkdir -p {{deps}}/include/nlohmann
-    for f in include/llama.h \
+    # Headers are only valid for the tag they were fetched with.
+    if [[ "$(cat {{deps}}/include/.tag 2>/dev/null)" != "{{tag}}" ]]; then rm -rf {{deps}}/include; fi
+    mkdir -p {{deps}}/include/nlohmann {{deps}}/include/common/jinja
+    echo "{{tag}}" > {{deps}}/include/.tag
+    for f in common.h chat.h sampling.h peg-parser.h json.h json-schema.h \
+             jinja/parser.h jinja/runtime.h jinja/caps.h jinja/lexer.h jinja/utils.h jinja/value.h jinja/string.h; do
+      out={{deps}}/include/common/$f
+      [[ -s "$out" ]] || curl -fsSL -o "$out" "{{raw}}/common/$f"
+    done
+    for f in include/llama.h include/llama-cpp.h \
              ggml/include/ggml.h ggml/include/ggml-backend.h ggml/include/ggml-alloc.h \
              ggml/include/ggml-cpu.h ggml/include/ggml-opt.h ggml/include/gguf.h \
              tools/mtmd/mtmd.h tools/mtmd/mtmd-helper.h; do
@@ -79,15 +96,31 @@ compile variant="cuda-12.8": (deps variant)
 build variant="cuda-12.8" target=dest: (compile variant) && (verify target variant)
     mkdir -p {{target}}/lib
     install -m 0755 {{build_dir}}/ggmlc-custom-decider {{target}}/ggmlc-custom-decider
+    install -m 0755 {{deps}}/llama-server {{target}}/llama-server
     cp -P {{deps}}/lib/*.so* {{target}}/lib/
+    for backend in "{{target}}"/lib/libggml-*.so*; do ln -sf "lib/$(basename "$backend")" "{{target}}/$(basename "$backend")"; done
     @echo "Installed {{target}}/ggmlc-custom-decider"
 
-# Warn about missing shared libraries.
+# Check the upstream server bundle and warn about missing host shared libraries.
 verify target=dest variant="cuda-12.8":
     #!/usr/bin/env bash
-    set -uo pipefail
+    set -euo pipefail
     cd {{target}}
-    missing=$(LD_LIBRARY_PATH=lib ldd ggmlc-custom-decider 2>/dev/null | grep 'not found' | sort -u || true)
+    test -x ggmlc-custom-decider
+    test -x llama-server
+    for lib in libllama.so libllama-common.so libllama-server-impl.so libmtmd.so libggml.so libggml-base.so libggml-cpu-x64.so; do
+      test -e "lib/$lib"
+    done
+    case "{{variant}}" in
+      cuda-*) test -e lib/libggml-cuda.so ;;
+      vulkan) test -e lib/libggml-vulkan.so ;;
+    esac
+    for backend in lib/libggml-*.so*; do
+      test -L "$(basename "$backend")"
+      test "$(readlink "$(basename "$backend")")" = "$backend"
+      test -e "$(basename "$backend")"
+    done
+    missing=$(LD_LIBRARY_PATH=lib ldd ggmlc-custom-decider llama-server lib/libllama-server-impl.so 2>/dev/null | grep 'not found' | sort -u || true)
     if [[ -n "$missing" ]]; then
       echo "WARNING: missing shared libraries:" >&2
       echo "$missing" >&2

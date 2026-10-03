@@ -51,11 +51,12 @@ jobs:
       - name: Build server and engines
         env:
           LLAMA_CPP_TAG: b11256
+          ENGINE_VARIANT: ${{ matrix.engine_variant }}
+          LAYA_VARIANT: vulkan
         run: |
           go test ./...
-          go build -trimpath -o bin/self ./cmd/self
-          just --unstable engine laya fetch vulkan v0.9.6
-          just --unstable engine build "${{ matrix.engine_variant }}"
+          just --unstable setup
+          just --unstable engine verify ../bin/libexec/ai-server "${{ matrix.engine_variant }}"
 
       - name: Log in to GHCR
         uses: docker/login-action@v3

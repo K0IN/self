@@ -43,21 +43,27 @@ them.
 
 ## Scope
 
-- In: decision models (text + images) and text-to-speech, GGUF files,
-  CUDA / Vulkan / CPU.
-- Out (later): image gen, STT, LLM chat, embeddings. A new model type
-  slots in without touching the shared code, see "Adding a model type" in 06.
-- Out: non-GGUF model formats, localhost HTTP between server and engine.
+- In: decision models (text + images), text-to-speech, OpenAI-compatible chat
+  completions, GGUF files, CUDA / Vulkan / CPU.
+- Out (later): image generation and STT. A new model type slots in without
+  touching the shared code, see "Adding a model type" in 06.
+- Out: non-GGUF model formats and public exposure of the engine's private
+  HTTP endpoint.
 
 ## Architecture
 
 ```
-HTTP (chi) -> api/decision -> decision.Service -> Scheduler -> Adapter -> engine subprocess
+HTTP (chi) -> model API -> typed service -> Adapter -> engine subprocess
 ```
 
 - Go server owns HTTP, validation, images, queue.
-- Native engine runs as a child process. Talks over stdin/stdout.
-- Adapter = the only Go code that knows an engine's protocol.
+- Native engines run as child processes. Decision/audio workers use SELFIPC1;
+  text models use the unmodified upstream `llama-server` HTTP API over a private
+  Unix domain socket (`--host` set to its path), with private loopback TCP on
+  Windows. The HTTP client uses Unix `DialContext`; the socket's `0700`
+  temporary directory is removed after the child exits. Public embeddings
+  are not implemented yet.
+- The adapter is the only Go code that knows an engine's protocol.
 - Registry (YAML) maps a model id to files + adapter. CLI references may add a
 	quant suffix: `self serve decider-vision:2b@q4`.
 - The registry is published as `https://k0in.github.io/self/models.yml` (built
@@ -88,12 +94,14 @@ HTTP (chi) -> api/decision -> decision.Service -> Scheduler -> Adapter -> engine
 | `internal/api` | Shared HTTP router, errors, health and model routes |
 | `internal/api/decision` | Decision-model HTTP handlers |
 | `internal/api/audio` | OpenAI-compatible speech HTTP handlers |
+| `internal/api/text` | OpenAI-compatible chat completion HTTP handlers |
 | `internal/api/image` | Reserved for future image-model HTTP handlers |
 | `internal/app` | `serve`, `pull`, `check`, `benchmark`, `settings` wiring: shared `target` + HTTP lifecycle, one file per model type |
 | `internal/onboard` | HF repo -> registry entry (library only, no CLI command yet) |
 | `models` | `registry.yml` and model cards (data only) |
 | `engines/ggmlc-custom-decider` | C++ engine |
 | `engines/ggmlc-audio` | C++ text-to-speech engine (same llama.cpp libraries) |
+| `llama-server` | Upstream llama.cpp HTTP engine for chat models |
 | `engines/clef` | C++ engine for Clef Flash (backbone via llama.cpp + native joint head) |
 | `engines/laya` | Recipe that fetches the upstream Laya engine |
 | `tests/models` | Source registry checks and end-to-end model tests |

@@ -11,12 +11,14 @@ import (
 	"ai-server/internal/adapters/customdecider"
 	"ai-server/internal/adapters/ggmlclaya"
 	"ai-server/internal/adapters/selfipc"
+	"ai-server/internal/adapters/text"
 	domaudio "ai-server/internal/audio"
 	"ai-server/internal/decision"
 	"ai-server/internal/errs"
 	"ai-server/internal/localconf"
 	"ai-server/internal/registry"
 	"ai-server/internal/settings"
+	domtext "ai-server/internal/text"
 )
 
 // Base is what every adapter entry has, whatever its model type.
@@ -38,6 +40,12 @@ type AudioEntry struct {
 	New domaudio.Factory
 }
 
+// TextEntry describes a text (chat) adapter.
+type TextEntry struct {
+	Base
+	New domtext.Factory
+}
+
 var decisionAdapters = map[string]DecisionEntry{
 	// Upstream ggmlc Laya daemon: ggmlc-compiled decision GGUFs (Kev, Laya).
 	"ggmlc-laya": {Base: Base{Engine: ggmlclaya.Engine, Settings: ggmlclaya.Settings}, New: ggmlclaya.New},
@@ -51,6 +59,11 @@ var audioAdapters = map[string]AudioEntry{
 	"ggmlc-audio": {Base: Base{Engine: audio.Engine, Settings: audio.Settings}, New: audio.New},
 }
 
+var textAdapters = map[string]TextEntry{
+	// Our persistent llama.cpp chat engine (Qwen3.5, Gemma 4; + vision via mmproj).
+	"llama-server": {Base: Base{Engine: text.Engine, Settings: text.Settings}, New: text.New},
+}
+
 // Lookup returns the parts of adapter name that do not depend on the model
 // type. A new model type adds a table above and a case here.
 func Lookup(t registry.ModelType, name string) (Base, error) {
@@ -61,6 +74,9 @@ func Lookup(t registry.ModelType, name string) (Base, error) {
 	case registry.TypeAudio:
 		e, err := Audio(name)
 		return e.Base, err
+	case registry.TypeText:
+		e, err := Text(name)
+		return e.Base, err
 	}
 	return Base{}, errs.New(errs.UnsupportedModel, "no adapters for model type %q", t)
 }
@@ -69,6 +85,15 @@ func Audio(name string) (AudioEntry, error) {
 	e, ok := audioAdapters[name]
 	if !ok {
 		return AudioEntry{}, errs.New(errs.UnsupportedModel, "unknown audio adapter %q", name)
+	}
+	return e, nil
+}
+
+// Text returns the text adapter registered under name.
+func Text(name string) (TextEntry, error) {
+	e, ok := textAdapters[name]
+	if !ok {
+		return TextEntry{}, errs.New(errs.UnsupportedModel, "unknown text adapter %q", name)
 	}
 	return e, nil
 }

@@ -5,7 +5,7 @@
 #   <name>:<tag>:
 #     description:   one line (shown by `self ls-remote` and on the overview page)
 #     readme:        model card, Markdown file relative to this file (readmes/<name>/<tag>.md)
-#     type:          decision | audio
+#     type:          decision | audio | text
 #     default:       quant used when --quant is not given
 #     capabilities:  text | vision | multi-image | choice | score | noul | audio
 #     info:          descriptive metadata (family, parameters, architecture,
@@ -16,11 +16,12 @@
 #                    overridden per quant (`settings:` under the quant) and
 #                    at run time with `self serve <id> --set key=value`.
 #     <quant>:
-#       adapter:     engine adapter (ggmlc-laya | ggmlc-custom-decider | ggmlc-audio)
+#       adapter:     engine adapter (ggmlc-laya | ggmlc-custom-decider | ggmlc-audio | llama-server)
 #       repo:        Hugging Face repo (owner/name)
 #       files:       - {file, size, sha256[, role: model|mmproj|voice][, repo]}
 #                    role voice (audio only): .wav/.mp3 reference voice used
 #                    when a request has none. repo: per-file repo override.
+#                    role mmproj (text and decision): vision projector.
 #       settings:    optional per-quant settings (override the model's)
 #
 # size (bytes) and sha256 pin the exact upstream file. A download that does
@@ -29,6 +30,128 @@
 version: 1
 
 models:
+
+  # --- Text generation (chat completions; upstream llama.cpp llama-server) ---
+  # Every model lists its multimodal projector with role: mmproj (image input).
+  # settings carry each model card's recommended sampling; `thinking` is the model's own default.
+
+  qwen3.5:9b:
+    description: "Qwen3.5 9B: multilingual chat model with reasoning and image input"
+    readme: readmes/qwen3.5/9b.md
+    type: text
+    default: q4
+    capabilities:
+      input: [text, vision, multi-image]
+      output: [text]
+    info:
+      family: qwen3.5
+      parameters: 9B
+      architecture: qwen3.5
+      base_model: Qwen/Qwen3.5-9B
+      source: Qwen/Qwen3.5-9B
+      license: apache-2.0
+      languages: [multilingual]
+      context_length: 262144
+      homepage: "https://huggingface.co/Qwen/Qwen3.5-9B"
+    settings:
+      context_size: 16384
+      temperature: 1.0
+      top_p: 0.95
+      top_k: 20
+      min_p: 0.0
+      presence_penalty: 1.5
+      thinking: "on"
+    q4:
+      adapter: llama-server
+      repo: unsloth/Qwen3.5-9B-GGUF
+      files:
+        - {file: Qwen3.5-9B-Q4_K_M.gguf, size: 5680522464, sha256: 03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8}
+        - {file: mmproj-F16.gguf, role: mmproj, size: 918166080, sha256: f70dc3509053962b0d0d3ee8a7eacebf5d60aa560cad78254ae8698516ae029f}
+    q8:
+      adapter: llama-server
+      repo: unsloth/Qwen3.5-9B-GGUF
+      files:
+        - {file: Qwen3.5-9B-Q8_0.gguf, size: 9527502048, sha256: 809626574d0cb43d4becfa56169980da2bb448f2299270f7be443cb89d0a6ae4}
+        - {file: mmproj-F16.gguf, role: mmproj, size: 918166080, sha256: f70dc3509053962b0d0d3ee8a7eacebf5d60aa560cad78254ae8698516ae029f}
+
+  gemma4:e4b:
+    description: "Gemma 4 E4B: efficient multilingual chat model with reasoning and image input"
+    readme: readmes/gemma4/e4b.md
+    type: text
+    default: q4
+    capabilities:
+      input: [text, vision, multi-image]
+      output: [text]
+    info:
+      family: gemma4
+      parameters: 4.5B effective (8B with embeddings)
+      architecture: gemma4
+      base_model: google/gemma-4-E4B
+      source: google/gemma-4-E4B-it
+      license: apache-2.0
+      languages: [multilingual]
+      context_length: 131072
+      homepage: "https://huggingface.co/google/gemma-4-E4B-it"
+    settings:
+      context_size: 16384
+      temperature: 1.0
+      top_p: 0.95
+      top_k: 64
+      min_p: 0.0
+      thinking: "off"
+    q4:
+      adapter: llama-server
+      repo: google/gemma-4-E4B-it-qat-q4_0-gguf
+      files:
+        - {file: gemma-4-E4B_q4_0-it.gguf, size: 5154941280, sha256: 676c35070db6dbe52f93e9c864ee0fba4eddea94b9c875d9cb10daff453fbaee}
+        - {file: gemma-4-E4B-it-mmproj.gguf, role: mmproj, size: 991552256, sha256: 7498a37cb619e55f2fcf87eb931f56e99389ed6d432e4c5c66110694c0d65578}
+    q8:
+      adapter: llama-server
+      repo: ggml-org/gemma-4-E4B-it-GGUF
+      files:
+        - {file: gemma-4-E4B-it-Q8_0.gguf, size: 8031242688, sha256: 34be82b17b4942d389b9b527170c4b058027abdd32531fda063d3d97dd8ce80a}
+        - {file: mmproj-gemma-4-E4B-it-Q8_0.gguf, role: mmproj, size: 559874816, sha256: 197f49a93027f9843772bd24a6a9e0be2a32a788de5a3def330e9c585d86edd1}
+
+  gemma4:12b:
+    description: "Gemma 4 12B: multilingual chat model with reasoning and image input"
+    readme: readmes/gemma4/12b.md
+    type: text
+    default: q4
+    capabilities:
+      input: [text, vision, multi-image]
+      output: [text]
+    info:
+      family: gemma4
+      parameters: 11.95B
+      architecture: gemma4 (unified)
+      base_model: google/gemma-4-12B
+      source: google/gemma-4-12B-it
+      license: apache-2.0
+      languages: [multilingual]
+      context_length: 262144
+      homepage: "https://huggingface.co/google/gemma-4-12B-it"
+    settings:
+      context_size: 16384
+      temperature: 1.0
+      top_p: 0.95
+      top_k: 64
+      min_p: 0.0
+      thinking: "off"
+    q4:
+      adapter: llama-server
+      repo: google/gemma-4-12B-it-qat-q4_0-gguf
+      files:
+        - {file: gemma-4-12b-it-qat-q4_0.gguf, size: 6975879296, sha256: 93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b}
+        - {file: mmproj-gemma-4-12b-it-qat-q4_0.gguf, role: mmproj, size: 175115616, sha256: cb018338a7538a9814d994bfe54644c71eb7ed54e31eae2f721e45fd3c260da7}
+    q8:
+      adapter: llama-server
+      repo: ggml-org/gemma-4-12B-it-GGUF
+      files:
+        - {file: gemma-4-12B-it-Q8_0.gguf, size: 12669646976, sha256: abfc3044b93795f6a446fc1a04468ac2d5fc5e9c92e237f09a5b3384c5a433e4}
+        - {file: mmproj-gemma-4-12B-it-Q8_0.gguf, role: mmproj, size: 158987616, sha256: 59e62255435dda870e2d1de97cc031330b31a898bac12b38a182cecff9cd3738}
+
+  # --- Text to speech ---
+
   qwen3-tts:1.7b:
     description: "Qwen3-TTS 1.7B Base: multilingual text-to-speech with reference audio"
     readme: readmes/qwen3-tts/1.7b.md

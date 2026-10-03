@@ -1,0 +1,44 @@
+# Gemma 4 E4B
+
+Google DeepMind's efficient "effective 4B" multimodal model (4.5B effective,
+8B with per-layer embeddings; 128K token context). Served by upstream `llama-server`
+from llama.cpp: its own chat template, reasoning split and sampler, model kept
+loaded between requests. The bundled projector enables text and image input;
+the audio encoder is not used.
+
+Source: [google/gemma-4-E4B-it](https://huggingface.co/google/gemma-4-E4B-it).
+GGUF artifacts: Google's quantization-aware-trained Q4_0
+([google/gemma-4-E4B-it-qat-q4_0-gguf](https://huggingface.co/google/gemma-4-E4B-it-qat-q4_0-gguf))
+for `q4`, and [ggml-org/gemma-4-E4B-it-GGUF](https://huggingface.co/ggml-org/gemma-4-E4B-it-GGUF)
+Q8_0 for `q8`. License: Apache-2.0.
+
+Available variants are `q4` (default) and `q8`. Each downloads the language
+model and the vision projector (`mmproj`). Sizes and SHA256 values are pinned
+from upstream LFS metadata.
+
+```bash
+self serve gemma4:e4b
+```
+
+Image messages use the standard OpenAI `image_url` content part:
+
+```json
+{"model":"gemma4:e4b","messages":[{"role":"user","content":[{"type":"text","text":"Describe this image."},{"type":"image_url","image_url":{"url":"https://example.com/image.jpg"}}]}]}
+```
+
+Chat at `POST /v1/chat/completions` (OpenAI-compatible). See
+[Text generation API](/api/text).
+
+## Thinking
+
+Gemma 4 answers directly unless thinking is switched on; the registry keeps that
+default (`thinking: off`). Turn it on per request with `"reasoning_effort": "low"`
+(any level but `none`) or `"chat_template_kwargs": {"enable_thinking": true}`, or
+for the whole server with `--set thinking=on`. The thinking comes back as
+`reasoning_content`, separate from `content`.
+
+## Sampling
+
+The registry carries the model card's settings: `temperature` 1.0, `top_p` 0.95,
+`top_k` 64. A request's own `temperature` and `top_p` win. The context window is
+16,384 tokens by default (`--set context_size=...`; the model supports 131,072).

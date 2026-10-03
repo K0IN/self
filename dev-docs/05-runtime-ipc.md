@@ -30,8 +30,15 @@
   request never starts a process or loads weights. The ready handshake only completes once the
   weights, the context and the projector are loaded, so the first request is as warm as the rest
   (apart from a few hundred ms of one-time GPU kernel setup).
-- Engines (`ggmlc-custom-decider`, `clef`, `ggmlc-audio`; Laya is a daemon) then answer request
-  frames in a loop. The only per-request state they reset is the KV cache.
+- Engines (`ggmlc-custom-decider`, `clef`, `ggmlc-audio`; Laya is a daemon)
+  answer request frames in a loop. Text models use the upstream `llama-server`
+  child over HTTP on a private Unix domain socket, with private loopback TCP
+  on Windows. The only per-request model state reset is the KV cache.
+- On non-Windows systems, `self` passes the socket path to the unmodified
+  upstream `llama-server` via `--host`. The socket lives in a `0700` temporary
+  directory, and the HTTP client connects using Unix `DialContext`. After the
+  child exits, idle HTTP connections are closed and the directory is removed.
+  The directory is also removed if the child fails to start.
 - If requests are slow while the engine stays up, it is compute, not loading: check the device
   first (`Device` line at startup, or `ps` showing the same engine PID and a growing elapsed time
   while latency stays flat; see 13 for a bundle that silently runs on the CPU).
@@ -59,4 +66,7 @@
 - Must: engine not found -> `runtime_not_found`. Fails to start -> `runtime_start_failed`.
 - Must: engine exit during serve -> current request `runtime_crashed`, queue rejected, `self` exits non-zero (`TestCrashAndProtocolErrors`, `TestSchedulerCrashFailsQueued`).
 - Must: no engine process left after `self` exits (manual, verified: no engine process after SIGINT).
-- Must: no localhost HTTP between server and engine.
+- Must: custom decision/audio engines use SELFIPC1; the upstream `llama-server`
+  text engine uses HTTP over a private Unix domain socket in a `0700` temporary
+  directory, removed after child exit. Windows falls back to private loopback
+  TCP. Neither internal endpoint is exposed through the public API.

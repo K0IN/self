@@ -1,7 +1,7 @@
 # self — local AI model server
 #
 #   just            list recipes
-#   just setup      build self + fetch the bundled decision engine
+#   just setup      build self + install all bundled engines
 #   just serve      serve the default model (kev:0.5b)
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
@@ -13,6 +13,8 @@ engine_dir  := bin / "libexec/ai-server"
 ggmlc       := env_var_or_default("GGMLC_VERSION", "v0.9.6")
 model       := env_var_or_default("MODEL", "kev:0.5b")
 port        := env_var_or_default("PORT", "8080")
+variant     := env_var_or_default("ENGINE_VARIANT", "cuda-13.4")
+laya_variant := env_var_or_default("LAYA_VARIANT", "auto")
 
 # Dev runs use the checked-out registry, not the published one.
 export AI_SERVER_REGISTRY := env_var_or_default("AI_SERVER_REGISTRY", justfile_directory() / "models/registry.yml")
@@ -23,7 +25,11 @@ default:
     @just --list
 
 # Build self and all bundled engines.
-setup: build runtime engine-decider
+setup: build (runtime laya_variant) (engine-decider variant) && verify-engines
+
+[private]
+verify-engines:
+    just engine verify "{{justfile_directory()}}/{{engine_dir}}" "{{variant}}"
 
 # Build the self binary into bin/
 build:
@@ -45,7 +51,7 @@ bootstrap:
             rm -f "{{engine_dir}}/laya"
             just runtime
         fi
-        if [[ ! -x "{{engine_dir}}/ggmlc-custom-decider" || ! -x "{{engine_dir}}/clef" ]]; then
+        if [[ ! -x "{{engine_dir}}/ggmlc-custom-decider" || ! -x "{{engine_dir}}/clef" || ! -x "{{engine_dir}}/llama-server" || ! -e "{{engine_dir}}/lib/libllama-server-impl.so" ]]; then
             just engine-decider
         fi
         if [[ ! -x "{{engine_dir}}/ggmlc-audio" ]]; then

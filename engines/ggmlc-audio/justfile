@@ -27,6 +27,9 @@ build variant="" target=dest:
     mkdir -p "{{target}}/lib"
     install -m 0755 {{build_dir}}/ggmlc-audio "{{target}}/ggmlc-audio"
     cp -P {{deps}}/lib/*.so* "{{target}}/lib/"
+    for backend in "{{target}}"/lib/libggml-*.so*; do
+      ln -sf "lib/$(basename "$backend")" "{{target}}/$(basename "$backend")"
+    done
     missing=$(cd "{{target}}" && LD_LIBRARY_PATH=lib ldd ggmlc-audio | grep 'not found' || true)
     if [[ -n "$missing" ]]; then echo "WARNING: missing shared libraries:" >&2; echo "$missing" >&2; fi
     echo "Installed {{target}}/ggmlc-audio"

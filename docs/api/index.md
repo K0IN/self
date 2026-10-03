@@ -14,8 +14,8 @@ aside: false
 | --- | --- | --- |
 | [Decision](/api/decision) | `POST /v1/systemone`, `/v1/decide` | Available |
 | [Audio (text to speech)](/api/audio) | `POST /v1/audio/speech`, `/v1/audio/voice` | Available, OpenAI-compatible |
-| [Text generation](/api/text) | `POST /v1/chat/completions` | Planned |
-| [Embeddings](/api/embeddings) | `POST /v1/embeddings` | Planned |
+| [Text generation](/api/text) | `POST /v1/chat/completions` | Available, OpenAI-compatible |
+| [Embeddings](/api/embeddings) | `POST /v1/embeddings` | Not available yet |
 | [Speech to text](/api/stt) | `POST /v1/audio/transcriptions` | Planned |
 
 This page covers what every model shares: health, model metadata and errors.

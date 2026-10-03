@@ -14,6 +14,12 @@ The goal is to be as ergonomic as Ollama while using a good open-source ggml
 engine for each function, with text, image, audio, and video support in one
 server.
 
+For text models, `self` starts the unmodified upstream `llama-server` with
+`--host` set to a private Unix domain socket in a `0700` temporary directory.
+Its HTTP client connects through Unix `DialContext`; the directory is removed
+after the child exits. Windows uses private loopback TCP instead. Only `self`
+owns the public API port.
+
 ## Run with Docker
 
 Images are published to GHCR for Linux hosts:
@@ -129,7 +135,7 @@ docker run --rm --network none --gpus all \
 See the full [OpenAI-style API reference](docs/api/index.md) for endpoint examples,
 request and response fields, image inputs, Python and JavaScript clients, and
 error responses. It has one page per modality: [decision](docs/api/decision.md),
-[audio](docs/api/audio.md), and the planned [text](docs/api/text.md),
+[audio](docs/api/audio.md), and [text](docs/api/text.md),
 [embeddings](docs/api/embeddings.md) and [speech to text](docs/api/stt.md).
 
 ### Health
