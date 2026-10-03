@@ -15,16 +15,18 @@ import (
 )
 
 type audioService struct {
-	id, quant string
-	info      any
-	settings  map[string]any
-	adapter   dom.Adapter
+	id, quant    string
+	info         any
+	settings     map[string]any
+	instructions bool
+	adapter      dom.Adapter
 }
 
-func (s *audioService) ModelID() string          { return s.id }
-func (s *audioService) Quant() string            { return s.quant }
-func (s *audioService) Info() any                { return s.info }
-func (s *audioService) Settings() map[string]any { return s.settings }
+func (s *audioService) ModelID() string             { return s.id }
+func (s *audioService) Quant() string               { return s.quant }
+func (s *audioService) Info() any                   { return s.info }
+func (s *audioService) Settings() map[string]any    { return s.settings }
+func (s *audioService) InstructionsSupported() bool { return s.instructions }
 func (s *audioService) Synthesize(ctx context.Context, r dom.Request) (dom.Response, error) {
 	return s.adapter.Synthesize(ctx, r)
 }
@@ -51,7 +53,8 @@ func serveAudio(ctx context.Context, cfg config.Serve, t target, out io.Writer, 
 	fmt.Fprintf(out, "\nUsing %s\n\nLoading model...\n", tildify(files[registry.RoleModel]))
 	startCtx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
-	startCfg := dom.RuntimeConfig{ModelID: t.res.ID(), Files: dom.ModelFiles{Model: files[registry.RoleModel], MMProj: files[registry.RoleMMProj], Voice: files[registry.RoleVoice]}, Device: cfg.Device, EnginePath: engine.Path, LibDir: engine.LibDir, Log: engineLog, Settings: t.settings}
+	instructions := t.res.Model.Capabilities.Has(registry.CapInstructions)
+	startCfg := dom.RuntimeConfig{ModelID: t.res.ID(), Files: dom.ModelFiles{Model: files[registry.RoleModel], MMProj: files[registry.RoleMMProj], Voice: files[registry.RoleVoice]}, Instructions: instructions, Device: cfg.Device, EnginePath: engine.Path, LibDir: engine.LibDir, Log: engineLog, Settings: t.settings}
 	if err := adapter.Start(startCtx, startCfg); err != nil {
 		return err
 	}
@@ -65,6 +68,6 @@ func serveAudio(ctx context.Context, cfg config.Serve, t target, out io.Writer, 
 	if s, ok := adapter.(interface{ StderrTail(int) []string }); ok {
 		tail = s.StderrTail
 	}
-	svc := &audioService{id: t.res.ID(), quant: t.res.Variant.Quant, info: t.res.Model.Info, settings: t.settings, adapter: adapter}
+	svc := &audioService{id: t.res.ID(), quant: t.res.Variant.Quant, info: t.res.Model.Info, settings: t.settings, instructions: instructions, adapter: adapter}
 	return serveHTTP(ctx, cfg, out, runningModel{Kind: "audio", Engine: engine.Path, Device: info.Device, Mount: apiaudio.New(svc).Mount, Done: adapter.Done(), StderrTail: tail, Close: closeEngine})
 }

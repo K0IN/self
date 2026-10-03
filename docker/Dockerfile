@@ -13,7 +13,7 @@ ARG TARGETARCH=amd64
 ARG CUDA_VARIANT
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl libvulkan1 mesa-vulkan-drivers \
+    && apt-get install -y --no-install-recommends ca-certificates curl libgomp1 libvulkan1 mesa-vulkan-drivers \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

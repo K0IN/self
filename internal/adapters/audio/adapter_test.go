@@ -77,9 +77,23 @@ func startFake(t *testing.T, mode string, voice ...string) (*Adapter, error) {
 	if len(voice) > 0 {
 		files.Voice = voice[0]
 	}
-	err := a.Start(ctx, dom.RuntimeConfig{ModelID: "fake:1b", EnginePath: os.Args[0], Device: "cpu", Files: files})
+	instructions := len(voice) > 1 && voice[1] == "instructions"
+	err := a.Start(ctx, dom.RuntimeConfig{ModelID: "fake:1b", EnginePath: os.Args[0], Device: "cpu", Files: files, Instructions: instructions})
 	t.Cleanup(func() { _ = a.Close(context.Background()) })
 	return a, err
+}
+
+func TestInstructionConfigGatesForwarding(t *testing.T) {
+	a, err := startFake(t, "ok", "", "instructions")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !a.instructions {
+		t.Fatal("instruction capability was not configured")
+	}
+	if _, err := a.Synthesize(context.Background(), dom.Request{Input: "hello", Instructions: "sound warm"}); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // The model loads once in Start; every request is served by that one process.

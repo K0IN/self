@@ -5,14 +5,13 @@ aside: false
 <div class="api-row">
 <div class="api-doc">
 # Embeddings API
-Embedding models are not registered in the current build. There is no embedding
-model type or `/v1/embeddings` route. The fields below describe the intended
-OpenAI-compatible shape, not a live endpoint.
+Embedding models use the `llama-server` adapter and expose an OpenAI-compatible
+`/v1/embeddings` route.
 
 </div>
 <div class="api-example">
 
-<div class="api-label">Reserved endpoint</div>
+<div class="api-label">Endpoint</div>
 
 ```text
 POST /v1/embeddings
@@ -22,8 +21,58 @@ POST /v1/embeddings
 
 [Browse embedding models](/registry/?type=embedding)
 
-No embedding model is available yet, so there is no working `self serve`
-command.
+Register an embedding model with `type: embedding` and `adapter: llama-server`,
+then start it with `self serve MODEL`.
+
+The same loaded embedding model also exposes `POST /similarity` for comparing
+one input sentence with a list of reference sentences.
+
+</div>
+</div>
+
+<div class="api-row">
+<div class="api-doc">
+
+## `POST /similarity`
+
+Compute cosine similarity between `input` and every sentence in `ref`. Scores
+are in the range `[-1, 1]` and have the same order as the supplied `ref` array.
+
+#### Request body
+
+<ApiField name="input" type="string" required>
+
+The reference sentence to compare against.
+
+</ApiField>
+
+<ApiField name="ref" type="array of strings" required>
+
+One or more sentences to compare with `input`.
+
+</ApiField>
+
+</div>
+<div class="api-example">
+
+<div class="api-label">Example request</div>
+
+```bash
+curl -i http://localhost:8080/similarity \
+  -H 'Content-Type: application/json' \
+  -d '{"input":"A cat is sleeping.","ref":["A kitten is asleep.","The weather is sunny."]}'
+```
+
+<div class="api-label">Response</div>
+
+```json
+[0.91, 0.08]
+```
+
+The response is a JSON array of numbers. A score of `1` means identical vector
+direction, `0` means orthogonal vectors, and `-1` means opposite direction.
+Missing or empty fields, empty reference strings, unknown fields, mismatched
+embedding dimensions, and zero-magnitude vectors return an error.
 
 </div>
 </div>
@@ -33,8 +82,8 @@ command.
 
 ## `POST /v1/embeddings`
 
-The route is not registered today. Planned request fields are listed for future
-implementation.
+The route accepts one string or a non-empty array of strings. Requests are
+forwarded to llama.cpp's OpenAI-compatible `/v1/embeddings` endpoint.
 
 #### Request body
 
@@ -44,21 +93,23 @@ Text to embed, either one string or a list of strings.
 
 </ApiField>
 
-<ApiField name="model" type="string" required>
+<ApiField name="model" type="string" optional>
 
-Planned embedding model ID.
+Model ID is accepted for OpenAI client compatibility and ignored because a
+server instance runs one loaded model.
 
 </ApiField>
 
 <ApiField name="encoding_format" type="string" optional>
 
-Planned output encoding, such as `float` or `base64`.
+Use `float` or omit the field. Other formats are not supported.
 
 </ApiField>
 
 <ApiField name="dimensions" type="integer" optional>
 
-Optional requested output dimension.
+Accepted for OpenAI client compatibility, but dimensionality changes are not
+supported by the loaded model and return `unsupported_capability`.
 
 </ApiField>
 
@@ -103,16 +154,11 @@ console.log(response.status, await response.text())
 
 :::
 
-<div class="api-label">Current response</div>
+<div class="api-label">Error behavior</div>
 
-```json
-{
-  "error": {
-    "type": "invalid_request",
-    "message": "no route for POST /v1/embeddings"
-  }
-}
-```
+Unsupported `encoding_format` values and `dimensions` requests return an
+`unsupported_capability` error. Other malformed requests return
+`invalid_request`.
 
 </div>
 </div>
@@ -120,7 +166,7 @@ console.log(response.status, await response.text())
 <div class="api-row">
 <div class="api-doc">
 
-#### Planned response body
+#### Response body
 
 <ApiField name="object" type="string">
 
@@ -143,7 +189,8 @@ Model used to create the embeddings.
 
 <ApiField name="usage" type="object">
 
-Planned token counts: `prompt_tokens` and `total_tokens`.
+Token counts returned by llama.cpp: `prompt_tokens` and `total_tokens`. For a
+batch request, they cover all supplied input strings.
 
 </ApiField>
 

@@ -45,12 +45,19 @@ var Settings = settings.Schema{
 	{Name: "min_p", Flag: "", Kind: settings.Float, Min: 0, Max: 1, Help: "default request min-p"},
 	{Name: "presence_penalty", Flag: "", Kind: settings.Float, Min: -2, Max: 2, Help: "default request presence penalty"},
 	{Name: "thinking", Flag: "", Kind: settings.String, Enum: []string{"on", "off"}, Help: "default thinking mode"},
+	{Name: "pooling", Flag: "", Kind: settings.String, Enum: []string{"none", "mean", "cls", "last", "rank"}, Help: "embedding pooling type"},
 }
 
 const requestTimeout = 10 * time.Minute
 
 func Args(cfg dom.RuntimeConfig, port int) []string {
 	args := []string{"--model", cfg.Files.Model, "--host", "127.0.0.1", "--port", strconv.Itoa(port), "--no-webui", "--jinja"}
+	if cfg.Embedding {
+		args = append(args, "--embedding")
+		if cfg.Pooling != "" {
+			args = append(args, "--pooling", cfg.Pooling)
+		}
+	}
 	if cfg.Device == "cpu" {
 		args = append(args, "--device", "none")
 	}
@@ -115,7 +122,9 @@ func (a *Adapter) Start(ctx context.Context, cfg dom.RuntimeConfig) error {
 	}
 	proc, err := runtime.Start(runtime.Spec{Path: cfg.EnginePath, Args: args, LibDir: cfg.LibDir, Log: cfg.Log, LogPrefix: "[llama-server] "})
 	if err != nil {
-		if a.socketDir != "" { _ = os.RemoveAll(a.socketDir) }
+		if a.socketDir != "" {
+			_ = os.RemoveAll(a.socketDir)
+		}
 		return errs.Wrap(errs.RuntimeStartFailed, err, "cannot start llama-server")
 	}
 	a.proc = runtime.Supervise(proc, "llama-server")
@@ -123,7 +132,9 @@ func (a *Adapter) Start(ctx context.Context, cfg dom.RuntimeConfig) error {
 		io.Copy(io.Discard, proc.Stdout())
 		<-proc.Done()
 		a.client.CloseIdleConnections()
-		if a.socketDir != "" { _ = os.RemoveAll(a.socketDir) }
+		if a.socketDir != "" {
+			_ = os.RemoveAll(a.socketDir)
+		}
 		close(a.done)
 	}()
 	if err := a.waitReady(ctx); err != nil {
@@ -202,6 +213,40 @@ func (a *Adapter) Chat(ctx context.Context, req dom.Request, onDelta func(dom.De
 		return convertCompletion(out), nil
 	}
 	return readSSE(resp.Body, onDelta)
+}
+
+func (a *Adapter) Embed(ctx context.Context, input string) ([]float32, int, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	body, _ := json.Marshal(map[string]any{"input": input, "encoding_format": "float"})
+	hreq, err := http.NewRequestWithContext(ctx, http.MethodPost, a.baseURL+"/v1/embeddings", bytes.NewReader(body))
+	if err != nil {
+		return nil, 0, err
+	}
+	hreq.Header.Set("Content-Type", "application/json")
+	resp, err := a.client.Do(hreq)
+	if err != nil {
+		return nil, 0, a.proc.CrashErr(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, 0, decodeHTTPError(resp)
+	}
+	var out struct {
+		Data []struct {
+			Embedding []float32 `json:"embedding"`
+		} `json:"data"`
+		Usage struct {
+			PromptTokens int `json:"prompt_tokens"`
+		} `json:"usage"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return nil, 0, errs.Wrap(errs.RuntimeCrashed, err, "invalid llama-server embedding response")
+	}
+	if len(out.Data) == 0 {
+		return nil, 0, errs.New(errs.RuntimeCrashed, "llama-server returned no embedding")
+	}
+	return out.Data[0].Embedding, out.Usage.PromptTokens, nil
 }
 
 type openAIMessage struct {

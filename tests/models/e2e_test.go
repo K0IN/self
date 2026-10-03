@@ -111,7 +111,7 @@ func testModel(t *testing.T, cfg e2eConfig, res registry.Resolved) {
 	t.Logf("loaded in %.1fs", time.Since(started).Seconds())
 
 	e := newEnv(t.Context(), newClient(proc.base), res)
-	for _, c := range modelChecks() {
+	for _, c := range checksFor(e) {
 		t.Run(c.name, func(t *testing.T) {
 			status, detail := runCheck(t.Context(), e, c)
 			switch status {
@@ -193,8 +193,8 @@ func selectTargets(reg *registry.Registry, patterns, quants string) ([]registry.
 		idPat, quant, _ := strings.Cut(p, "@")
 		matched := false
 		for _, id := range reg.IDs() {
-			// The checks here are decision API checks; other types get their own suite.
-			if reg.Models[id].Type != registry.TypeDecision {
+			modelType := reg.Models[id].Type
+			if modelType != registry.TypeDecision && modelType != registry.TypeEmbedding {
 				continue
 			}
 			ok, err := path.Match(idPat, id)

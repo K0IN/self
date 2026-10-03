@@ -97,6 +97,39 @@ type decided struct {
 	Wall    time.Duration `json:"-"`
 }
 
+type embeddingReply struct {
+	Object string `json:"object"`
+	Data   []struct {
+		Object    string    `json:"object"`
+		Embedding []float32 `json:"embedding"`
+		Index     int       `json:"index"`
+	} `json:"data"`
+	Model string `json:"model"`
+	Usage struct {
+		PromptTokens int `json:"prompt_tokens"`
+		TotalTokens  int `json:"total_tokens"`
+	} `json:"usage"`
+}
+
+func (c *client) embeddings(ctx context.Context, inputs []string) (embeddingReply, error) {
+	body, err := json.Marshal(map[string]any{"model": "ignored", "input": inputs})
+	if err != nil {
+		return embeddingReply{}, err
+	}
+	r, err := c.do(ctx, http.MethodPost, "/v1/embeddings", "application/json", body)
+	if err != nil {
+		return embeddingReply{}, err
+	}
+	if r.Status != http.StatusOK {
+		return embeddingReply{}, errorOf(r)
+	}
+	var out embeddingReply
+	if err := json.Unmarshal(r.Body, &out); err != nil {
+		return embeddingReply{}, fmt.Errorf("decode embeddings response: %w", err)
+	}
+	return out, nil
+}
+
 // post sends a decision request and returns the raw reply.
 func (c *client) post(ctx context.Context, req decideRequest) (reply, error) {
 	body, err := json.Marshal(req)
@@ -140,29 +173,73 @@ func expectStatus(err error, status int, typ string) error {
 
 // modelDoc is the /v1/model body.
 type modelDoc struct {
-	ID           string `json:"id"`
-	Object       string `json:"object"`
-	Type         string `json:"type"`
-	Quant        string `json:"quant"`
-	Capabilities struct {
-		Input struct {
-			Text       bool `json:"text"`
-			Vision     bool `json:"vision"`
-			MultiImage bool `json:"multi_image"`
-			MaxImages  int  `json:"max_images"`
-		} `json:"input"`
-		Output struct {
-			Choice     bool `json:"choice"`
-			Score      bool `json:"score"`
-			Noul       bool `json:"noul"`
-			MaxOptions int  `json:"max_options"`
-		} `json:"output"`
-	} `json:"capabilities"`
-	Info struct {
+	ID           string        `json:"id"`
+	Object       string        `json:"object"`
+	Type         string        `json:"type"`
+	Quant        string        `json:"quant"`
+	Capabilities capabilityDoc `json:"capabilities"`
+	Info         struct {
 		ContextLength int `json:"context_length"`
 		MaxOptions    int `json:"max_options"`
 	} `json:"info"`
 	Settings map[string]any `json:"settings"`
+}
+
+type capabilityDoc struct {
+	Input struct {
+		Text       bool `json:"text"`
+		Vision     bool `json:"vision"`
+		MultiImage bool `json:"multi_image"`
+		MaxImages  int  `json:"max_images"`
+	} `json:"input"`
+	Output struct {
+		Choice     bool `json:"choice"`
+		Score      bool `json:"score"`
+		Noul       bool `json:"noul"`
+		Embedding  bool `json:"embedding"`
+		MaxOptions int  `json:"max_options"`
+	} `json:"output"`
+}
+
+func (c *capabilityDoc) UnmarshalJSON(data []byte) error {
+	var arrays struct {
+		Input  json.RawMessage `json:"input"`
+		Output json.RawMessage `json:"output"`
+	}
+	if err := json.Unmarshal(data, &arrays); err != nil {
+		return err
+	}
+	if len(arrays.Input) > 0 && arrays.Input[0] == '{' {
+		if err := json.Unmarshal(arrays.Input, &c.Input); err != nil {
+			return err
+		}
+	} else {
+		var values []string
+		if err := json.Unmarshal(arrays.Input, &values); err != nil {
+			return err
+		}
+		for _, value := range values {
+			if value == "text" {
+				c.Input.Text = true
+			}
+		}
+	}
+	if len(arrays.Output) > 0 && arrays.Output[0] == '{' {
+		if err := json.Unmarshal(arrays.Output, &c.Output); err != nil {
+			return err
+		}
+	} else {
+		var values []string
+		if err := json.Unmarshal(arrays.Output, &values); err != nil {
+			return err
+		}
+		for _, value := range values {
+			if value == "embedding" {
+				c.Output.Embedding = true
+			}
+		}
+	}
+	return nil
 }
 
 func (d *modelDoc) decisionCaps() dec.Capabilities {

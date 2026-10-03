@@ -171,7 +171,7 @@ func startFake(t *testing.T, id string, broken bool) *env {
 
 func runAll(e *env) map[string]string {
 	out := map[string]string{}
-	for _, c := range modelChecks() {
+	for _, c := range checksFor(e) {
 		out[c.name], _ = runCheck(context.Background(), e, c)
 	}
 	return out
@@ -255,7 +255,7 @@ func TestSelectTargets(t *testing.T) {
 	}
 }
 
-func TestRealRegistrySelectsEveryDecisionModel(t *testing.T) {
+func TestRealRegistrySelectsEveryModel(t *testing.T) {
 	data, err := os.ReadFile("../../models/registry.yml")
 	if err != nil {
 		t.Fatal(err)
@@ -265,14 +265,14 @@ func TestRealRegistrySelectsEveryDecisionModel(t *testing.T) {
 		t.Fatal(err)
 	}
 	res, err := selectTargets(reg, "", "default")
-	decisionCount := 0
+	supportedCount := 0
 	for _, model := range reg.Models {
-		if model.Type == registry.TypeDecision {
-			decisionCount++
+		if model.Type == registry.TypeDecision || model.Type == registry.TypeEmbedding {
+			supportedCount++
 		}
 	}
-	if err != nil || len(res) != decisionCount {
-		t.Fatalf("%d targets for %d decision models: %v", len(res), decisionCount, err)
+	if err != nil || len(res) != supportedCount {
+		t.Fatalf("%d targets for %d supported models: %v", len(res), supportedCount, err)
 	}
 	audio, err := reg.Resolve("qwen3-tts:1.7b", registry.ResolveOptions{})
 	if err != nil {

@@ -15,13 +15,14 @@ type ModelFiles struct {
 }
 
 type RuntimeConfig struct {
-	ModelID    string
-	Files      ModelFiles
-	Device     string
-	EnginePath string
-	LibDir     string
-	Log        io.Writer
-	Settings   settings.Values
+	ModelID      string
+	Files        ModelFiles
+	Instructions bool
+	Device       string
+	EnginePath   string
+	LibDir       string
+	Log          io.Writer
+	Settings     settings.Values
 }
 
 type Voice struct {

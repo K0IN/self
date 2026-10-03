@@ -87,6 +87,22 @@ func modelChecks() []check {
 	)
 }
 
+func embeddingChecks() []check {
+	return []check{
+		{"api: health", checkHealth},
+		{"api: model metadata", checkMetadata},
+		{"embeddings: scalar and batch", checkEmbeddings},
+		{"api: embedding invalid requests", checkEmbeddingInvalidRequests},
+	}
+}
+
+func checksFor(e *env) []check {
+	if e.res.Model.Type == registry.TypeEmbedding {
+		return embeddingChecks()
+	}
+	return modelChecks()
+}
+
 func checkHealth(ctx context.Context, e *env) (string, error) {
 	r, err := e.c.get(ctx, "/health")
 	if err != nil {
@@ -103,6 +119,19 @@ func checkMetadata(ctx context.Context, e *env) (string, error) {
 		return "", e.docErr
 	}
 	d, m := e.doc, e.res.Model
+	if m.Type == registry.TypeEmbedding {
+		if d.Type != string(m.Type) || d.Object != "model" {
+			return "", fmt.Errorf("type %q object %q", d.Type, d.Object)
+		}
+		r, err := e.c.get(ctx, "/v1/models")
+		if err != nil {
+			return "", err
+		}
+		if r.Status != http.StatusOK || !strings.Contains(string(r.Body), fmt.Sprintf("%q", e.res.ID())) {
+			return "", fmt.Errorf("/v1/models does not list the model (HTTP %d)", r.Status)
+		}
+		return "embedding model metadata matches registry", nil
+	}
 	var problems []string
 	add := func(format string, args ...any) { problems = append(problems, fmt.Sprintf(format, args...)) }
 	if d.ID != e.res.ID() {
@@ -148,6 +177,49 @@ func checkMetadata(ctx context.Context, e *env) (string, error) {
 		return "", errors.New(strings.Join(problems, "; "))
 	}
 	return fmt.Sprintf("vision=%v max_options=%d", in.Vision, out.MaxOptions), nil
+}
+
+func checkEmbeddings(ctx context.Context, e *env) (string, error) {
+	first, err := e.c.embeddings(ctx, []string{"search_query: hello world"})
+	if err != nil {
+		return "", err
+	}
+	if len(first.Data) != 1 || len(first.Data[0].Embedding) < 2 {
+		return "", fmt.Errorf("scalar response has %d vectors", len(first.Data))
+	}
+	batch, err := e.c.embeddings(ctx, []string{"search_query: first", "search_query: second"})
+	if err != nil {
+		return "", err
+	}
+	if len(batch.Data) != 2 || batch.Data[0].Index != 0 || batch.Data[1].Index != 1 {
+		return "", fmt.Errorf("batch response indexes are invalid")
+	}
+	if len(batch.Data[0].Embedding) == 0 || len(batch.Data[0].Embedding) != len(batch.Data[1].Embedding) {
+		return "", fmt.Errorf("batch vectors have inconsistent dimensions")
+	}
+	if batch.Usage.TotalTokens <= 0 {
+		return "", fmt.Errorf("batch usage is empty: %+v", batch.Usage)
+	}
+	return fmt.Sprintf("dimension=%d tokens=%d", len(batch.Data[0].Embedding), batch.Usage.TotalTokens), nil
+}
+
+func checkEmbeddingInvalidRequests(ctx context.Context, e *env) (string, error) {
+	for _, tc := range []struct {
+		name, contentType, body string
+	}{
+		{"unknown field", "application/json", `{"input":"x","bogus":1}`},
+		{"missing input", "application/json", `{}`},
+		{"wrong content type", "text/plain", `{"input":"x"}`},
+	} {
+		r, err := e.c.do(ctx, http.MethodPost, "/v1/embeddings", tc.contentType, []byte(tc.body))
+		if err != nil {
+			return "", fmt.Errorf("%s: %w", tc.name, err)
+		}
+		if got := errorOf(r); r.Status != http.StatusBadRequest || got.Type != "invalid_request" {
+			return "", fmt.Errorf("%s: got HTTP %d %q", tc.name, r.Status, got.Type)
+		}
+	}
+	return "3 cases", nil
 }
 
 func probeCheck(p app.Probe) check {

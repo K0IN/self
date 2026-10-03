@@ -25,6 +25,8 @@ type ModelFiles struct {
 type RuntimeConfig struct {
 	ModelID    string
 	Files      ModelFiles
+	Embedding  bool
+	Pooling    string
 	Device     string
 	EnginePath string
 	LibDir     string
@@ -131,6 +133,7 @@ type Adapter interface {
 	// generated; the returned Response always holds the complete output.
 	// Cancelling ctx stops generation.
 	Chat(ctx context.Context, req Request, onDelta func(Delta)) (Response, error)
+	Embed(ctx context.Context, input string) ([]float32, int, error)
 	// Done is closed when the engine exits for any reason.
 	Done() <-chan struct{}
 }

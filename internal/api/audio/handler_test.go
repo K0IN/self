@@ -17,14 +17,16 @@ import (
 )
 
 type fakeService struct {
-	request dom.Request
-	calls   int
+	request      dom.Request
+	calls        int
+	instructions bool
 }
 
-func (s *fakeService) ModelID() string          { return "test-tts" }
-func (s *fakeService) Quant() string            { return "q4" }
-func (s *fakeService) Info() any                { return map[string]any{"family": "test"} }
-func (s *fakeService) Settings() map[string]any { return nil }
+func (s *fakeService) ModelID() string             { return "test-tts" }
+func (s *fakeService) Quant() string               { return "q4" }
+func (s *fakeService) Info() any                   { return map[string]any{"family": "test"} }
+func (s *fakeService) Settings() map[string]any    { return nil }
+func (s *fakeService) InstructionsSupported() bool { return s.instructions }
 func (s *fakeService) Synthesize(_ context.Context, request dom.Request) (dom.Response, error) {
 	s.request = request
 	s.calls++
@@ -98,6 +100,17 @@ func TestDecodeRejectsUnsupportedControls(t *testing.T) {
 				t.Fatalf("status=%d calls=%d body=%s", response.Code, service.calls, response.Body.String())
 			}
 		})
+	}
+}
+
+func TestSpeechForwardsInstructionsWhenSupported(t *testing.T) {
+	service := &fakeService{instructions: true}
+	router := chi.NewRouter()
+	New(service).Mount(router)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/v1/audio/speech", bytes.NewBufferString(`{"input":"hello","instructions":"speak warmly"}`)))
+	if response.Code != http.StatusOK || service.calls != 1 || service.request.Instructions != "speak warmly" {
+		t.Fatalf("status=%d calls=%d request=%#v body=%s", response.Code, service.calls, service.request, response.Body.String())
 	}
 }
 

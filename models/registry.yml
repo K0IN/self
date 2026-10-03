@@ -5,7 +5,7 @@
 #   <name>:<tag>:
 #     description:   one line (shown by `self ls-remote` and on the overview page)
 #     readme:        model card, Markdown file relative to this file (readmes/<name>/<tag>.md)
-#     type:          decision | audio | text
+#     type:          decision | audio | text | embedding
 #     default:       quant used when --quant is not given
 #     capabilities:  text | vision | multi-image | choice | score | noul | audio
 #     info:          descriptive metadata (family, parameters, architecture,
@@ -149,6 +149,89 @@ models:
       files:
         - {file: gemma-4-12B-it-Q8_0.gguf, size: 12669646976, sha256: abfc3044b93795f6a446fc1a04468ac2d5fc5e9c92e237f09a5b3384c5a433e4}
         - {file: mmproj-gemma-4-12B-it-Q8_0.gguf, role: mmproj, size: 158987616, sha256: 59e62255435dda870e2d1de97cc031330b31a898bac12b38a182cecff9cd3738}
+
+  # --- Embeddings (llama.cpp llama-server) ---
+
+  clm:8b:
+    description: "CLM v0.1 8B: contrastive encoder for text ranking and embeddings"
+    readme: readmes/clm/8b.md
+    type: embedding
+    default: q4
+    capabilities:
+      input: [text]
+      output: [embedding]
+    info:
+      family: clm
+      parameters: 8B
+      architecture: qwen3
+      base_model: Contrastive-LM/CLM-v0.1-8B
+      source: Contrastive-LM/CLM-v0.1-8B
+      license: apache-2.0
+      languages: [en]
+      context_length: 32768
+      homepage: "https://huggingface.co/Contrastive-LM/CLM-v0.1-8B"
+    settings:
+      context_size: 8192
+      pooling: last
+    q4:
+      adapter: llama-server
+      repo: czl/CLM-v0.1-8B-GGUF
+      files:
+        - {file: Qwen3-8B-Q4_K_M.gguf, size: 5489669760, sha256: 373e464e5310bda8fc54c1b67b36c2b860be5f03e5e0d3d046f5ef8da6b7e7d6}
+
+  nomic:1.5:
+    description: "Nomic Embed v1.5: English text embeddings"
+    readme: readmes/nomic/1.5.md
+    type: embedding
+    default: q4
+    capabilities:
+      input: [text]
+      output: [embedding]
+    info:
+      family: nomic-embed-text
+      parameters: 137M
+      architecture: nomic-bert
+      base_model: nomic-ai/nomic-embed-text-v1.5
+      source: nomic-ai/nomic-embed-text-v1.5
+      license: apache-2.0
+      languages: [en]
+      context_length: 8192
+      homepage: "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5"
+    settings:
+      context_size: 8192
+      pooling: mean
+    q4:
+      adapter: llama-server
+      repo: nomic-ai/nomic-embed-text-v1.5-GGUF
+      files:
+        - {file: nomic-embed-text-v1.5.Q4_K_M.gguf, size: 84106624, sha256: d4e388894e09cf3816e8b0896d81d265b55e7a9fff9ab03fe8bf4ef5e11295ac}
+
+  nomic:2-moe:
+    description: "Nomic Embed v2 MoE: multilingual mixture-of-experts embeddings"
+    readme: readmes/nomic/2-moe.md
+    type: embedding
+    default: q4
+    capabilities:
+      input: [text]
+      output: [embedding]
+    info:
+      family: nomic-embed-text
+      parameters: 475M active (305M activated)
+      architecture: nomic-bert
+      base_model: nomic-ai/nomic-embed-text-v2-moe
+      source: nomic-ai/nomic-embed-text-v2-moe
+      license: apache-2.0
+      languages: [multilingual]
+      context_length: 8192
+      homepage: "https://huggingface.co/nomic-ai/nomic-embed-text-v2-moe"
+    settings:
+      context_size: 8192
+      pooling: mean
+    q4:
+      adapter: llama-server
+      repo: nomic-ai/nomic-embed-text-v2-moe-GGUF
+      files:
+        - {file: nomic-embed-text-v2-moe.Q4_K_M.gguf, size: 344120288, sha256: b5fb2811647b8ef461519a68a3bf67014a84a66a130c8a2af9413ff9f06d3f22}
 
   # --- Text to speech ---
 

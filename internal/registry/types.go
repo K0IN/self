@@ -13,9 +13,10 @@ import (
 type ModelType string
 
 const (
-	TypeDecision ModelType = "decision"
-	TypeAudio    ModelType = "audio"
-	TypeText     ModelType = "text"
+	TypeDecision  ModelType = "decision"
+	TypeAudio     ModelType = "audio"
+	TypeText      ModelType = "text"
+	TypeEmbedding ModelType = "embedding"
 )
 
 // typeSpec is what the registry accepts for one model type.
@@ -32,12 +33,16 @@ var modelTypes = map[ModelType]typeSpec{
 		Roles:        []FileRole{RoleModel, RoleMMProj, RoleHead},
 	},
 	TypeAudio: {
-		Capabilities: []Capability{CapText, CapAudio},
+		Capabilities: []Capability{CapText, CapAudio, CapInstructions},
 		Roles:        []FileRole{RoleModel, RoleMMProj, RoleVoice},
 	},
 	TypeText: {
 		Capabilities: []Capability{CapText, CapVision, CapMultiImage},
 		Roles:        []FileRole{RoleModel, RoleMMProj},
+	},
+	TypeEmbedding: {
+		Capabilities: []Capability{CapText, CapEmbedding},
+		Roles:        []FileRole{RoleModel},
 	},
 }
 
@@ -45,13 +50,15 @@ var modelTypes = map[ModelType]typeSpec{
 type Capability string
 
 const (
-	CapText       Capability = "text"
-	CapVision     Capability = "vision"
-	CapMultiImage Capability = "multi-image"
-	CapChoice     Capability = "choice"
-	CapScore      Capability = "score"
-	CapNoul       Capability = "noul"
-	CapAudio      Capability = "audio"
+	CapText         Capability = "text"
+	CapVision       Capability = "vision"
+	CapMultiImage   Capability = "multi-image"
+	CapChoice       Capability = "choice"
+	CapScore        Capability = "score"
+	CapNoul         Capability = "noul"
+	CapAudio        Capability = "audio"
+	CapInstructions Capability = "instructions"
+	CapEmbedding    Capability = "embedding"
 )
 
 // Capabilities separates accepted input features from produced output types.

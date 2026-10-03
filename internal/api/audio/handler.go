@@ -35,6 +35,10 @@ type Service interface {
 	Synthesize(context.Context, dom.Request) (dom.Response, error)
 }
 
+type instructionService interface {
+	InstructionsSupported() bool
+}
+
 type Handler struct {
 	svc Service
 }
@@ -59,7 +63,11 @@ func (h *Handler) Mount(r chi.Router) apiroot.ModelInfo {
 	r.Post("/v1/audio/speech", h.speech)
 	r.Post("/v1/audio/voice", h.voice)
 	r.Post("/v1/audio/voices", h.voice)
-	return apiroot.ModelInfo{ID: h.svc.ModelID(), Object: "model", Type: "audio", Quant: h.svc.Quant(), Capabilities: map[string]any{"input": []string{"text"}, "output": []string{"audio"}}, Info: h.svc.Info(), Settings: h.svc.Settings()}
+	input := []string{"text"}
+	if supportsInstructions(h.svc) {
+		input = append(input, "instructions")
+	}
+	return apiroot.ModelInfo{ID: h.svc.ModelID(), Object: "model", Type: "audio", Quant: h.svc.Quant(), Capabilities: map[string]any{"input": input, "output": []string{"audio"}}, Info: h.svc.Info(), Settings: h.svc.Settings()}
 }
 
 func (h *Handler) speech(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +89,7 @@ func (h *Handler) speech(w http.ResponseWriter, r *http.Request) {
 		apiroot.WriteError(w, errs.New(errs.UnsupportedCapability, "response_format %q is not supported by the loaded audio model", req.ResponseFormat))
 		return
 	}
-	if req.Instructions != "" {
+	if req.Instructions != "" && !supportsInstructions(h.svc) {
 		apiroot.WriteError(w, errs.New(errs.UnsupportedCapability, "instructions are not supported by the loaded audio model"))
 		return
 	}
@@ -97,6 +105,11 @@ func (h *Handler) speech(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "audio/wav")
 	w.Header().Set("Content-Disposition", "attachment; filename=speech.wav")
 	_, _ = w.Write(resp.WAV)
+}
+
+func supportsInstructions(svc Service) bool {
+	s, ok := svc.(instructionService)
+	return ok && s.InstructionsSupported()
 }
 
 func (h *Handler) voice(w http.ResponseWriter, r *http.Request) {

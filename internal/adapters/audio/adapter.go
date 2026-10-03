@@ -47,14 +47,15 @@ func New() dom.Adapter { return &Adapter{done: make(chan struct{})} }
 
 // Adapter implements audio.Adapter over SELFIPC1.
 type Adapter struct {
-	mu     sync.Mutex // one request at a time
-	proc   *runtime.Supervisor
-	r      *ipc.Reader
-	w      *ipc.Writer
-	info   dom.RuntimeInfo
-	voice  []byte // default reference voice, sent when a request has none
-	nextID uint64
-	done   chan struct{}
+	mu           sync.Mutex // one request at a time
+	proc         *runtime.Supervisor
+	r            *ipc.Reader
+	w            *ipc.Writer
+	info         dom.RuntimeInfo
+	voice        []byte // default reference voice, sent when a request has none
+	instructions bool
+	nextID       uint64
+	done         chan struct{}
 }
 
 type readyMsg struct {
@@ -79,6 +80,7 @@ func (a *Adapter) Start(ctx context.Context, cfg dom.RuntimeConfig) error {
 		}
 		a.voice = voice
 	}
+	a.instructions = cfg.Instructions
 	proc, err := runtime.Start(runtime.Spec{
 		Path:      cfg.EnginePath,
 		Args:      Args(cfg),
@@ -121,6 +123,7 @@ func (a *Adapter) StderrTail(n int) []string { return a.proc.StderrTail(n) }
 
 type synthParams struct {
 	Input             string `json:"input"`
+	Instructions      string `json:"instructions,omitempty"`
 	Language          string `json:"language,omitempty"`
 	SpeakerAttachment *int   `json:"speaker_attachment,omitempty"`
 }
@@ -142,6 +145,9 @@ func (a *Adapter) Synthesize(_ context.Context, req dom.Request) (dom.Response, 
 	a.nextID++
 	id := a.nextID
 	p := synthParams{Input: req.Input, Language: req.Language}
+	if a.instructions {
+		p.Instructions = req.Instructions
+	}
 	var attachments [][]byte
 	voice := req.Voice.Audio
 	if len(voice) == 0 {

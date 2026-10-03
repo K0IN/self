@@ -38,6 +38,8 @@ func Serve(ctx context.Context, cfg config.Serve, out io.Writer, isTTY bool) err
 		return serveAudio(ctx, cfg, t, out, isTTY)
 	case registry.TypeText:
 		return serveText(ctx, cfg, t, out, isTTY)
+	case registry.TypeEmbedding:
+		return serveEmbedding(ctx, cfg, t, out, isTTY)
 	}
 	return errs.New(errs.UnsupportedModel, "model type %q cannot be served yet", t.res.Model.Type)
 }

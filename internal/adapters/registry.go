@@ -9,11 +9,13 @@ import (
 	"ai-server/internal/adapters/audio"
 	"ai-server/internal/adapters/clef"
 	"ai-server/internal/adapters/customdecider"
+	embeddingadapter "ai-server/internal/adapters/embedding"
 	"ai-server/internal/adapters/ggmlclaya"
 	"ai-server/internal/adapters/selfipc"
 	"ai-server/internal/adapters/text"
 	domaudio "ai-server/internal/audio"
 	"ai-server/internal/decision"
+	domembedding "ai-server/internal/embedding"
 	"ai-server/internal/errs"
 	"ai-server/internal/localconf"
 	"ai-server/internal/registry"
@@ -46,6 +48,11 @@ type TextEntry struct {
 	New domtext.Factory
 }
 
+type EmbeddingEntry struct {
+	Base
+	New domembedding.Factory
+}
+
 var decisionAdapters = map[string]DecisionEntry{
 	// Upstream ggmlc Laya daemon: ggmlc-compiled decision GGUFs (Kev, Laya).
 	"ggmlc-laya": {Base: Base{Engine: ggmlclaya.Engine, Settings: ggmlclaya.Settings}, New: ggmlclaya.New},
@@ -64,6 +71,10 @@ var textAdapters = map[string]TextEntry{
 	"llama-server": {Base: Base{Engine: text.Engine, Settings: text.Settings}, New: text.New},
 }
 
+var embeddingAdapters = map[string]EmbeddingEntry{
+	"llama-server": {Base: Base{Engine: text.Engine, Settings: text.Settings}, New: embeddingadapter.New},
+}
+
 // Lookup returns the parts of adapter name that do not depend on the model
 // type. A new model type adds a table above and a case here.
 func Lookup(t registry.ModelType, name string) (Base, error) {
@@ -77,8 +88,19 @@ func Lookup(t registry.ModelType, name string) (Base, error) {
 	case registry.TypeText:
 		e, err := Text(name)
 		return e.Base, err
+	case registry.TypeEmbedding:
+		e, err := Embedding(name)
+		return e.Base, err
 	}
 	return Base{}, errs.New(errs.UnsupportedModel, "no adapters for model type %q", t)
+}
+
+func Embedding(name string) (EmbeddingEntry, error) {
+	e, ok := embeddingAdapters[name]
+	if !ok {
+		return EmbeddingEntry{}, errs.New(errs.UnsupportedModel, "unknown embedding adapter %q", name)
+	}
+	return e, nil
 }
 
 func Audio(name string) (AudioEntry, error) {
