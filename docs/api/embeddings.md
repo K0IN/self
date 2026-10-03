@@ -25,7 +25,7 @@ POST /v1/embeddings
 [Browse embedding models](/registry/?type=embedding)
 
 ```bash
-self serve nomic:1.5
+self serve nomic-embed-text-v1.5:137m
 ```
 
 </div>
@@ -83,7 +83,7 @@ Optional end-user identifier. It is accepted and ignored.
 ```bash [curl]
 curl http://localhost:8080/v1/embeddings \
   -H 'Content-Type: application/json' \
-  -d '{"model":"nomic:1.5","input":"Represent this sentence."}'
+  -d '{"model":"nomic-embed-text-v1.5:137m","input":"Represent this sentence."}'
 ```
 
 ```python [Python]
@@ -91,7 +91,7 @@ import requests
 
 response = requests.post(
     "http://localhost:8080/v1/embeddings",
-    json={"model": "nomic:1.5", "input": "Represent this sentence."},
+    json={"model": "nomic-embed-text-v1.5:137m", "input": "Represent this sentence."},
     timeout=60,
 )
 response.raise_for_status()
@@ -102,7 +102,7 @@ print(response.json())
 const response = await fetch('http://localhost:8080/v1/embeddings', {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
-  body: JSON.stringify({ model: 'nomic:1.5', input: 'Represent this sentence.' })
+  body: JSON.stringify({ model: 'nomic-embed-text-v1.5:137m', input: 'Represent this sentence.' })
 })
 
 if (!response.ok) throw new Error(await response.text())
@@ -117,7 +117,7 @@ console.log(await response.json())
 {
   "object": "list",
   "data": [{"object": "embedding", "embedding": [0.0123, -0.0456], "index": 0}],
-  "model": "nomic:1.5",
+  "model": "nomic-embed-text-v1.5:137m",
   "usage": {"prompt_tokens": 4, "total_tokens": 4, "latency_ms": 12.4}
 }
 ```

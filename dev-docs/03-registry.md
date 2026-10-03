@@ -13,7 +13,7 @@
   like the published one (cache + offline fallback below). A file is read as-is, never cached,
   and has no fallback, so it cannot replace the cached published registry. `just` and the dev
   container set it to `models/registry.yml`; `tests/models` passes the same source to `self`.
-- Model cards: `models/readmes/<name>/<tag>.md`.
+- Model cards: `models/readmes/<name>/<version-size>.md`.
 
 ## Offline cache
 
@@ -51,10 +51,12 @@ models:
 ## Rules
 
 - Document: `version: 1` (anything else is rejected) and a `models:` mapping.
-- Id: `name:tag`. No `/ \ :` or spaces in parts.
+- Id: `name:version-size`, where `version-size` ends in a numeric size such as
+  `4b`, `137m`, or `1.7b`. No `/ \ :` or spaces in parts. The size suffix
+  keeps model IDs consistent across modalities; quantization is separate.
 - CLI references may append `@quant`, for example `decider-vision:2b@q4`.
   The `@quant` portion is not part of the registry ID.
-- `type`: `decision` or `audio`. Types and what each accepts (capabilities, file roles) are declared
+- `type`: `decision`, `audio`, `text`, `embedding`, or `image`. Types and what each accepts (capabilities, file roles) are declared
   in `modelTypes` in `internal/registry/types.go`. A model of a type this build does not know is skipped
   without judging its other fields (`Registry.Skipped`), so a registry that gained a type still loads for
   older clients. `self ls-remote` lists skipped ids as needing a newer `self`. A missing `type` is an error.
@@ -96,8 +98,10 @@ models:
 | Id | Adapter |
 | :--- | :--- |
 | `kev:0.5b`, `kev:0.8b`, `kev:4b` | `ggmlc-laya` |
-| `laya:english`, `laya:multilingual`, `laya:typed-decisions` | `ggmlc-laya` |
+| `laya-english:421m`, `laya-multilingual:322m`, `laya-typed-decisions:421m` | `ggmlc-laya` |
 | `decider:0.8b`, `decider:4b`, `decider-vision:2b` | `ggmlc-custom-decider` |
+| `qwen3.5:9b`, `gemma4:4b`, `gemma4:12b` | `llama-server` |
+| `clm-v0.1:8b`, `nomic-embed-text-v1.5:137m`, `nomic-embed-text-v2-moe:475m` | `llama-server` |
 | `qwen3-tts:1.7b` | `ggmlc-audio` |
 | `pocket-tts-en:100m`, `-de`, `-es`, `-fr`, `-it`, `-pt` (each `:100m`) | `ggmlc-audio` (with a default `voice` file) |
 

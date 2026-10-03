@@ -11,12 +11,14 @@ import (
 	"ai-server/internal/adapters/customdecider"
 	embeddingadapter "ai-server/internal/adapters/embedding"
 	"ai-server/internal/adapters/ggmlclaya"
+	imageadapter "ai-server/internal/adapters/image"
 	"ai-server/internal/adapters/selfipc"
 	"ai-server/internal/adapters/text"
 	domaudio "ai-server/internal/audio"
 	"ai-server/internal/decision"
 	domembedding "ai-server/internal/embedding"
 	"ai-server/internal/errs"
+	domimage "ai-server/internal/image"
 	"ai-server/internal/localconf"
 	"ai-server/internal/registry"
 	"ai-server/internal/settings"
@@ -53,6 +55,11 @@ type EmbeddingEntry struct {
 	New domembedding.Factory
 }
 
+type ImageEntry struct {
+	Base
+	New domimage.Factory
+}
+
 var decisionAdapters = map[string]DecisionEntry{
 	// Upstream ggmlc Laya daemon: ggmlc-compiled decision GGUFs (Kev, Laya).
 	"ggmlc-laya": {Base: Base{Engine: ggmlclaya.Engine, Settings: ggmlclaya.Settings}, New: ggmlclaya.New},
@@ -75,6 +82,10 @@ var embeddingAdapters = map[string]EmbeddingEntry{
 	"llama-server": {Base: Base{Engine: text.Engine, Settings: text.Settings}, New: embeddingadapter.New},
 }
 
+var imageAdapters = map[string]ImageEntry{
+	"sd-server": {Base: Base{Engine: imageadapter.Engine, Settings: imageadapter.Settings}, New: imageadapter.New},
+}
+
 // Lookup returns the parts of adapter name that do not depend on the model
 // type. A new model type adds a table above and a case here.
 func Lookup(t registry.ModelType, name string) (Base, error) {
@@ -91,6 +102,9 @@ func Lookup(t registry.ModelType, name string) (Base, error) {
 	case registry.TypeEmbedding:
 		e, err := Embedding(name)
 		return e.Base, err
+	case registry.TypeImage:
+		e, err := Image(name)
+		return e.Base, err
 	}
 	return Base{}, errs.New(errs.UnsupportedModel, "no adapters for model type %q", t)
 }
@@ -99,6 +113,14 @@ func Embedding(name string) (EmbeddingEntry, error) {
 	e, ok := embeddingAdapters[name]
 	if !ok {
 		return EmbeddingEntry{}, errs.New(errs.UnsupportedModel, "unknown embedding adapter %q", name)
+	}
+	return e, nil
+}
+
+func Image(name string) (ImageEntry, error) {
+	e, ok := imageAdapters[name]
+	if !ok {
+		return ImageEntry{}, errs.New(errs.UnsupportedModel, "unknown image adapter %q", name)
 	}
 	return e, nil
 }

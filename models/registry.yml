@@ -2,12 +2,12 @@
 #
 # Public, human-edited list of the models `self` can serve. Every entry:
 #
-#   <name>:<tag>:
+#   <name>:<version-size>:
 #     description:   one line (shown by `self ls-remote` and on the overview page)
-#     readme:        model card, Markdown file relative to this file (readmes/<name>/<tag>.md)
+#     readme:        model card, Markdown file relative to this file (readmes/<name>/<version-size>.md)
 #     type:          decision | audio | text | embedding
 #     default:       quant used when --quant is not given
-#     capabilities:  text | vision | multi-image | choice | score | noul | audio
+#     capabilities:  text | vision | multi-image | choice | score | noul | audio | embedding | image | image-edit
 #     info:          descriptive metadata (family, parameters, architecture,
 #                    base_model, source, license, languages, context_length,
 #                    max_options, homepage). max_options also caps requests.
@@ -74,9 +74,9 @@ models:
         - {file: Qwen3.5-9B-Q8_0.gguf, size: 9527502048, sha256: 809626574d0cb43d4becfa56169980da2bb448f2299270f7be443cb89d0a6ae4}
         - {file: mmproj-F16.gguf, role: mmproj, size: 918166080, sha256: f70dc3509053962b0d0d3ee8a7eacebf5d60aa560cad78254ae8698516ae029f}
 
-  gemma4:e4b:
+  gemma4:4b:
     description: "Gemma 4 E4B: efficient multilingual chat model with reasoning and image input"
-    readme: readmes/gemma4/e4b.md
+    readme: readmes/gemma4/4b.md
     type: text
     default: q4
     capabilities:
@@ -152,9 +152,9 @@ models:
 
   # --- Embeddings (llama.cpp llama-server) ---
 
-  clm:8b:
+  clm-v0.1:8b:
     description: "CLM v0.1 8B: contrastive encoder for text ranking and embeddings"
-    readme: readmes/clm/8b.md
+    readme: readmes/clm-v0.1/8b.md
     type: embedding
     default: q4
     capabilities:
@@ -179,9 +179,9 @@ models:
       files:
         - {file: Qwen3-8B-Q4_K_M.gguf, size: 5489669760, sha256: 373e464e5310bda8fc54c1b67b36c2b860be5f03e5e0d3d046f5ef8da6b7e7d6}
 
-  nomic:1.5:
+  nomic-embed-text-v1.5:137m:
     description: "Nomic Embed v1.5: English text embeddings"
-    readme: readmes/nomic/1.5.md
+    readme: readmes/nomic-embed-text-v1.5/137m.md
     type: embedding
     default: q4
     capabilities:
@@ -206,9 +206,9 @@ models:
       files:
         - {file: nomic-embed-text-v1.5.Q4_K_M.gguf, size: 84106624, sha256: d4e388894e09cf3816e8b0896d81d265b55e7a9fff9ab03fe8bf4ef5e11295ac}
 
-  nomic:2-moe:
+  nomic-embed-text-v2-moe:475m:
     description: "Nomic Embed v2 MoE: multilingual mixture-of-experts embeddings"
-    readme: readmes/nomic/2-moe.md
+    readme: readmes/nomic-embed-text-v2-moe/475m.md
     type: embedding
     default: q4
     capabilities:

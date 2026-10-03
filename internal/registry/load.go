@@ -19,6 +19,8 @@ var reservedModelKeys = map[string]bool{
 	"description": true, "readme": true, "info": true, "settings": true,
 }
 
+var canonicalIDRE = regexp.MustCompile(`^[a-z0-9][a-z0-9.-]*:[0-9]+(?:\.[0-9]+)?[bm]$`)
+
 // LoadFile reads and parses a registry file.
 func LoadFile(p string) (*Registry, error) {
 	b, err := os.ReadFile(p)
@@ -92,6 +94,9 @@ func validateID(id string) error {
 	name, tag, hasTag := strings.Cut(id, ":")
 	if name == "" || (hasTag && tag == "") {
 		return fmt.Errorf("id must look like name or name:tag")
+	}
+	if !canonicalIDRE.MatchString(id) {
+		return fmt.Errorf("id must look like name:version-size, with a numeric b/m size tag")
 	}
 	for _, part := range []string{name, tag} {
 		if strings.ContainsAny(part, `/\: `) || part == "." || part == ".." {

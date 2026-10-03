@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -170,7 +171,7 @@ func TestAudioVoiceFile(t *testing.T) {
 		return `
 version: 1
 models:
-  tts:en:
+  tts:100m:
     description: TTS
     readme: readmes/tts/en.md
     type: audio
@@ -185,7 +186,7 @@ models:
 `
 	}
 	r := mustParse(t, doc(`{file: voices/default.wav, role: voice, repo: other/voices, size: 3, sha256: `+sumB+`}`))
-	v := r.Models["tts:en"].Variants["bf16"]
+	v := r.Models["tts:100m"].Variants["bf16"]
 	if f := v.Files[2]; f.Role != RoleVoice || v.RepoOf(f) != "other/voices" || v.RepoOf(v.Files[0]) != "owner/tts-GGUF" {
 		t.Fatalf("files = %+v", v.Files)
 	}
@@ -246,6 +247,20 @@ func TestBundledRegistry(t *testing.T) {
 	for _, id := range reg.IDs() {
 		if _, err := os.Stat(filepath.Join(dir, filepath.FromSlash(reg.Models[id].Readme))); err != nil {
 			t.Errorf("%s: %v", id, err)
+		}
+	}
+}
+
+func TestBundledRegistryUsesCanonicalModelIDs(t *testing.T) {
+	const dir = "../../models"
+	reg, err := LoadFile(filepath.Join(dir, "registry.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	modelID := regexp.MustCompile(`^[a-z0-9][a-z0-9.-]*:([0-9]+(?:\.[0-9]+)?)[bm]$`)
+	for _, id := range reg.IDs() {
+		if !modelID.MatchString(id) {
+			t.Errorf("%s: want name:version-size with a b/m size tag", id)
 		}
 	}
 }

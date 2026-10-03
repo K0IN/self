@@ -17,6 +17,7 @@ const (
 	TypeAudio     ModelType = "audio"
 	TypeText      ModelType = "text"
 	TypeEmbedding ModelType = "embedding"
+	TypeImage     ModelType = "image"
 )
 
 // typeSpec is what the registry accepts for one model type.
@@ -44,6 +45,10 @@ var modelTypes = map[ModelType]typeSpec{
 		Capabilities: []Capability{CapText, CapEmbedding},
 		Roles:        []FileRole{RoleModel},
 	},
+	TypeImage: {
+		Capabilities: []Capability{CapText, CapImage, CapImageEdit, CapMultiImage},
+		Roles:        []FileRole{RoleModel, RoleVAE, RoleTextEncoder},
+	},
 }
 
 // Capability is a typed registry capability.
@@ -59,6 +64,8 @@ const (
 	CapAudio        Capability = "audio"
 	CapInstructions Capability = "instructions"
 	CapEmbedding    Capability = "embedding"
+	CapImage        Capability = "image"
+	CapImageEdit    Capability = "image-edit"
 )
 
 // Capabilities separates accepted input features from produced output types.
@@ -141,6 +148,8 @@ const (
 	RoleVoice FileRole = "voice"
 	// RoleHead is a trained decision head (safetensors) that a decision engine needs next to the GGUF.
 	RoleHead FileRole = "head"
+	RoleVAE  FileRole = "vae"
+	RoleTextEncoder FileRole = "text-encoder"
 )
 
 // File is one downloadable artifact of a variant. Size and SHA256 pin the
