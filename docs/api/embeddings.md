@@ -5,8 +5,11 @@ aside: false
 <div class="api-row">
 <div class="api-doc">
 # Embeddings API
-Embedding models use the `llama-server` adapter and expose an OpenAI-compatible
-`/v1/embeddings` route.
+Embedding models expose the official OpenAI-compatible embeddings endpoint.
+The server runs one selected embedding model per process.
+
+Health, model metadata and the error format are shared by all modalities; see
+the [API overview](/api/).
 
 </div>
 <div class="api-example">
@@ -21,58 +24,9 @@ POST /v1/embeddings
 
 [Browse embedding models](/registry/?type=embedding)
 
-Register an embedding model with `type: embedding` and `adapter: llama-server`,
-then start it with `self serve MODEL`.
-
-The same loaded embedding model also exposes `POST /similarity` for comparing
-one input sentence with a list of reference sentences.
-
-</div>
-</div>
-
-<div class="api-row">
-<div class="api-doc">
-
-## `POST /similarity`
-
-Compute cosine similarity between `input` and every sentence in `ref`. Scores
-are in the range `[-1, 1]` and have the same order as the supplied `ref` array.
-
-#### Request body
-
-<ApiField name="input" type="string" required>
-
-The reference sentence to compare against.
-
-</ApiField>
-
-<ApiField name="ref" type="array of strings" required>
-
-One or more sentences to compare with `input`.
-
-</ApiField>
-
-</div>
-<div class="api-example">
-
-<div class="api-label">Example request</div>
-
 ```bash
-curl -i http://localhost:8080/similarity \
-  -H 'Content-Type: application/json' \
-  -d '{"input":"A cat is sleeping.","ref":["A kitten is asleep.","The weather is sunny."]}'
+self serve nomic:1.5
 ```
-
-<div class="api-label">Response</div>
-
-```json
-[0.91, 0.08]
-```
-
-The response is a JSON array of numbers. A score of `1` means identical vector
-direction, `0` means orthogonal vectors, and `-1` means opposite direction.
-Missing or empty fields, empty reference strings, unknown fields, mismatched
-embedding dimensions, and zero-magnitude vectors return an error.
 
 </div>
 </div>
@@ -82,8 +36,9 @@ embedding dimensions, and zero-magnitude vectors return an error.
 
 ## `POST /v1/embeddings`
 
-The route accepts one string or a non-empty array of strings. Requests are
-forwarded to llama.cpp's OpenAI-compatible `/v1/embeddings` endpoint.
+This is the OpenAI-compatible embeddings endpoint. Requests must use
+`Content-Type: application/json`; unknown top-level fields are rejected. The
+route accepts one string or a non-empty array of strings.
 
 #### Request body
 
@@ -95,8 +50,7 @@ Text to embed, either one string or a list of strings.
 
 <ApiField name="model" type="string" optional>
 
-Model ID is accepted for OpenAI client compatibility and ignored because a
-server instance runs one loaded model.
+Accepted and ignored: a server runs the model selected at startup.
 
 </ApiField>
 
@@ -108,14 +62,14 @@ Use `float` or omit the field. Other formats are not supported.
 
 <ApiField name="dimensions" type="integer" optional>
 
-Accepted for OpenAI client compatibility, but dimensionality changes are not
-supported by the loaded model and return `unsupported_capability`.
+Dimensionality changes are not supported by the loaded model and return
+`422 unsupported_capability`.
 
 </ApiField>
 
 <ApiField name="user" type="string" optional>
 
-Optional end-user identifier.
+Optional end-user identifier. It is accepted and ignored.
 
 </ApiField>
 
@@ -127,9 +81,9 @@ Optional end-user identifier.
 ::: code-group
 
 ```bash [curl]
-curl -i http://localhost:8080/v1/embeddings \
+curl http://localhost:8080/v1/embeddings \
   -H 'Content-Type: application/json' \
-  -d '{"model":"embedding-model","input":"Represent this sentence."}'
+  -d '{"model":"nomic:1.5","input":"Represent this sentence."}'
 ```
 
 ```python [Python]
@@ -137,28 +91,36 @@ import requests
 
 response = requests.post(
     "http://localhost:8080/v1/embeddings",
-    json={"model": "embedding-model", "input": "Represent this sentence."},
+    json={"model": "nomic:1.5", "input": "Represent this sentence."},
     timeout=60,
 )
-print(response.status_code, response.json())
+response.raise_for_status()
+print(response.json())
 ```
 
 ```js [JavaScript]
 const response = await fetch('http://localhost:8080/v1/embeddings', {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
-  body: JSON.stringify({ model: 'embedding-model', input: 'Represent this sentence.' })
+  body: JSON.stringify({ model: 'nomic:1.5', input: 'Represent this sentence.' })
 })
-console.log(response.status, await response.text())
+
+if (!response.ok) throw new Error(await response.text())
+console.log(await response.json())
 ```
 
 :::
 
-<div class="api-label">Error behavior</div>
+<div class="api-label">Response</div>
 
-Unsupported `encoding_format` values and `dimensions` requests return an
-`unsupported_capability` error. Other malformed requests return
-`invalid_request`.
+```json
+{
+  "object": "list",
+  "data": [{"object": "embedding", "embedding": [0.0123, -0.0456], "index": 0}],
+  "model": "nomic:1.5",
+  "usage": {"prompt_tokens": 4, "total_tokens": 4}
+}
+```
 
 </div>
 </div>
@@ -197,14 +159,79 @@ batch request, they cover all supplied input strings.
 </div>
 <div class="api-example">
 
+Embedding vectors are returned as floating-point arrays. The vector dimension
+depends on the loaded model.
+
+</div>
+</div>
+
+<div class="api-row">
+<div class="api-doc">
+
+#### Error behavior
+
+Malformed JSON, missing input, empty batches, wrong content types, and unknown
+fields return `400 invalid_request`. Unsupported `encoding_format` values and
+`dimensions` requests return `422 unsupported_capability`.
+
+</div>
+<div class="api-example">
+
 ```json
 {
-  "object": "list",
-  "data": [{"object": "embedding", "embedding": [0.0123, -0.0456], "index": 0}],
-  "model": "embedding-model",
-  "usage": {"prompt_tokens": 4, "total_tokens": 4}
+  "error": {
+    "type": "unsupported_capability",
+    "message": "dimensions are not supported by the loaded embedding model"
+  }
 }
 ```
+
+</div>
+</div>
+
+<div class="api-row">
+<div class="api-doc">
+
+## `POST /similarity`
+
+Compute cosine similarity between `input` and every sentence in `ref`. Scores
+are in the range `[-1, 1]` and have the same order as the supplied `ref` array.
+
+#### Request body
+
+<ApiField name="input" type="string" required>
+
+The sentence to compare against.
+
+</ApiField>
+
+<ApiField name="ref" type="array of strings" required>
+
+One or more sentences to compare with `input`.
+
+</ApiField>
+
+</div>
+<div class="api-example">
+
+<div class="api-label">Example request</div>
+
+```bash
+curl http://localhost:8080/similarity \
+  -H 'Content-Type: application/json' \
+  -d '{"input":"A cat is sleeping.","ref":["A kitten is asleep.","The weather is sunny."]}'
+```
+
+<div class="api-label">Response</div>
+
+```json
+[0.91, 0.08]
+```
+
+The response is a JSON array of numbers. A score of `1` means identical vector
+direction, `0` means orthogonal vectors, and `-1` means opposite direction.
+Missing or empty fields, empty reference strings, unknown fields, mismatched
+embedding dimensions, and zero-magnitude vectors return an error.
 
 </div>
 </div>
