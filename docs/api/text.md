@@ -24,6 +24,14 @@ the [API overview](/api/).
 POST /v1/chat/completions
 ```
 
+<div class="api-label">Models and quick start</div>
+
+[Browse text models](/registry/?type=text)
+
+```bash
+self serve qwen3.5:9b
+```
+
 </div>
 </div>
 
@@ -211,7 +219,7 @@ console.log(await response.json())
 
 :::
 
-<div class="api-label">Example response for the curl request</div>
+<div class="api-label">Example response</div>
 
 ```json
 {
@@ -226,32 +234,6 @@ console.log(await response.json())
     "logprobs": null
   }],
   "usage": {"prompt_tokens": 18, "completion_tokens": 10, "total_tokens": 28}
-}
-```
-
-<div class="api-label">Example response for the Python request</div>
-
-```json
-{
-  "id": "chatcmpl-python...",
-  "object": "chat.completion",
-  "created": 1760000001,
-  "model": "text-model",
-  "choices": [{"index": 0, "message": {"role": "assistant", "content": "Embeddings represent meaning as numeric vectors."}, "finish_reason": "stop", "logprobs": null}],
-  "usage": {"prompt_tokens": 17, "completion_tokens": 9, "total_tokens": 26}
-}
-```
-
-<div class="api-label">Example response for the JavaScript request</div>
-
-```json
-{
-  "id": "chatcmpl-javascript...",
-  "object": "chat.completion",
-  "created": 1760000002,
-  "model": "text-model",
-  "choices": [{"index": 0, "message": {"role": "assistant", "content": "They are vectors representing semantic meaning."}, "finish_reason": "stop", "logprobs": null}],
-  "usage": {"prompt_tokens": 16, "completion_tokens": 8, "total_tokens": 24}
 }
 ```
 

@@ -26,6 +26,14 @@ POST /v1/systemone
 POST /v1/decide
 ```
 
+<div class="api-label">Models and quick start</div>
+
+[Browse decision models](/registry/?type=decision)
+
+```bash
+self serve kev:0.5b
+```
+
 </div>
 </div>
 
@@ -161,7 +169,7 @@ console.log(await response.json())
 
 :::
 
-<div class="api-label">Example response for the curl request</div>
+<div class="api-label">Example response</div>
 
 ```json
 {

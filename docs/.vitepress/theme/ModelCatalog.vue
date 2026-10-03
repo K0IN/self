@@ -14,7 +14,7 @@ const selectedType = ref('all')
 const selectedCapability = ref('all')
 const searchInput = ref(null)
 
-const types = computed(() => ['all', ...new Set(props.models.map(model => model.type))])
+const types = computed(() => ['all', ...new Set([...props.models.map(model => model.type), selectedType.value].filter(Boolean))])
 const capabilities = computed(() => ['all', ...new Set(props.models.flatMap(model => model.capabilities))])
 const normalizedQuery = computed(() => query.value.trim().toLowerCase())
 
@@ -50,7 +50,11 @@ const focusSearch = event => {
     searchInput.value?.focus()
 }
 
-onMounted(() => window.addEventListener('keydown', focusSearch, true))
+onMounted(() => {
+    const requestedType = new URLSearchParams(window.location.search).get('type')
+    if (requestedType) selectedType.value = requestedType
+    window.addEventListener('keydown', focusSearch, true)
+})
 onBeforeUnmount(() => window.removeEventListener('keydown', focusSearch, true))
 </script>
 

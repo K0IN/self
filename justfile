@@ -88,4 +88,4 @@ site:
 
 # Render the registry site and serve it on port 8000 (Pages builds use base /self/, see pages.yml)
 site-serve: site
-    cd docs && npx vitepress preview . --port 8000
+    cd docs && npx vitepress preview . --port 8000 --watch

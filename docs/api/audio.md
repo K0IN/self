@@ -8,21 +8,12 @@ aside: false
 
 # Audio API (text to speech)
 
-Audio models expose an OpenAI-compatible speech endpoint. Start an audio model
-before sending requests.
-
-The endpoint returns WAV audio and does not require an API key.
-
-The official OpenAI SDKs work unchanged: point their base URL at
-`http://localhost:8080/v1`. The SDK's model field selects the already-loaded
-audio model, and built-in voice names select its default voice.
+Audio models expose an OpenAI-compatible speech endpoint. The server runs one
+selected audio model per process and returns WAV audio. Reference recordings are
+kept only in memory and must be sent again for each request.
 
 Health, model metadata and the error format are shared by all modalities; see
 the [API overview](/api/).
-
-The model is loaded once when the server starts and stays loaded, so a request
-only pays for generation. Requests are processed one at a time; concurrent
-requests wait in a queue.
 
 </div>
 <div class="api-example">
@@ -35,19 +26,12 @@ POST /v1/audio/voice
 POST /v1/audio/voices
 ```
 
-<div class="api-label">OpenAI SDK (Python)</div>
+<div class="api-label">Models and quick start</div>
 
-```python
-from openai import OpenAI
+[Browse audio models](/registry/?type=audio)
 
-client = OpenAI(base_url="http://localhost:8080/v1", api_key="unused")
-with client.audio.speech.with_streaming_response.create(
-  model="audio-model",
-    voice="alloy",
-    input="Hello from the local speech model.",
-    response_format="wav",
-) as response:
-    response.stream_to_file("speech.wav")
+```bash
+self serve qwen3-tts:1.7b
 ```
 
 </div>
@@ -56,131 +40,55 @@ with client.audio.speech.with_streaming_response.create(
 <div class="api-row">
 <div class="api-doc">
 
-## Choosing a voice
+## How voices work
 
-The voice is set by **reference audio**, not by a name or a text description:
+Audio synthesis uses the text in `input` and, optionally, a short reference
+recording that tells the model which speaker to imitate. A voice name does not
+identify a server-side person: the OpenAI-compatible names are aliases for the
+loaded model's default voice.
 
-| You send | You get |
-| --- | --- |
-| No `voice` | The model's default voice (for Pocket TTS, Kyutai's default voice, downloaded with the model) |
-| An OpenAI voice name (`alloy`, `ash`, `coral`, ...) | The same default voice; the name is accepted so OpenAI clients work, it does not select a speaker |
-| A short recording of a speaker (MP3 or WAV) | That speaker's voice (voice cloning) |
+When a request is synthesized, the server chooses the first available voice in
+this order:
 
-A clean recording of 5 to 20 seconds of one person speaking works best.
-The server never stores it: send it with every request.
+1. Inline audio in `voice.audio`.
+2. A JSON `ref_audio` value.
+3. A multipart `ref_audio` upload.
+4. The model's registry-provided default reference voice.
+5. No reference audio, if the model has no default voice.
 
-Named speakers and voices described in text are not available yet. Qwen3-TTS
-has them in separate model variants (CustomVoice and VoiceDesign), but
-llama.cpp b11256 supports only the Base model, and its TTS engine accepts only
-a language and a reference recording. Pocket TTS models speak one language
-each (`pocket-tts-en:100m`, `pocket-tts-de:100m`, `pocket-tts-es:100m`,
-`pocket-tts-fr:100m`, `pocket-tts-it:100m`, `pocket-tts-pt:100m`); a recording
-in any language works as the reference.
+The selected recording is read into memory and attached to this engine request.
+It is discarded after synthesis. The server does not create a persistent voice
+profile, voice ID, fine-tune, or speaker database.
 
 </div>
 <div class="api-example">
 
 <div class="api-label">Default voice</div>
 
+```bash
+curl http://localhost:8080/v1/audio/speech \
+  -H 'Content-Type: application/json' \
+  -d '{"input":"Hello from the model default voice."}' \
+  -o default.wav
+```
+
+<div class="api-label">Named voice alias</div>
+
 ```json
-{"input": "Hello!"}
+{"input":"Hello!","voice":"alloy"}
 ```
 
-<div class="api-label">Cloned voice (upload a recording)</div>
+The accepted aliases are `alloy`, `ash`, `ballad`, `cedar`, `coral`, `echo`,
+`fable`, `marin`, `nova`, `onyx`, `sage`, `shimmer`, and `verse`. They all use
+the same loaded model default; they do not select different speakers.
 
-```bash
-curl http://localhost:8080/v1/audio/speech \
-  -F input='Hello!' \
-  -F ref_audio=@my-voice.mp3 \
-  -o hello.wav
-```
+<div class="api-label">Reference voice</div>
 
-<div class="api-label">Ready-made voice (Kyutai)</div>
-
-```bash
-curl -L -o merchant.wav \
-  https://huggingface.co/kyutai/tts-voices/resolve/main/alba-mackenna/merchant.wav
-curl http://localhost:8080/v1/audio/speech \
-  -F input='Hello!' \
-  -F ref_audio=@merchant.wav \
-  -o hello.wav
-```
-
-</div>
-</div>
-
-<div class="api-row">
-<div class="api-doc">
-
-## Examples
-
-Copy-paste examples against a server started with
-`self serve qwen3-tts:1.7b`. Each one writes a WAV file you can play. Replace
-the model ID in the start command with any ID from the model list above to use
-another audio model.
-
-**Speak some text** with the default voice.
-
-**OpenAI-style request**: the same body an OpenAI client sends.
-
-**Another language**: set `language` (`en`, `de`, `fr`, `es`, `it`, `pt`,
-`ru`, `ja`, `ko`, `zh`).
-
-**Clone a voice in one call**: upload a recording as a file with
-`multipart/form-data`. No base64 needed; all speech fields can be form fields.
-
-**Clone a voice with JSON**: when your client can only send JSON, put the
-recording in `voice.audio` as base64.
-
-</div>
-<div class="api-example">
-
-<div class="api-label">Speak some text</div>
-
-```bash
-curl http://localhost:8080/v1/audio/speech \
-  -H 'Content-Type: application/json' \
-  -d '{"input": "Hello world, this is a local text to speech server."}' \
-  -o hello.wav
-```
-
-<div class="api-label">OpenAI-style request</div>
-
-```bash
-curl http://localhost:8080/v1/audio/speech \
-  -H 'Content-Type: application/json' \
-  -d '{"model": "tts-1", "voice": "alloy",
-       "input": "The quick brown fox jumps over the lazy dog."}' \
-  -o openai.wav
-```
-
-<div class="api-label">Another language</div>
-
-```bash
-curl http://localhost:8080/v1/audio/speech \
-  -H 'Content-Type: application/json' \
-  -d '{"input": "Guten Morgen! Wie geht es dir heute?", "language": "de"}' \
-  -o german.wav
-```
-
-<div class="api-label">Clone a voice in one call</div>
-
-```bash
-curl http://localhost:8080/v1/audio/speech \
-  -F input='Hello, this is my cloned voice.' \
-  -F language=en \
-  -F ref_audio=@my-voice.mp3 \
-  -o cloned.wav
-```
-
-<div class="api-label">Clone a voice with JSON (bash)</div>
-
-```bash
-curl http://localhost:8080/v1/audio/speech \
-  -H 'Content-Type: application/json' \
-  -d "{\"input\": \"Cloned via JSON.\",
-       \"voice\": {\"audio\": \"$(base64 -w0 my-voice.mp3)\"}}" \
-  -o cloned.wav
+```json
+{
+  "input":"Hello in the reference speaker's voice.",
+  "voice":{"audio":"<base64 MP3 or WAV>","format":"mp3"}
+}
 ```
 
 </div>
@@ -191,9 +99,11 @@ curl http://localhost:8080/v1/audio/speech \
 
 ## `POST /v1/audio/speech`
 
-Requests use `Content-Type: application/json` or `multipart/form-data`. In a
-form, every field below is a form field and `ref_audio` is an uploaded file. The
-standard OpenAI fields are accepted:
+Requests use `application/json` or `multipart/form-data`. The generated audio
+is returned as `audio/wav`. The alias voice names accepted by OpenAI clients
+select the loaded model's default voice; reference audio selects a speaker.
+
+#### Request body
 
 <ApiField name="input" type="string" required>
 
@@ -203,68 +113,65 @@ Text to synthesize, up to 4096 characters.
 
 <ApiField name="model" type="string" optional>
 
-Ignored: the server runs one model. Accepted so the official OpenAI SDKs work
-unchanged.
+Accepted and ignored: the server runs one model.
 
 </ApiField>
 
 <ApiField name="voice" type="string | object" optional>
 
-An OpenAI built-in voice name (`alloy`, `ash`, `coral`, ...), which selects the
-model's default voice, or an object containing inline base64 reference audio for
-voice cloning:
+An OpenAI voice name such as `alloy`, which selects the default voice, or an
+object containing inline base64 reference audio:
 
 ```json
 {"audio":"<base64 MP3 or WAV>","format":"mp3"}
 ```
 
-Voices are never stored by the server; send the reference audio with every
-request.
+The object accepts `audio` and optional `format`; voice IDs are not supported.
+The base64 value may also be a base64 `data:` URL. Filesystem paths are never
+read.
 
 </ApiField>
 
 <ApiField name="response_format" type="string" optional>
 
-OpenAI values `mp3`, `opus`, `aac`, `flac`, `wav`, and `pcm` are recognized at
-the request boundary. The current llama.cpp runtime can produce only `wav`;
-other formats return `422 unsupported_capability`. When omitted, the response
-is WAV (OpenAI's default is MP3).
+Only `wav` is supported. The default is `wav`; other formats return
+`422 unsupported_capability`.
 
 </ApiField>
 
-<ApiField name="stream_format" type="audio | sse" optional>
+<ApiField name="stream_format" type="string" optional>
 
-Both OpenAI values are recognized. Streaming is not implemented yet and
-`sse` returns `422 unsupported_capability`.
+`audio` is accepted. `sse` is not implemented and returns
+`422 unsupported_capability`.
 
 </ApiField>
 
 <ApiField name="speed" type="number" optional>
 
-The OpenAI range `0.25` to `4.0` is validated. The current runtime supports
-only the default value `1.0`; other values return `422`.
+Validated from `0.25` through `4.0`, but only the default value `1.0` is
+supported by the current runtime.
 
 </ApiField>
 
 <ApiField name="instructions" type="string" optional>
 
-Accepted for OpenAI request compatibility, but returns `422` because the
-bundled llama.cpp TTS runtime does not currently expose instruction control.
+Accepted for compatibility but not supported by the runtime; a non-empty value
+returns `422 unsupported_capability`.
 
 </ApiField>
 
 <ApiField name="language" type="string" optional>
 
-Language passed to Qwen3-TTS, for example `en`, `de`, `fr`, or `ja`. Pocket
-TTS models speak one fixed language, chosen by the model you start.
+Language passed to models that support it, for example `en`, `de`, `fr`, or
+`ja`.
 
 </ApiField>
 
 <ApiField name="ref_audio" type="file | string" optional>
 
-Server extension for the reference recording. In a form, upload the MP3 or WAV
-file itself; in JSON, send base64 or a base64 `data:` URL. Filesystem paths are
-rejected. The format is detected from the file.
+Server extension for reference audio. In multipart requests, upload an MP3 or
+WAV file. In JSON, send base64 or a base64 `data:` URL. Filesystem paths are
+rejected. Use this when a client cannot construct a `voice` object.
 
 </ApiField>
 
@@ -273,25 +180,116 @@ rejected. The format is detected from the file.
 
 <div class="api-label">Example request</div>
 
-```bash
+::: code-group
+
+```bash [curl]
 curl http://localhost:8080/v1/audio/speech \
   -H 'Content-Type: application/json' \
-  -d '{
-    "model": "qwen3-tts:1.7b",
-    "input": "Hello from the local speech model.",
-    "voice": {
-      "audio": "<base64 MP3 or WAV>",
-      "format": "mp3"
-    },
-    "language": "en",
-    "response_format": "wav"
-  }' \
-  --output speech.wav
+  -d '{"model":"audio-model","input":"Hello from the local speech model.","voice":"alloy","response_format":"wav"}' \
+  -o speech.wav
 ```
+
+```python [Python]
+import requests
+
+response = requests.post(
+    "http://localhost:8080/v1/audio/speech",
+    json={
+        "model": "audio-model",
+        "input": "Hello from the local speech model.",
+        "voice": "alloy",
+        "response_format": "wav",
+    },
+    timeout=60,
+)
+response.raise_for_status()
+with open("speech.wav", "wb") as audio:
+    audio.write(response.content)
+```
+
+```js [JavaScript]
+const response = await fetch('http://localhost:8080/v1/audio/speech', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({
+    model: 'audio-model',
+    input: 'Hello from the local speech model.',
+    voice: 'alloy',
+    response_format: 'wav'
+  })
+})
+
+if (!response.ok) throw new Error(await response.text())
+const audio = Buffer.from(await response.arrayBuffer())
+require('fs').writeFileSync('speech.wav', audio)
+```
+
+:::
 
 <div class="api-label">Response</div>
 
-The response body is the generated WAV file with `Content-Type: audio/wav`.
+The response body is the generated WAV file with `Content-Type: audio/wav` and
+`Content-Disposition: attachment; filename=speech.wav`.
+
+</div>
+</div>
+
+<div class="api-row">
+<div class="api-doc">
+
+#### Voice cloning
+
+Voice cloning here means reference-audio conditioning: the recording is sent
+with the text request and the model generates new WAV audio with a similar
+speaker identity. It is not a persistent voice profile or a server-side
+fine-tune.
+
+Use a clean 5 to 20 second recording of one speaker with little background
+noise. The reference must be MP3 or WAV. The server validates the audio bytes,
+rejects empty or unsupported files, and keeps the recording only in memory.
+
+</div>
+<div class="api-example">
+
+<div class="api-label">Multipart request</div>
+
+::: code-group
+
+```bash [curl]
+curl http://localhost:8080/v1/audio/speech \
+  -F input='Hello, this is my cloned voice.' \
+  -F language=en \
+  -F ref_audio=@my-voice.mp3 \
+  -o cloned.wav
+```
+
+```python [Python]
+import requests
+
+with open("my-voice.mp3", "rb") as reference:
+    response = requests.post(
+        "http://localhost:8080/v1/audio/speech",
+        files={"ref_audio": ("my-voice.mp3", reference, "audio/mpeg")},
+        data={"input": "Hello, this is my cloned voice.", "language": "en"},
+        timeout=60,
+    )
+response.raise_for_status()
+with open("cloned.wav", "wb") as audio:
+    audio.write(response.content)
+```
+
+```js [JavaScript]
+const form = new FormData()
+form.append('input', 'Hello, this is my cloned voice.')
+form.append('language', 'en')
+form.append('ref_audio', new Blob([require('fs').readFileSync('my-voice.mp3')], { type: 'audio/mpeg' }), 'my-voice.mp3')
+
+const response = await fetch('http://localhost:8080/v1/audio/speech', { method: 'POST', body: form })
+if (!response.ok) throw new Error(await response.text())
+require('fs').writeFileSync('cloned.wav', Buffer.from(await response.arrayBuffer()))
+```
+
+:::
 
 </div>
 </div>
@@ -301,47 +299,71 @@ The response body is the generated WAV file with `Content-Type: audio/wav`.
 
 ## `POST /v1/audio/voice`
 
-Turns a recording into a `voice` object you can reuse in JSON speech requests,
-without base64-encoding it yourself. Nothing is stored: the response contains
-the recording, so keep it and send it again with each request. The alias
-`POST /v1/audio/voices` behaves identically.
+Packages a recording as a reusable JSON `voice` object. The alias
+`/v1/audio/voices` behaves identically. This endpoint does not register a voice
+or store it on the server; it only base64-encodes the uploaded bytes so a
+client can keep them and send them to `/v1/audio/speech` later.
 
-Send the recording in one of three ways:
+#### Request body
 
-- a form upload, field `audio_sample` (as in OpenAI's create-voice API) or `file`;
-- the raw file as the body, with `Content-Type: audio/mpeg`, `audio/wav` or
-  `application/octet-stream`;
-- JSON `{"audio": "<base64>"}`.
+The recording can be uploaded as multipart field `audio_sample` or `file`, sent
+as a raw audio body, or sent as JSON with base64 `audio` and optional `format`.
 
-The file must be MP3 or WAV; the format is detected from its content.
+<ApiField name="audio_sample | file" type="file" conditional>
+
+Multipart upload containing an MP3 or WAV file.
+
+</ApiField>
+
+<ApiField name="audio" type="string" conditional>
+
+JSON base64 audio or a base64 `data:` URL.
+
+</ApiField>
+
+<ApiField name="format" type="string" optional>
+
+`mp3` or `wav` when the format cannot be detected from the bytes.
+
+</ApiField>
 
 </div>
 <div class="api-example">
 
-<div class="api-label">Upload a file</div>
+<div class="api-label">Example request</div>
 
-```bash
+::: code-group
+
+```bash [curl]
 curl http://localhost:8080/v1/audio/voice \
   -F audio_sample=@my-voice.mp3 \
   -o voice.json
 ```
 
-<div class="api-label">Or send the file as the body</div>
+```python [Python]
+import requests
 
-```bash
-curl http://localhost:8080/v1/audio/voice \
-  -H 'Content-Type: audio/mpeg' \
-  --data-binary @my-voice.mp3 \
-  -o voice.json
+with open("my-voice.mp3", "rb") as audio:
+    response = requests.post(
+        "http://localhost:8080/v1/audio/voice",
+        files={"audio_sample": ("my-voice.mp3", audio, "audio/mpeg")},
+        timeout=60,
+    )
+response.raise_for_status()
+voice = response.json()["voice"]
+print(voice["format"])
 ```
 
-<div class="api-label">Reuse it in a JSON request (jq)</div>
+```js [JavaScript]
+const form = new FormData()
+form.append('audio_sample', new Blob([require('fs').readFileSync('my-voice.mp3')], { type: 'audio/mpeg' }), 'my-voice.mp3')
 
-```bash
-jq '{input: "Reusing my saved voice.", voice: .voice}' voice.json |
-  curl http://localhost:8080/v1/audio/speech \
-    -H 'Content-Type: application/json' -d @- -o reused.wav
+const response = await fetch('http://localhost:8080/v1/audio/voice', { method: 'POST', body: form })
+if (!response.ok) throw new Error(await response.text())
+console.log(await response.json())
 ```
+
+:::
 
 <div class="api-label">Response</div>
 
@@ -361,29 +383,44 @@ jq '{input: "Reusing my saved voice.", voice: .voice}' voice.json |
 <div class="api-row">
 <div class="api-doc">
 
-## Audio errors
+#### Response body
 
-Besides the [shared errors](/api/#errors), audio requests return:
+<ApiField name="object" type="string">
 
-| Status | Error types | Meaning |
-| --- | --- | --- |
-| `400` | `invalid_request` | Empty or too long `input`, unknown voice name or form field, or reference audio that is not an MP3/WAV file (filesystem paths included). |
-| `413` | `request_too_large` | Request body exceeds 32 MiB. |
-| `422` | `unsupported_capability` | Non-WAV `response_format`, `stream_format: "sse"`, `instructions`, or `speed` other than `1`. |
+Always `voice`.
+
+</ApiField>
+
+<ApiField name="voice.audio" type="string">
+
+Base64-encoded MP3 or WAV recording.
+
+</ApiField>
+
+<ApiField name="voice.format" type="string">
+
+Detected audio format: `mp3` or `wav`.
+
+</ApiField>
 
 </div>
 <div class="api-example">
 
-<div class="api-label">Error response</div>
+<div class="api-label">Reuse the response</div>
 
-```json
-{
-  "error": {
-    "type": "unsupported_capability",
-    "message": "response_format \"mp3\" is not supported by the loaded audio model"
-  }
-}
+```bash
+jq '{input: "Reusing my saved voice.", voice: .voice}' voice.json |
+  curl http://localhost:8080/v1/audio/speech \
+    -H 'Content-Type: application/json' -d @- -o reused.wav
 ```
 
 </div>
 </div>
+
+## Audio errors
+
+Besides the [shared errors](/api/#errors), audio requests return `400
+invalid_request` for empty input, unknown fields or invalid reference audio,
+`413 request_too_large` for bodies over 32 MiB, and
+`422 unsupported_capability` for unsupported formats, streaming, instructions,
+or speed values.
