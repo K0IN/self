@@ -73,6 +73,11 @@ function formatBytes(bytes) {
 for (const { id, model, quants, slug } of rows) {
     const readmePath = path.join(root, 'models', model.readme)
     const readme = fs.readFileSync(readmePath, 'utf8')
+    if (/^## Quantizations and Files\s*$/m.test(readme)) {
+        fs.mkdirSync(path.dirname(path.join(output, slug)), { recursive: true })
+        fs.writeFileSync(path.join(output, `${slug}.md`), readme.trim() + '\n')
+        continue
+    }
     const lines = [`${readme.trim()}`, '', `## Registry details`, '', `- Registry id: \`${id}\``, `- Type: ${model.type}`, `- Default quantization: \`${model.default}\``, `- Capabilities: ${(model.capabilities?.input ?? []).join(', ')} -> ${(model.capabilities?.output ?? []).join(', ')}`, '', '## Available quants', '', '| Quant | Adapter | Repository | File | Size | SHA-256 |', '| --- | --- | --- | --- | --- | --- |']
     for (const quant of quants) {
         const variant = model[quant]

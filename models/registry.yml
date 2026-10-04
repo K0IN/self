@@ -357,7 +357,7 @@ models:
 
   pocket-tts-en:100m:
     description: "Pocket TTS English: small CPU-friendly text-to-speech with voice cloning"
-    readme: readmes/pocket-tts/pocket-tts.md
+    readme: readmes/pocket-tts/en.md
     type: audio
     default: bf16
     capabilities:
@@ -374,7 +374,7 @@ models:
 
   pocket-tts-de:100m:
     description: "Pocket TTS German: small CPU-friendly text-to-speech with voice cloning"
-    readme: readmes/pocket-tts/pocket-tts.md
+    readme: readmes/pocket-tts/de.md
     type: audio
     default: bf16
     capabilities:
@@ -391,7 +391,7 @@ models:
 
   pocket-tts-es:100m:
     description: "Pocket TTS Spanish: small CPU-friendly text-to-speech with voice cloning"
-    readme: readmes/pocket-tts/pocket-tts.md
+    readme: readmes/pocket-tts/es.md
     type: audio
     default: bf16
     capabilities:
@@ -408,7 +408,7 @@ models:
 
   pocket-tts-fr:100m:
     description: "Pocket TTS French (24 layers): text-to-speech with voice cloning"
-    readme: readmes/pocket-tts/pocket-tts.md
+    readme: readmes/pocket-tts/fr.md
     type: audio
     default: bf16
     capabilities:
@@ -425,7 +425,7 @@ models:
 
   pocket-tts-it:100m:
     description: "Pocket TTS Italian: small CPU-friendly text-to-speech with voice cloning"
-    readme: readmes/pocket-tts/pocket-tts.md
+    readme: readmes/pocket-tts/it.md
     type: audio
     default: bf16
     capabilities:
@@ -442,7 +442,7 @@ models:
 
   pocket-tts-pt:100m:
     description: "Pocket TTS Portuguese: small CPU-friendly text-to-speech with voice cloning"
-    readme: readmes/pocket-tts/pocket-tts.md
+    readme: readmes/pocket-tts/pt.md
     type: audio
     default: bf16
     capabilities:
