@@ -40,3 +40,23 @@ models:
 		})
 	}
 }
+
+func TestImageSafetensorsModel(t *testing.T) {
+	doc := `version: 1
+models:
+  test:7b:
+    description: Test pipeline
+    readme: readmes/test/7b.md
+    type: image
+    default: int8
+    int8:
+      adapter: sd-server
+      repo: test/model
+      files:
+        - {file: diffusion.safetensors, size: 1, sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+        - {file: vae.safetensors, role: vae, size: 1, sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}
+`
+	if _, err := Parse([]byte(doc)); err != nil {
+		t.Fatal(err)
+	}
+}

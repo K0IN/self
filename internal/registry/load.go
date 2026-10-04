@@ -248,7 +248,7 @@ func parseVariant(t ModelType, quant string, node *yaml.Node) (Variant, error) {
 			if ext != ".safetensors" {
 				return Variant{}, fmt.Errorf("files[%d]: a head must be a .safetensors file (%q)", i, f.Name)
 			}
-		case t == TypeImage && (role == RoleVAE || role == RoleTextEncoder):
+		case t == TypeImage && (role == RoleModel || role == RoleVAE || role == RoleTextEncoder):
 			if ext != ".gguf" && ext != ".safetensors" {
 				return Variant{}, fmt.Errorf("files[%d]: image %s must be GGUF or safetensors (%q)", i, role, f.Name)
 			}

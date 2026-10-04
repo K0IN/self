@@ -40,7 +40,7 @@ models:
     description: "Qwen Image 2.1 7B: generation, transparent images and multi-reference editing"
     readme: readmes/qwen-image-2.1/7b.md
     type: image
-    default: q8
+    default: int8
     capabilities:
       input: [text, image, multi-image]
       output: [image, image-edit]
@@ -57,6 +57,16 @@ models:
       cfg_scale: 6.0
       sampling_method: euler
       flash_attention: true
+      offload_to_cpu: true
+      steps: 40
+    int8:
+      adapter: sd-server
+      repo: Comfy-Org/Qwen-Image-2.1
+      files:
+        - {file: diffusion_models/qwen_image_2.1_int8_convrot.safetensors, revision: cb504a4090723e43f17ad01cec0359490e2de613, size: 7256783064, sha256: cb74113cb03faecd79611b01fd7fd642f0aa60d6f0b95086abee214d75eaa57d}
+        - {file: vae/qwen_image_2.1_vae_bf16.safetensors, role: vae, repo: Comfy-Org/Qwen-Image-2.1, revision: cb504a4090723e43f17ad01cec0359490e2de613, size: 675509688, sha256: bb21f7473051e1ac368515dd3f2e15cd44d7a11748ee8823e1ddca3e4876b7c9}
+        - {file: Qwen3VL-8B-Instruct-Q4_K_M.gguf, role: text-encoder, repo: Qwen/Qwen3-VL-8B-Instruct-GGUF, revision: f982a07559d4a2f6c8744d840bf6fccab30eea96, size: 5027784800, sha256: 67d1659bfe71b89d50b45a4ad1a9e5b997e5bb16ce5da66a6a6167abd569e9e2}
+        - {file: mmproj-Qwen3VL-8B-Instruct-F16.gguf, role: mmproj, repo: Qwen/Qwen3-VL-8B-Instruct-GGUF, revision: f982a07559d4a2f6c8744d840bf6fccab30eea96, size: 1159029824, sha256: ca524100ebf825c9a870db1c580d03879e0da0ab2541697e2458e64891cf9d38}
     q4:
       adapter: sd-server
       repo: unsloth/Qwen-Image-2.1-GGUF
@@ -92,7 +102,7 @@ models:
       license: flux-non-commercial-license
       homepage: "https://huggingface.co/black-forest-labs/FLUX.2-klein-9B"
     settings:
-      steps: 20
+      steps: 40
       cfg_scale: 1.0
       sampling_method: euler
       flash_attention: true

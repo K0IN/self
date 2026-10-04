@@ -52,9 +52,17 @@ libs variant:
     echo "Fetching $asset"
     curl -fL --progress-bar -o "$tmp/l.tgz" "https://github.com/ggml-org/llama.cpp/releases/download/{{tag}}/$asset"
     tar -xzf "$tmp/l.tgz" -C "$tmp"
+    rm -f "$tmp/l.tgz"
     src=$(find "$tmp" -maxdepth 2 -name 'libllama.so*' -printf '%h\n' | head -1)
     rm -rf {{deps}}/lib && mkdir -p {{deps}}/lib
-    cp -P "$src"/lib*.so* {{deps}}/lib/
+    cp -P "$src"/libllama.so* "$src"/libllama-common.so* \
+      "$src"/libllama-server-impl.so* "$src"/libmtmd.so* \
+      "$src"/libggml.so* "$src"/libggml-base.so* \
+      "$src"/libggml-cpu-x64.so* {{deps}}/lib/
+    case "{{variant}}" in
+      cuda-*) cp -P "$src"/libggml-cuda.so* {{deps}}/lib/ ;;
+      vulkan) cp -P "$src"/libggml-vulkan.so* {{deps}}/lib/ ;;
+    esac
     install -m 0755 "$src/llama-server" {{deps}}/llama-server
     echo "{{tag}}-{{variant}}" > {{deps}}/.tag
     echo "deps/lib ready: $(ls {{deps}}/lib | wc -l) files"
