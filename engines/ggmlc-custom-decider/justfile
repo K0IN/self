@@ -48,6 +48,8 @@ libs variant:
     if [[ -f {{deps}}/.tag && "$(cat {{deps}}/.tag)" == "{{tag}}-{{variant}}" && "$complete" == true && -x {{deps}}/llama-server ]]; then
       echo "deps/lib up to date ({{tag}}, {{variant}})"; exit 0
     fi
+    rm -rf {{deps}}/lib && mkdir -p {{deps}}/lib
+    rm -f {{deps}}/llama-server
     tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
     echo "Fetching $asset"
     curl -fL --progress-bar -o "$tmp/l.tgz" "https://github.com/ggml-org/llama.cpp/releases/download/{{tag}}/$asset"
@@ -60,19 +62,9 @@ libs variant:
       cuda-*) tar_patterns+=( '*/libggml-cuda.so*' ) ;;
       vulkan) tar_patterns+=( '*/libggml-vulkan.so*' ) ;;
     esac
-    tar -xzf "$tmp/l.tgz" -C "$tmp" --wildcards "${tar_patterns[@]}"
-    rm -f "$tmp/l.tgz"
-    src=$(find "$tmp" -maxdepth 2 -name 'libllama.so*' -printf '%h\n' | head -1)
-    rm -rf {{deps}}/lib && mkdir -p {{deps}}/lib
-    cp -P "$src"/libllama.so* "$src"/libllama-common.so* \
-      "$src"/libllama-server-impl.so* "$src"/libmtmd.so* \
-      "$src"/libggml.so* "$src"/libggml-base.so* \
-      "$src"/libggml-cpu-x64.so* {{deps}}/lib/
-    case "{{variant}}" in
-      cuda-*) cp -P "$src"/libggml-cuda.so* {{deps}}/lib/ ;;
-      vulkan) cp -P "$src"/libggml-vulkan.so* {{deps}}/lib/ ;;
-    esac
-    install -m 0755 "$src/llama-server" {{deps}}/llama-server
+    tar -xzf "$tmp/l.tgz" -C {{deps}}/lib --strip-components=1 --wildcards "${tar_patterns[@]:0:${#tar_patterns[@]}-1}"
+    tar -xzf "$tmp/l.tgz" -C {{deps}} --strip-components=1 --wildcards '*/llama-server'
+    chmod 0755 {{deps}}/llama-server
     echo "{{tag}}-{{variant}}" > {{deps}}/.tag
     echo "deps/lib ready: $(ls {{deps}}/lib | wc -l) files"
 
