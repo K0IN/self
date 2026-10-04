@@ -51,7 +51,16 @@ libs variant:
     tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
     echo "Fetching $asset"
     curl -fL --progress-bar -o "$tmp/l.tgz" "https://github.com/ggml-org/llama.cpp/releases/download/{{tag}}/$asset"
-    tar -xzf "$tmp/l.tgz" -C "$tmp"
+    tar_patterns=(
+      '*/libllama.so*' '*/libllama-common.so*' '*/libllama-server-impl.so*'
+      '*/libmtmd.so*' '*/libggml.so*' '*/libggml-base.so*' '*/libggml-cpu-x64.so*'
+      '*/llama-server'
+    )
+    case "{{variant}}" in
+      cuda-*) tar_patterns+=( '*/libggml-cuda.so*' ) ;;
+      vulkan) tar_patterns+=( '*/libggml-vulkan.so*' ) ;;
+    esac
+    tar -xzf "$tmp/l.tgz" -C "$tmp" --wildcards "${tar_patterns[@]}"
     rm -f "$tmp/l.tgz"
     src=$(find "$tmp" -maxdepth 2 -name 'libllama.so*' -printf '%h\n' | head -1)
     rm -rf {{deps}}/lib && mkdir -p {{deps}}/lib
