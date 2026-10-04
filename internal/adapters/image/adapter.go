@@ -11,8 +11,6 @@ import (
 	"mime/multipart"
 	"net"
 	"net/http"
-	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -28,9 +26,11 @@ const Engine = "sd-server"
 
 var Settings = settings.Schema{
 	{Name: "threads", Flag: "--threads", Kind: settings.Int, Min: 1, Max: 1024, Help: "CPU threads"},
-	{Name: "gpu_layers", Flag: "--clip-on-cpu", Kind: settings.Bool, Help: "keep text encoder on CPU"},
+	{Name: "offload_to_cpu", Flag: "--offload-to-cpu", Kind: settings.Bool, Help: "offload inactive model stages to CPU"},
 	{Name: "steps", Flag: "--steps", Kind: settings.Int, Min: 1, Max: 200, Help: "sampling steps"},
 	{Name: "cfg_scale", Flag: "--cfg-scale", Kind: settings.Float, Min: 0, Max: 50, Help: "guidance scale"},
+	{Name: "sampling_method", Flag: "--sampling-method", Kind: settings.String, Enum: []string{"euler"}, Help: "sampling method"},
+	{Name: "flash_attention", Flag: "--fa", Kind: settings.Bool, Help: "flash attention"},
 	{Name: "seed", Flag: "--seed", Kind: settings.Int, Min: 0, Max: 9223372036854775807, Help: "default seed"},
 }
 
@@ -46,15 +46,22 @@ type Adapter struct {
 }
 
 func Args(cfg dom.RuntimeConfig, port int) []string {
-	args := []string{"--listen-ip", "127.0.0.1", "--listen-port", strconv.Itoa(port), "--diffusion-model", cfg.Files.Model}
+	args := []string{"--listen-ip", "127.0.0.1", "--listen-port", strconv.Itoa(port), "--eager-load", "--diffusion-model", cfg.Files.Model}
 	if cfg.Files.VAE != "" {
 		args = append(args, "--vae", cfg.Files.VAE)
 	}
 	if cfg.Files.TextEncoder != "" {
 		args = append(args, "--llm", cfg.Files.TextEncoder)
 	}
+	if cfg.Files.MMProj != "" {
+		args = append(args, "--llm_vision", cfg.Files.MMProj)
+	}
 	if cfg.Device == "cpu" {
-		args = append(args, "--backend", "CPU")
+		args = append(args, "--backend", "cpu", "--params-backend", "cpu")
+	} else if cfg.Device == "cuda" {
+		args = append(args, "--backend", "cuda0")
+	} else if strings.HasPrefix(cfg.Device, "cuda:") {
+		args = append(args, "--backend", "cuda"+strings.TrimPrefix(cfg.Device, "cuda:"))
 	}
 	return append(args, Settings.Args(cfg.Settings)...)
 }
@@ -69,12 +76,17 @@ func (a *Adapter) Start(ctx context.Context, cfg dom.RuntimeConfig) error {
 		return errs.Wrap(errs.RuntimeStartFailed, err, "cannot start engine %s", cfg.EnginePath)
 	}
 	a.proc = runtime.Supervise(proc, "image engine")
-	a.client = &http.Client{Timeout: 15 * time.Minute}
+	a.client = &http.Client{Timeout: 15 * time.Minute, Transport: &http.Transport{Proxy: nil}}
 	a.baseURL = "http://127.0.0.1:" + strconv.Itoa(port)
 	a.info = dom.RuntimeInfo{EngineModel: cfg.ModelID, Device: cfg.Device}
-	go func() { <-proc.Done(); close(a.done) }()
-	if err := waitReady(ctx, a.client, a.baseURL); err != nil {
-		_ = a.proc.Close(context.Background())
+	readyCtx, cancelReady := context.WithCancel(ctx)
+	defer cancelReady()
+	go func() { _, _ = io.Copy(io.Discard, proc.Stdout()) }()
+	go func() { <-proc.Done(); close(a.done); cancelReady() }()
+	if err := waitReady(readyCtx, a.client, a.baseURL); err != nil {
+		closeCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		_ = a.proc.Close(closeCtx)
 		return err
 	}
 	return nil
@@ -86,20 +98,28 @@ func (a *Adapter) Close(ctx context.Context) error               { return a.proc
 func (a *Adapter) StderrTail(n int) []string                     { return a.proc.StderrTail(n) }
 
 func (a *Adapter) Generate(ctx context.Context, req dom.GenerateRequest) (dom.Response, error) {
-	body := map[string]any{"prompt": req.Prompt, "n": req.N, "size": fmt.Sprintf("%dx%d", req.Width, req.Height), "output_format": req.OutputFormat, "output_compression": req.Compression}
-	if req.NegativePrompt != "" {
-		body["negative_prompt"] = req.NegativePrompt
+	extra := make(map[string]any, len(req.Extra)+2)
+	for key, value := range req.Extra {
+		extra[key] = value
 	}
-	merge(body, req.Extra)
+	if req.Seed != nil {
+		extra["seed"] = *req.Seed
+	}
+	if req.NegativePrompt != "" {
+		extra["negative_prompt"] = req.NegativePrompt
+	}
+	body := map[string]any{"prompt": extendedPrompt(req.Prompt, extra), "n": req.N, "size": fmt.Sprintf("%dx%d", req.Width, req.Height), "output_format": req.OutputFormat, "output_compression": req.Compression}
 	return a.doJSON(ctx, "/v1/images/generations", body)
 }
 
 func (a *Adapter) Edit(ctx context.Context, req dom.EditRequest) (dom.Response, error) {
 	var b bytes.Buffer
 	mw := multipart.NewWriter(&b)
-	_ = mw.WriteField("prompt", req.Prompt)
+	_ = mw.WriteField("prompt", extendedPrompt(req.Prompt, req.Extra))
 	_ = mw.WriteField("n", strconv.Itoa(req.N))
-	_ = mw.WriteField("size", fmt.Sprintf("%dx%d", req.Width, req.Height))
+	if req.Width > 0 && req.Height > 0 {
+		_ = mw.WriteField("size", fmt.Sprintf("%dx%d", req.Width, req.Height))
+	}
 	_ = mw.WriteField("output_format", req.OutputFormat)
 	_ = mw.WriteField("output_compression", strconv.Itoa(req.Compression))
 	for _, img := range req.Images {
@@ -129,12 +149,20 @@ func (a *Adapter) doJSON(ctx context.Context, path string, body any) (dom.Respon
 	return a.do(request)
 }
 func (a *Adapter) do(request *http.Request) (dom.Response, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if err := request.Context().Err(); err != nil {
+		return dom.Response{}, err
+	}
 	resp, err := a.client.Do(request)
 	if err != nil {
 		return dom.Response{}, errs.Wrap(errs.RuntimeCrashed, err, "image engine request failed")
 	}
 	defer resp.Body.Close()
-	data, _ := io.ReadAll(resp.Body)
+	data, err := io.ReadAll(io.LimitReader(resp.Body, (256<<20)+1))
+	if err != nil || len(data) > 256<<20 {
+		return dom.Response{}, errs.New(errs.RuntimeCrashed, "image engine response is truncated or too large")
+	}
 	if resp.StatusCode/100 != 2 {
 		return dom.Response{}, errs.New(errs.Internal, "image engine returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(data)))
 	}
@@ -158,10 +186,15 @@ func (a *Adapter) do(request *http.Request) (dom.Response, error) {
 	}
 	return out, nil
 }
-func merge(dst map[string]any, src map[string]any) {
-	for k, v := range src {
-		dst[k] = v
+func extendedPrompt(prompt string, extra map[string]any) string {
+	if len(extra) == 0 {
+		return prompt
 	}
+	payload, err := json.Marshal(extra)
+	if err != nil {
+		return prompt
+	}
+	return prompt + " <sd_cpp_extra_args>" + string(payload) + "</sd_cpp_extra_args>"
 }
 func filename(img dom.InputImage) string {
 	if img.Name != "" {
@@ -196,6 +229,3 @@ func waitReady(ctx context.Context, client *http.Client, base string) error {
 		}
 	}
 }
-
-var _ = url.PathEscape
-var _ = os.Stderr

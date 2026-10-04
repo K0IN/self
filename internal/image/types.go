@@ -12,6 +12,7 @@ type ModelFiles struct {
 	Model       string
 	VAE         string
 	TextEncoder string
+	MMProj      string
 }
 
 type RuntimeConfig struct {

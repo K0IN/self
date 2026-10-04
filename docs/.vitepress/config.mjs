@@ -22,9 +22,10 @@ export default defineConfig({
                 collapsed: false,
                 items: [
                     { text: 'Decision', link: '/api/decision' },
-                    { text: 'Audio (text to speech)', link: '/api/audio' },
-                    { text: 'Text generation', link: '/api/text' },
+                    { text: 'Audio generation', link: '/api/audio' },
+                    { text: 'Text', link: '/api/text' },
                     { text: 'Embeddings', link: '/api/embeddings' },
+                    { text: 'Image', link: '/api/images' },
                     { text: 'Speech to text', link: '/api/stt' }
                 ]
             },

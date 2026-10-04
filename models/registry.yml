@@ -5,7 +5,7 @@
 #   <name>:<version-size>:
 #     description:   one line (shown by `self ls-remote` and on the overview page)
 #     readme:        model card, Markdown file relative to this file (readmes/<name>/<version-size>.md)
-#     type:          decision | audio | text | embedding
+#     type:          decision | audio | text | embedding | image
 #     default:       quant used when --quant is not given
 #     capabilities:  text | vision | multi-image | choice | score | noul | audio | embedding | image | image-edit
 #     info:          descriptive metadata (family, parameters, architecture,
@@ -16,7 +16,7 @@
 #                    overridden per quant (`settings:` under the quant) and
 #                    at run time with `self serve <id> --set key=value`.
 #     <quant>:
-#       adapter:     engine adapter (ggmlc-laya | ggmlc-custom-decider | ggmlc-audio | llama-server)
+#       adapter:     engine adapter (ggmlc-laya | ggmlc-custom-decider | ggmlc-audio | llama-server | sd-server)
 #       repo:        Hugging Face repo (owner/name)
 #       files:       - {file, size, sha256[, role: model|mmproj|voice][, repo]}
 #                    role voice (audio only): .wav/.mp3 reference voice used
@@ -27,9 +27,74 @@
 # size (bytes) and sha256 pin the exact upstream file. A download that does
 # not match is deleted and never used; if the upstream file changes, `self`
 # refuses to download it until this file is updated.
+#
+# Image pipelines keep diffusion weights in GGUF. Image-only vae and
+# text-encoder roles also accept safetensors; mmproj remains GGUF.
 version: 1
 
 models:
+
+  # --- Images (official upstream stable-diffusion.cpp sd-server) ---
+
+  qwen-image-2.1:7b:
+    description: "Qwen Image 2.1 7B: generation, transparent images and multi-reference editing"
+    readme: readmes/qwen-image-2.1/7b.md
+    type: image
+    default: q4
+    capabilities:
+      input: [text, image, multi-image]
+      output: [image, image-edit]
+    max_images: 8
+    info:
+      family: qwen-image-2.1
+      parameters: 7B
+      architecture: qwen-image-2.1
+      base_model: Qwen/Qwen-Image-2.1
+      source: Qwen/Qwen-Image-2.1
+      license: qwen-research
+      homepage: "https://huggingface.co/Qwen/Qwen-Image-2.1"
+    settings:
+      cfg_scale: 6.0
+      sampling_method: euler
+      flash_attention: true
+    q4:
+      adapter: sd-server
+      repo: unsloth/Qwen-Image-2.1-GGUF
+      files:
+        - {file: qwen-image-2.1-Q4_K_M.gguf, revision: 2c31ccd392b367a6637841a143813320a02dff55, size: 4199565024, sha256: 631d532e7ca71e8d90a87c71d3699761a812039d22e3370e87498d87754660fe}
+        - {file: vae/qwen_image_2.1_vae_bf16.safetensors, role: vae, repo: Comfy-Org/Qwen-Image-2.1, revision: cb504a4090723e43f17ad01cec0359490e2de613, size: 675509688, sha256: bb21f7473051e1ac368515dd3f2e15cd44d7a11748ee8823e1ddca3e4876b7c9}
+        - {file: Qwen3VL-8B-Instruct-Q4_K_M.gguf, role: text-encoder, repo: Qwen/Qwen3-VL-8B-Instruct-GGUF, revision: f982a07559d4a2f6c8744d840bf6fccab30eea96, size: 5027784800, sha256: 67d1659bfe71b89d50b45a4ad1a9e5b997e5bb16ce5da66a6a6167abd569e9e2}
+        - {file: mmproj-Qwen3VL-8B-Instruct-F16.gguf, role: mmproj, repo: Qwen/Qwen3-VL-8B-Instruct-GGUF, revision: f982a07559d4a2f6c8744d840bf6fccab30eea96, size: 1159029824, sha256: ca524100ebf825c9a870db1c580d03879e0da0ab2541697e2458e64891cf9d38}
+
+  flux2-klein:9b:
+    description: "FLUX.2-klein 9B: four-step generation and multi-reference image editing"
+    readme: readmes/flux2-klein/9b.md
+    type: image
+    default: q4
+    capabilities:
+      input: [text, image, multi-image]
+      output: [image, image-edit]
+    max_images: 8
+    info:
+      family: flux2-klein
+      parameters: 9B
+      architecture: flux2
+      base_model: black-forest-labs/FLUX.2-klein-9B
+      source: black-forest-labs/FLUX.2-klein-9B
+      license: flux-non-commercial-license
+      homepage: "https://huggingface.co/black-forest-labs/FLUX.2-klein-9B"
+    settings:
+      steps: 4
+      cfg_scale: 1.0
+      sampling_method: euler
+      flash_attention: true
+    q4:
+      adapter: sd-server
+      repo: unsloth/FLUX.2-klein-9B-GGUF
+      files:
+        - {file: flux-2-klein-9b-Q4_K_M.gguf, revision: fde8634245fe6b749a221c25b34672b5b8fbd079, size: 5909829920, sha256: 5489463ed96056b0bb5472abb5d1bba7055e48d574e37877acb43b407465e26f}
+        - {file: split_files/vae/flux2-vae.safetensors, role: vae, repo: Comfy-Org/flux2-klein, revision: 5f526678002e43af5551dadb73ce2e8c91b43afe, size: 336211292, sha256: 868fe7b343cc8f3a19dbcfcafbc3d5f888802be3f89bd81b65b3621a066ce8f3}
+        - {file: Qwen3-8B-Q4_K_M.gguf, role: text-encoder, repo: unsloth/Qwen3-8B-GGUF, revision: a6adef130ffb23ddaf1a62fec9dced968c9bc482, size: 5027784512, sha256: 120307ba529eb2439d6c430d94104dabd578497bc7bfe7e322b5d9933b449bd4}
 
   # --- Text generation (chat completions; upstream llama.cpp llama-server) ---
   # Every model lists its multimodal projector with role: mmproj (image input).

@@ -55,7 +55,7 @@ func serveImage(ctx context.Context, cfg config.Serve, t target, out io.Writer, 
 	fmt.Fprintf(out, "\nUsing %s\n\nLoading model...\n", tildify(files[registry.RoleModel]))
 	startCtx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
-	if err := adapter.Start(startCtx, dom.RuntimeConfig{ModelID: t.res.ID(), Files: dom.ModelFiles{Model: files[registry.RoleModel], VAE: files[registry.RoleVAE], TextEncoder: files[registry.RoleTextEncoder]}, Device: cfg.Device, EnginePath: engine.Path, LibDir: engine.LibDir, Log: engineLog, Settings: t.settings}); err != nil {
+	if err := adapter.Start(startCtx, dom.RuntimeConfig{ModelID: t.res.ID(), Files: dom.ModelFiles{Model: files[registry.RoleModel], VAE: files[registry.RoleVAE], TextEncoder: files[registry.RoleTextEncoder], MMProj: files[registry.RoleMMProj]}, Device: cfg.Device, EnginePath: engine.Path, LibDir: engine.LibDir, Log: engineLog, Settings: t.settings}); err != nil {
 		return err
 	}
 	closeEngine := func() {

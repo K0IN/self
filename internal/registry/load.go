@@ -21,6 +21,13 @@ var reservedModelKeys = map[string]bool{
 
 var canonicalIDRE = regexp.MustCompile(`^[a-z0-9][a-z0-9.-]*:[0-9]+(?:\.[0-9]+)?[bm]$`)
 
+var legacyModelIDs = map[string]string{
+	"gemma4:e4b":  "gemma4:4b",
+	"clm:8b":      "clm-v0.1:8b",
+	"nomic:1.5":   "nomic-embed-text-v1.5:137m",
+	"nomic:2-moe": "nomic-embed-text-v2-moe:475m",
+}
+
 // LoadFile reads and parses a registry file.
 func LoadFile(p string) (*Registry, error) {
 	b, err := os.ReadFile(p)
@@ -47,13 +54,19 @@ func Parse(data []byte) (*Registry, error) {
 		return nil, fmt.Errorf("registry: unsupported version %d (want 1)", doc.Version)
 	}
 	reg := &Registry{Version: doc.Version, Models: map[string]Model{}}
-	for id, node := range doc.Models {
+	seenIDs := map[string]bool{}
+	for rawID, node := range doc.Models {
+		id := normalizeModelID(rawID)
+		if seenIDs[id] {
+			return nil, fmt.Errorf("registry: duplicate canonical model id %q", id)
+		}
+		seenIDs[id] = true
 		if err := validateID(id); err != nil {
-			return nil, fmt.Errorf("registry: model %q: %w", id, err)
+			return nil, fmt.Errorf("registry: model %q: %w", rawID, err)
 		}
 		t, known, err := peekType(&node)
 		if err != nil {
-			return nil, fmt.Errorf("registry: model %q: %w", id, err)
+			return nil, fmt.Errorf("registry: model %q: %w", rawID, err)
 		}
 		if !known {
 			reg.Skipped = append(reg.Skipped, id)
@@ -61,12 +74,19 @@ func Parse(data []byte) (*Registry, error) {
 		}
 		m, err := parseModel(id, t, &node)
 		if err != nil {
-			return nil, fmt.Errorf("registry: model %q: %w", id, err)
+			return nil, fmt.Errorf("registry: model %q: %w", rawID, err)
 		}
 		reg.Models[id] = m
 	}
 	sort.Strings(reg.Skipped)
 	return reg, nil
+}
+
+func normalizeModelID(id string) string {
+	if canonical, ok := legacyModelIDs[id]; ok {
+		return canonical
+	}
+	return id
 }
 
 // peekType reads only the type of a model, so entries of a type this build
@@ -227,6 +247,10 @@ func parseVariant(t ModelType, quant string, node *yaml.Node) (Variant, error) {
 		case role == RoleHead:
 			if ext != ".safetensors" {
 				return Variant{}, fmt.Errorf("files[%d]: a head must be a .safetensors file (%q)", i, f.Name)
+			}
+		case t == TypeImage && (role == RoleVAE || role == RoleTextEncoder):
+			if ext != ".gguf" && ext != ".safetensors" {
+				return Variant{}, fmt.Errorf("files[%d]: image %s must be GGUF or safetensors (%q)", i, role, f.Name)
 			}
 		case ext != ".gguf":
 			return Variant{}, fmt.Errorf("files[%d]: only GGUF files are supported (%q)", i, f.Name)

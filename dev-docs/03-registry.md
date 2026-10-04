@@ -73,6 +73,8 @@ models:
   `repo` (`owner/name`), `files`, optional `settings`.
 - Files: GGUF only, clean relative paths. Exceptions: the audio `voice` role is a
   `.wav` or `.mp3` file; the decision `head` role is a `.safetensors` file.
+  Image `vae` and `text-encoder` roles allow GGUF or safetensors. Image
+  `model` and `mmproj` remain GGUF; the projector maps to `--llm_vision`.
 - Optional per-file `repo` (`owner/name`) when a file lives in another repo than
   the quant's (e.g. a default voice from `kyutai/tts-voices`, a head published by the model author).
 - Optional per-file `revision` selects a Hugging Face branch, tag, or commit; it
@@ -103,6 +105,7 @@ models:
 | `qwen3.5:9b`, `gemma4:4b`, `gemma4:12b` | `llama-server` |
 | `clm-v0.1:8b`, `nomic-embed-text-v1.5:137m`, `nomic-embed-text-v2-moe:475m` | `llama-server` |
 | `qwen3-tts:1.7b` | `ggmlc-audio` |
+| `qwen-image-2.1:7b`, `flux2-klein:9b` | official upstream `sd-server` |
 | `pocket-tts-en:100m`, `-de`, `-es`, `-fr`, `-it`, `-pt` (each `:100m`) | `ggmlc-audio` (with a default `voice` file) |
 
 ## Acceptance criteria

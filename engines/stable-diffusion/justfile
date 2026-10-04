@@ -1,0 +1,37 @@
+# Build stable-diffusion.cpp's sd-server example.
+# The source is kept outside this repository and fetched at a pinned tag.
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+source_dir := "build/stable-diffusion.cpp"
+build_dir := "build/server"
+dest := "../../bin/libexec/ai-server"
+version := "master-929-3f8527a"
+
+build variant="cpu" target=dest:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p build
+    if [[ ! -d "{{source_dir}}/.git" ]]; then
+      git clone --depth 1 --branch "{{version}}" https://github.com/leejet/stable-diffusion.cpp.git "{{source_dir}}"
+    fi
+    test "$(git -C "{{source_dir}}" describe --tags --exact-match)" = "{{version}}"
+    git -C "{{source_dir}}" submodule update --init --recursive --depth 1
+    case "{{variant}}" in
+      cpu) cuda=OFF ;;
+      cuda-12*|cuda-13*) cuda=ON; export CUDA_HOME="${CUDA_HOME:-/usr/local/{{variant}}}"; export CUDACXX="$CUDA_HOME/bin/nvcc" ;;
+      *) echo "variant must be cpu, cuda-12.x or cuda-13.x" >&2; exit 2 ;;
+    esac
+    rm -rf "{{build_dir}}"
+    cmake -S "{{source_dir}}" -B "{{build_dir}}" -G Ninja \
+      -DSD_BUILD_EXAMPLES=ON \
+      -DSD_SERVER_BUILD_FRONTEND=OFF \
+      -DSD_WEBP=ON \
+      -DSD_CUDA=$cuda \
+      -DCMAKE_BUILD_TYPE=Release
+    cmake --build "{{build_dir}}" --target sd-server --parallel "${CMAKE_BUILD_PARALLEL_LEVEL:-2}"
+    mkdir -p "{{target}}"
+    install -m 0755 "{{build_dir}}/bin/sd-server" "{{target}}/sd-server"
+    echo "Installed {{target}}/sd-server ({{variant}})"
+
+clean:
+    rm -rf build

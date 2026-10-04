@@ -49,7 +49,8 @@
 - Clef has no prompt cache: every request evaluates its whole prompt (state, images, schema). On a GPU
   that is a few hundred ms; on a CPU-only host a request with an image and ~800 tokens takes about 30 s.
   An engine bundle built for another CUDA major than the host also runs on the CPU (see 13).
-- The docs build (`docs/generate-registry.mjs`) does not list `max_images` as a reserved model key; a registry model that sets it would be rendered with a bogus quant.
+- Image registry and mocked HTTP tests do not validate native inference.
+  Generation, editing and CUDA 12/13 execution still need hardware smoke tests.
 
 ## Open points
 

@@ -6,6 +6,7 @@ mod decider "ggmlc-custom-decider"
 mod audioengine "ggmlc-audio"
 mod clef "clef"
 mod laya "laya"
+mod imageengine "stable-diffusion"
 
 default:
     @just --list
@@ -19,10 +20,12 @@ build variant="cuda-12.8" target="":
             just decider build "{{variant}}" "$bundle"
             just clef build "$bundle"
             just audioengine build "{{variant}}" "$bundle"
+            just imageengine build "{{variant}}" "$bundle"
     else
       just decider build "{{variant}}"
       just clef build
             just audioengine build "{{variant}}"
+            just imageengine build "{{variant}}"
     fi
 
 deps variant="cuda-12.8":
@@ -37,10 +40,12 @@ verify target="../bin/libexec/ai-server" variant="cuda-12.8":
     test -x "{{target}}/laya"
     test -x "{{target}}/clef"
     test -x "{{target}}/ggmlc-audio"
+    test -x "{{target}}/sd-server"
 
 clean:
     just decider clean
     just clef clean
+    just imageengine clean
 
 # Fetch the upstream Laya runtime.
 runtime variant="auto" version="v0.9.6":
@@ -49,3 +54,7 @@ runtime variant="auto" version="v0.9.6":
 # Build the persistent audio (TTS) engine; variant defaults to the one in the decider deps.
 audio variant="" target="../../bin/libexec/ai-server":
     just audioengine build "{{variant}}" "{{target}}"
+
+# Build stable-diffusion.cpp's persistent OpenAI-compatible image server.
+image variant="cpu" target="../../bin/libexec/ai-server":
+    just imageengine build "{{variant}}" "{{target}}"

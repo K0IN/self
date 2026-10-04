@@ -201,6 +201,9 @@ image fetch failures, `503` runtime failures, and `504` timeouts.
 
 ## Scope
 
-The current image implements the decision API and includes a vision-capable
-model. Audio, video, image generation, and broader LLM APIs are planned. The
-container is the supported distribution method.
+The current image implements decision, audio, text, embedding, vision-input,
+and image-generation runtime support. Image generation and editing use the
+persistent official upstream `sd-server`. Registered image models are
+`qwen-image-2.1:7b` and `flux2-klein:9b`, with GGUF diffusion/encoder weights
+and pinned safetensors VAEs. See [Image API](docs/api/images.md).
+The container is the supported distribution method.

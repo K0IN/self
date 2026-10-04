@@ -47,6 +47,13 @@ default `model` role and the matching projector GGUF with `role: mmproj`.
 Keep model and projector quantization compatible. Use exact LFS `size` and
 `sha256` pins for both files.
 
+Image models use the official, unmodified upstream `sd-server`. The registered
+pipelines are `qwen-image-2.1:7b` and `flux2-klein:9b`. Image `vae` and
+`text-encoder` roles accept GGUF or safetensors, while `model` and `mmproj`
+remain GGUF. All files have exact revision, size and SHA-256 pins.
+Qwen 2.1 requires its own VAE, Qwen3-VL-8B and a matching vision projector;
+FLUX.2-klein 9B requires the FLUX.2 VAE and Qwen3-8B encoder.
+
 - pins every file with its exact `size` and `sha256` (from the Hub's LFS
   metadata);
 - add a model card at `models/readmes/<name>/<tag>.md` and link it with

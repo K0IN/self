@@ -57,6 +57,9 @@ bootstrap:
         if [[ ! -x "{{engine_dir}}/ggmlc-audio" ]]; then
             just engine audio "${AUDIO_VARIANT:-}"
         fi
+        if [[ ! -x "{{engine_dir}}/sd-server" ]]; then
+            just engine image "${IMAGE_VARIANT:-{{variant}}}"
+        fi
 
 # Serve a model.
 serve m=model *flags="": build bootstrap

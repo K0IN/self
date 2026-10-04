@@ -47,7 +47,7 @@ var modelTypes = map[ModelType]typeSpec{
 	},
 	TypeImage: {
 		Capabilities: []Capability{CapText, CapImage, CapImageEdit, CapMultiImage},
-		Roles:        []FileRole{RoleModel, RoleVAE, RoleTextEncoder},
+		Roles:        []FileRole{RoleModel, RoleVAE, RoleTextEncoder, RoleMMProj},
 	},
 }
 

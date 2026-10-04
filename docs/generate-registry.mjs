@@ -16,7 +16,7 @@ fs.writeFileSync(path.join(publicDir, 'models.yml'), registryText)
 
 const esc = value => String(value ?? '').replaceAll('|', '\\|')
 const rows = Object.entries(registry.models ?? {}).map(([id, model]) => {
-    const quants = Object.keys(model).filter(key => !['description', 'readme', 'type', 'default', 'capabilities', 'info', 'settings'].includes(key))
+    const quants = Object.keys(model).filter(key => !['description', 'readme', 'type', 'default', 'capabilities', 'max_images', 'info', 'settings'].includes(key))
     const slug = id.replace(':', '/')
     const size = model[model.default]?.files?.reduce((total, file) => total + Number(file.size || 0), 0) || 0
     return {

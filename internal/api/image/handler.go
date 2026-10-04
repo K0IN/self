@@ -5,10 +5,9 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
+	"image/png"
 	"io"
 	"mime"
-	"mime/multipart"
 	"net/http"
 	"strconv"
 	"strings"
@@ -114,15 +113,7 @@ func (h *Handler) edit(w http.ResponseWriter, r *http.Request) {
 	if len(images) == 0 {
 		images = parts.files["file"]
 	}
-	if len(images) == 0 {
-		apiroot.WriteError(w, errs.New(errs.InvalidRequest, "at least one image is required"))
-		return
-	}
-	if len(images) > 8 {
-		apiroot.WriteError(w, errs.New(errs.InvalidRequest, "at most 8 reference images are accepted"))
-		return
-	}
-	parsed := make([]dom.InputImage, 0, len(images))
+	parsed := make([]dom.InputImage, 0, len(images)+len(parts.fields["image_url[]"])+len(parts.fields["image_url"]))
 	for _, f := range images {
 		img, e := h.resolveInput(r.Context(), f.data, f.mime, f.name)
 		if e != nil {
@@ -130,6 +121,24 @@ func (h *Handler) edit(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		parsed = append(parsed, img)
+	}
+	for _, key := range []string{"image_url[]", "image_url"} {
+		for _, src := range parts.fields[key] {
+			img, e := h.resolveInput(r.Context(), []byte(src), "", "")
+			if e != nil {
+				apiroot.WriteError(w, e)
+				return
+			}
+			parsed = append(parsed, img)
+		}
+	}
+	if len(parsed) == 0 {
+		apiroot.WriteError(w, errs.New(errs.InvalidRequest, "at least one image is required"))
+		return
+	}
+	if len(parsed) > 8 {
+		apiroot.WriteError(w, errs.New(errs.InvalidRequest, "at most 8 reference images are accepted"))
+		return
 	}
 	var mask *dom.InputImage
 	if ms := parts.files["mask"]; len(ms) > 0 {
@@ -227,10 +236,15 @@ func (h *Handler) resolveInput(ctx context.Context, data []byte, mt, name string
 		mt = http.DetectContentType(data)
 		mt, _, _ = mime.ParseMediaType(mt)
 	}
-	if _, err := imageutil.Decode(data, mt, h.limits); err != nil {
+	decoded, err := imageutil.Decode(data, mt, h.limits)
+	if err != nil {
 		return dom.InputImage{}, err
 	}
-	return dom.InputImage{Bytes: data, MIME: mt, Name: name}, nil
+	var normalized bytes.Buffer
+	if err := png.Encode(&normalized, decoded); err != nil {
+		return dom.InputImage{}, errs.Wrap(errs.Internal, err, "cannot encode normalized image")
+	}
+	return dom.InputImage{Bytes: normalized.Bytes(), MIME: "image/png", Name: "image.png"}, nil
 }
 func decodeJSON(w http.ResponseWriter, r *http.Request, v any) error {
 	if mt, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type")); mt != "" && mt != "application/json" {
@@ -282,6 +296,3 @@ func openAIResponse(r dom.Response) map[string]any {
 	}
 	return map[string]any{"created": created, "output_format": r.OutputFormat, "data": data}
 }
-
-var _ = fmt.Sprintf
-var _ multipart.File
