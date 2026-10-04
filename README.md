@@ -19,6 +19,7 @@ It supports:
 - Image generation
 - Image editing
 
+[Model registry](https://k0in.github.io/self/registry/)
 
 The goal is get new models up and running quickly with minimal configuration, using established open-source tools.
 
@@ -89,9 +90,7 @@ docker run --rm --gpus all -p 9000:9000 -v self-models:/models \
 
 ## Models
 
-Models are downloaded directly from Hugging Face on first use. 
-
-[Model registry](https://k0in.github.io/self/registry/)
+Models are downloaded directly from Hugging Face on first use, you can find the available models in the [Model registry](https://k0in.github.io/self/registry/).
 
 To see how fast a model runs on your machine, run `self benchmark kev:0.5b`. It
 writes a report you can share as a pull request, see [benchmarks/](benchmarks/README.md).
