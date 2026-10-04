@@ -104,11 +104,3 @@ error responses. It has one page per modality: [decision](docs/api/decision.md),
 [audio](docs/api/audio.md), and [text](docs/api/text.md),
 [embeddings](docs/api/embeddings.md) and [speech to text](docs/api/stt.md).
 
-## Scope
-
-The current image implements decision, audio, text, embedding, vision-input, and image-generation runtime support. Image generation and editing use the persistent official upstream `sd-server`. Registered image models are `qwen-image-2.1:7b` and `flux2-klein:9b`, with GGUF diffusion/encoder weights and pinned safetensors VAEs. See [Image API](docs/api/images.md).
-and image-generation runtime support. Image generation and editing use the
-persistent official upstream `sd-server`. Registered image models are
-`qwen-image-2.1:7b` and `flux2-klein:9b`, with GGUF diffusion/encoder weights
-and pinned safetensors VAEs. See [Image API](docs/api/images.md).
-The container is the supported distribution method.
