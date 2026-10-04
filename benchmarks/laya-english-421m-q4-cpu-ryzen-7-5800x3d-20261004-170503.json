@@ -1,0 +1,139 @@
+{
+  "schema": 2,
+  "created_at": "2026-10-04T17:05:03Z",
+  "benchmark": {
+    "version": 1,
+    "modality": "decision",
+    "iterations": 5,
+    "warmup": 1,
+    "self_commit": "9556152cba31",
+    "self_modified": true
+  },
+  "model": {
+    "id": "laya-english:421m",
+    "quant": "q4",
+    "adapter": "ggmlc-laya",
+    "files": [
+      {
+        "name": "laya_english_ud_q4_k_m.gguf",
+        "role": "model",
+        "size": 419907712,
+        "sha256": "e504de8fcac28e5dae1cf531fe1e1c0912703de5b82719ad84bd616e1257d835"
+      }
+    ],
+    "settings": {
+      "threads": 4
+    }
+  },
+  "hardware": {
+    "os": "linux/amd64",
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "cpu_threads": 16,
+    "ram_gib": 31.3,
+    "gpus": [
+      {
+        "name": "NVIDIA GeForce RTX 5090",
+        "vram_mib": 32607,
+        "driver": "615.71.09",
+        "compute_capability": "12.0"
+      }
+    ]
+  },
+  "device": {
+    "requested": "auto",
+    "engine": "auto",
+    "gpu_memory_mib": 2,
+    "gpu_used": false
+  },
+  "load_seconds": 0.52,
+  "checks": {
+    "probes_passed": 5,
+    "probes_total": 5
+  },
+  "results": [
+    {
+      "scenario": "short-choice",
+      "requests": 5,
+      "input_tokens": 49,
+      "latency_ms": {
+        "min": 255.25,
+        "mean": 258.06,
+        "p50": 257.56,
+        "p95": 261,
+        "max": 261
+      },
+      "engine_latency_ms": {
+        "min": 255.08,
+        "mean": 257.9,
+        "p50": 257.41,
+        "p95": 260.84,
+        "max": 260.84
+      },
+      "requests_per_sec": 3.88,
+      "input_tokens_per_sec": 189.9
+    },
+    {
+      "scenario": "multi-question",
+      "requests": 5,
+      "input_tokens": 142,
+      "latency_ms": {
+        "min": 768.11,
+        "mean": 778.24,
+        "p50": 769.69,
+        "p95": 812.91,
+        "max": 812.91
+      },
+      "engine_latency_ms": {
+        "min": 767.9,
+        "mean": 778.03,
+        "p50": 769.49,
+        "p95": 812.71,
+        "max": 812.71
+      },
+      "requests_per_sec": 1.28,
+      "input_tokens_per_sec": 182.5
+    },
+    {
+      "scenario": "max-options",
+      "requests": 5,
+      "input_tokens": 147,
+      "latency_ms": {
+        "min": 600.36,
+        "mean": 607.54,
+        "p50": 604.83,
+        "p95": 619.65,
+        "max": 619.65
+      },
+      "engine_latency_ms": {
+        "min": 600.15,
+        "mean": 607.3,
+        "p50": 604.57,
+        "p95": 619.4,
+        "max": 619.4
+      },
+      "requests_per_sec": 1.65,
+      "input_tokens_per_sec": 242
+    },
+    {
+      "scenario": "long-context",
+      "requests": 3,
+      "input_tokens": 270,
+      "latency_ms": {
+        "min": 1129.94,
+        "mean": 1133.93,
+        "p50": 1133.88,
+        "p95": 1137.97,
+        "max": 1137.97
+      },
+      "engine_latency_ms": {
+        "min": 1129.72,
+        "mean": 1133.69,
+        "p50": 1133.62,
+        "p95": 1137.73,
+        "max": 1137.73
+      },
+      "requests_per_sec": 0.88,
+      "input_tokens_per_sec": 238.1
+    }
+  ]
+}

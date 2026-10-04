@@ -28,12 +28,15 @@ func DetectHardware(ctx context.Context) Hardware {
 // GPUMemoryMiB returns the NVIDIA memory in use, and whether it is known.
 func GPUMemoryMiB(ctx context.Context) (int, bool) { return rt.VRAMUsedMiB(ctx) }
 
-// GPUUsed judges whether the model ran on a GPU. Never with --device cpu. On a
-// detected NVIDIA GPU it did when loading added at least a quarter of the model
-// size in GPU memory; a silent CPU fallback adds almost none. A GPU the user
-// named (no driver or memory known) is taken at their word.
+// GPUUsed judges whether the model ran on a GPU. Never with --device cpu. For
+// an explicit GPU selector, memory evidence is enough when it is available;
+// auto is conservative because total nvidia-smi memory also includes unrelated
+// processes and cannot prove which backend the engine used.
 func GPUUsed(device string, h Hardware, gpuMiB int, modelBytes int64) bool {
 	if device == "cpu" || len(h.GPUs) == 0 {
+		return false
+	}
+	if device == "auto" {
 		return false
 	}
 	for _, g := range h.GPUs {

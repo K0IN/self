@@ -22,7 +22,7 @@ func sampleReport() Report {
 	return Report{
 		Schema:    SchemaVersion,
 		CreatedAt: time.Date(2026, 9, 30, 15, 30, 12, 0, time.UTC),
-		Benchmark: Info{Version: Version, Iterations: 20, Warmup: 2, SelfCommit: "14ba251ca378"},
+		Benchmark: Info{Version: Version, Modality: "decision", Iterations: 20, Warmup: 2, SelfCommit: "14ba251ca378"},
 		Model: Model{
 			ID: "kev:0.5b", Quant: "q4", Adapter: "ggmlc-laya",
 			Files:    []File{{Name: "kev_0.5b_ud_q4_k_m.gguf", Role: "model", Size: 570955168, SHA256: strings.Repeat("ab", 32)}},
@@ -37,6 +37,7 @@ func sampleReport() Report {
 		Checks:      Checks{ProbesPassed: 5, ProbesTotal: 5},
 		Results: []Result{{
 			Scenario: ShortChoice, Requests: 20, InputTokens: 45,
+			Throughput: 11538.5, ThroughputUnit: "input_tokens_per_sec",
 			Latency:        Stats{Min: 3.1, Mean: 3.9, P50: 3.8, P95: 4.6, Max: 5},
 			Engine:         &Stats{Min: 3, Mean: 3.8, P50: 3.7, P95: 4.5, Max: 4.9},
 			RequestsPerSec: 256.4, InputTokensPerSec: 11538.5,
@@ -241,6 +242,7 @@ func TestValidateRejects(t *testing.T) {
 		"wrong schema":              func(r *Report) { r.Schema = 99 },
 		"no time":                   func(r *Report) { r.CreatedAt = time.Time{} },
 		"future benchmark version":  func(r *Report) { r.Benchmark.Version = Version + 1 },
+		"missing modality":          func(r *Report) { r.Benchmark.Modality = "" },
 		"zero iterations":           func(r *Report) { r.Benchmark.Iterations = 0 },
 		"no model":                  func(r *Report) { r.Model.ID = "" },
 		"no files":                  func(r *Report) { r.Model.Files = nil },
@@ -410,8 +412,9 @@ func TestGPUUsed(t *testing.T) {
 		mib    int
 		want   bool
 	}{
-		{"model in GPU memory", "auto", nvidia, 4300, true},
-		{"quarter of the weights is enough", "auto", nvidia, 1024, true},
+		{"auto remains conservative", "auto", nvidia, 4300, false},
+		{"explicit gpu in memory", "cuda", nvidia, 4300, true},
+		{"explicit gpu quarter of weights", "cuda", nvidia, 1024, true},
 		{"silent CPU fallback", "auto", nvidia, 14, false},
 		{"explicit cpu", "cpu", nvidia, 4300, false},
 		{"no gpu at all", "auto", Hardware{}, 0, false},

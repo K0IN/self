@@ -1,0 +1,79 @@
+{
+  "schema": 2,
+  "created_at": "2026-10-04T19:14:13Z",
+  "benchmark": {
+    "version": 1,
+    "modality": "audio",
+    "iterations": 1,
+    "warmup": 0,
+    "self_commit": "9556152cba31",
+    "self_modified": true
+  },
+  "model": {
+    "id": "pocket-tts-en:100m",
+    "quant": "bf16",
+    "adapter": "ggmlc-audio",
+    "files": [
+      {
+        "name": "pocket-tts-en.gguf",
+        "role": "model",
+        "size": 159390816,
+        "sha256": "9cca37ab8f3da366a1864919214fbd545f45609d8f1167d1fb302cebea515d63"
+      },
+      {
+        "name": "mmproj-pocket-tts-en.gguf",
+        "role": "mmproj",
+        "size": 59858080,
+        "sha256": "ccb1b6a55a7df0d4f96adff04ae3b9cd99c070edc98f6c84af5adb6d46a64cfc"
+      },
+      {
+        "name": "alba-mackenna/casual.wav",
+        "role": "voice",
+        "size": 958542,
+        "sha256": "46264e83cb99115c3d210260e029117566d9c64f20266d10daa78107759ede3e"
+      }
+    ]
+  },
+  "hardware": {
+    "os": "linux/amd64",
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "cpu_threads": 16,
+    "ram_gib": 31.3,
+    "gpus": [
+      {
+        "name": "NVIDIA GeForce RTX 5090",
+        "vram_mib": 32607,
+        "driver": "615.71.09",
+        "compute_capability": "12.0"
+      }
+    ]
+  },
+  "device": {
+    "requested": "auto",
+    "engine": "/workspaces/universal-ai-server/bin/libexec/ai-server/ggmlc-audio",
+    "gpu_used": false
+  },
+  "load_seconds": 0.95,
+  "checks": {
+    "probes_passed": 0,
+    "probes_total": 0
+  },
+  "results": [
+    {
+      "scenario": "speech",
+      "requests": 1,
+      "input_tokens": 0,
+      "throughput": 3.6,
+      "throughput_unit": "audio_seconds_per_sec",
+      "latency_ms": {
+        "min": 859.72,
+        "mean": 859.72,
+        "p50": 859.72,
+        "p95": 859.72,
+        "max": 859.72
+      },
+      "requests_per_sec": 1.16,
+      "input_tokens_per_sec": 0
+    }
+  ]
+}

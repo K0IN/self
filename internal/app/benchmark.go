@@ -37,9 +37,6 @@ func Benchmark(ctx context.Context, cfg config.Serve, opt BenchmarkOptions, out 
 	if err != nil {
 		return "", err
 	}
-	if t.res.Model.Type != registry.TypeDecision {
-		return "", errs.New(errs.UnsupportedModel, "benchmark supports decision models only")
-	}
 	res, set := t.res, t.settings
 	engine, err := t.locate(cfg)
 	if err != nil {
@@ -63,6 +60,9 @@ func Benchmark(ctx context.Context, cfg config.Serve, opt BenchmarkOptions, out 
 		hw.GPUs = []benchmark.GPU{{Name: opt.GPU}}
 	}
 	fmt.Fprintf(out, "Hardware %s, %d threads, %.1f GiB RAM, GPU %s\n", hw.CPU, hw.CPUThreads, hw.RAMGiB, gpuNames(hw))
+	if res.Model.Type != registry.TypeDecision {
+		return benchmarkOther(ctx, cfg, t, files, reported, engine, hw, opt, out)
+	}
 
 	baseMiB, haveGPUMemory := benchmark.GPUMemoryMiB(ctx)
 	started := time.Now()
@@ -133,6 +133,9 @@ func Benchmark(ctx context.Context, cfg config.Serve, opt BenchmarkOptions, out 
 		gpuMiB = max(gpuMiB, used-baseMiB)
 	}
 	gpuUsed := benchmark.GPUUsed(cfg.Device, hw, gpuMiB, res.Variant.Size())
+	if strings.HasPrefix(cfg.Device, "cuda") && !gpuUsed {
+		return "", errs.New(errs.RuntimeStartFailed, "CUDA was requested but the benchmark used the CPU; check the CUDA runtime and engine logs")
+	}
 	if !gpuUsed && cfg.Device != "cpu" && len(hw.GPUs) > 0 {
 		fmt.Fprintf(out, "\nWarning  the model added only %d MiB of GPU memory (%d MiB of weights): it ran on the CPU.\n         The report is filed as a CPU run. Fix the GPU runtime, or use --device cpu.\n", gpuMiB, res.Variant.Size()>>20)
 	}
@@ -141,13 +144,13 @@ func Benchmark(ctx context.Context, cfg config.Serve, opt BenchmarkOptions, out 
 	report := benchmark.Report{
 		Schema:    benchmark.SchemaVersion,
 		CreatedAt: time.Now().UTC().Truncate(time.Second),
-		Benchmark: benchmark.Info{Version: benchmark.Version, Iterations: opt.Iterations, Warmup: opt.Warmup, SelfCommit: commit, SelfModified: modified},
+		Benchmark: benchmark.Info{Version: benchmark.Version, Modality: string(res.Model.Type), Iterations: opt.Iterations, Warmup: opt.Warmup, SelfCommit: commit, SelfModified: modified},
 		Model: benchmark.Model{
 			ID: res.ID(), Quant: res.Variant.Quant, Adapter: res.Variant.Adapter,
 			Files: reported, Settings: map[string]any(set),
 		},
 		Hardware:    hw,
-		Device:      benchmark.Device{Requested: cfg.Device, Engine: info.Device, GPUMemoryMiB: gpuMiB, GPUUsed: gpuUsed},
+		Device:      benchmark.Device{Requested: cfg.Device, Engine: engine.Path, GPUMemoryMiB: gpuMiB, GPUUsed: gpuUsed},
 		LoadSeconds: math.Round(load.Seconds()*100) / 100,
 		Checks:      benchmark.Checks{ProbesPassed: passed, ProbesTotal: total},
 		Results:     results,

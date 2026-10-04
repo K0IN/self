@@ -28,6 +28,7 @@ type Report struct {
 // Info says how the numbers were produced.
 type Info struct {
 	Version      int    `json:"version"` // Version of the scenarios
+	Modality     string `json:"modality"`
 	Iterations   int    `json:"iterations"`
 	Warmup       int    `json:"warmup"`
 	SelfCommit   string `json:"self_commit,omitempty"`
@@ -91,6 +92,8 @@ type Result struct {
 	Requests           int     `json:"requests"`
 	InputTokens        int     `json:"input_tokens"` // per request, as reported by the engine
 	OutputTokens       int     `json:"output_tokens,omitempty"`
+	Throughput         float64 `json:"throughput,omitempty"`
+	ThroughputUnit     string  `json:"throughput_unit,omitempty"`
 	Latency            Stats   `json:"latency_ms"`
 	Engine             *Stats  `json:"engine_latency_ms,omitempty"`
 	RequestsPerSec     float64 `json:"requests_per_sec"`
@@ -203,6 +206,11 @@ func Validate(r Report) error {
 	if r.Benchmark.Version < 1 || r.Benchmark.Version > Version {
 		bad("benchmark.version is %d, this build knows 1..%d", r.Benchmark.Version, Version)
 	}
+	switch r.Benchmark.Modality {
+	case "audio", "decision", "embedding", "image", "text":
+	default:
+		bad("benchmark.modality %q must be audio, decision, embedding, image or text", r.Benchmark.Modality)
+	}
 	if r.Benchmark.Iterations < 1 {
 		bad("benchmark.iterations must be at least 1")
 	}
@@ -229,7 +237,7 @@ func Validate(r Report) error {
 	if r.LoadSeconds <= 0 {
 		bad("load_seconds must be positive")
 	}
-	if r.Checks.ProbesTotal < 1 || r.Checks.ProbesPassed < 0 || r.Checks.ProbesPassed > r.Checks.ProbesTotal {
+	if r.Checks.ProbesTotal < 0 || r.Checks.ProbesPassed < 0 || r.Checks.ProbesPassed > r.Checks.ProbesTotal {
 		bad("checks: %d of %d probes", r.Checks.ProbesPassed, r.Checks.ProbesTotal)
 	}
 	if len(r.Results) == 0 {

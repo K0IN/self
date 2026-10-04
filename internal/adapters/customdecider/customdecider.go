@@ -44,7 +44,7 @@ var Spec = selfipc.Spec{
 		if cfg.Files.MMProj != "" {
 			args = append(args, "--mmproj", cfg.Files.MMProj)
 		}
-		return append(args, Settings.Args(cfg.Settings)...)
+		return append(args, Settings.Args(gpuDefaults(cfg.Device, cfg.Settings))...)
 	},
 	Check: func(cfg decision.RuntimeConfig) error {
 		md, err := ggufmeta.ReadFile(cfg.Files.Model)
@@ -53,6 +53,20 @@ var Spec = selfipc.Spec{
 		}
 		return CheckModel(md, cfg.Files.MMProj)
 	},
+}
+
+func gpuDefaults(device string, source settings.Values) settings.Values {
+	if device == "cpu" {
+		return source
+	}
+	values := settings.Values{}
+	for key, value := range source {
+		values[key] = value
+	}
+	if _, ok := values["gpu_layers"]; !ok {
+		values["gpu_layers"] = int64(-1)
+	}
+	return values
 }
 
 // CheckModel verifies that a GGUF is a llama.cpp checkpoint the engine can

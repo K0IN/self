@@ -64,7 +64,17 @@ func Args(cfg dom.RuntimeConfig, port int) []string {
 	if cfg.Files.MMProj != "" {
 		args = append(args, "--mmproj", cfg.Files.MMProj)
 	}
-	return append(args, Settings.Args(cfg.Settings)...)
+	values := cfg.Settings
+	if cfg.Device != "cpu" {
+		values = make(settings.Values, len(cfg.Settings)+1)
+		for key, value := range cfg.Settings {
+			values[key] = value
+		}
+		if _, set := values["gpu_layers"]; !set {
+			values["gpu_layers"] = int64(-1)
+		}
+	}
+	return append(args, Settings.Args(values)...)
 }
 
 type Adapter struct {

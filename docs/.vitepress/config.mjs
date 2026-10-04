@@ -16,6 +16,7 @@ export default defineConfig({
             { text: 'Docker and model paths', link: '/docker' },
             { text: 'Local settings', link: '/settings' },
             { text: 'CLI and completions', link: '/cli' },
+            { text: 'Benchmarks', link: '/benchmarks' },
             {
                 text: 'API reference',
                 link: '/api/',

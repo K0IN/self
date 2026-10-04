@@ -51,11 +51,16 @@ fetch variant="auto" version="v0.9.6":
         echo "Laya CUDA builds require CUDA 12 runtime libraries; using Vulkan" >&2
         selected=vulkan
       fi
-      if [[ "$selected" == vulkan ]] && ! has_library libvulkan.so.1; then
-        echo "automatic runtime selection could not find Vulkan or CUDA 12 runtime libraries" >&2
+        if [[ "$selected" == vulkan ]] && ! has_library libvulkan.so.1; then
+          echo "automatic runtime selection could not find Vulkan or CUDA 12 runtime libraries" >&2
         echo "rebuild the devcontainer, install libvulkan1, or set CUDA_LIB_DIRS and rerun 'just serve'" >&2
         exit 1
       fi
+        if [[ "$selected" == vulkan ]] && command -v vulkaninfo >/dev/null 2>&1 && ! vulkaninfo --summary >/dev/null 2>&1; then
+          echo "Vulkan is installed but no Vulkan device is visible to this container" >&2
+          echo "reopen the devcontainer with NVIDIA graphics capabilities, then rerun 'just runtime'" >&2
+          exit 1
+        fi
     fi
 
     case "$selected" in

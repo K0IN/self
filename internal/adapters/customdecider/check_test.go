@@ -35,7 +35,7 @@ func TestArgs(t *testing.T) {
 		Device: "cuda:0",
 		Files:  decision.ModelFiles{Model: "/m/model.gguf", MMProj: "/m/mmproj.gguf"},
 	}), " ")
-	want := "--model /m/model.gguf --device cuda:0 --mmproj /m/mmproj.gguf"
+	want := "--model /m/model.gguf --device cuda:0 --mmproj /m/mmproj.gguf --gpu-layers -1"
 	if got != want {
 		t.Fatalf("args = %q", got)
 	}

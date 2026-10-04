@@ -12,4 +12,4 @@ package benchmark
 const Version = 1
 
 // SchemaVersion is the layout version of a Report.
-const SchemaVersion = 1
+const SchemaVersion = 2

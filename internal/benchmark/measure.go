@@ -15,6 +15,89 @@ type Decider interface {
 	Decide(ctx context.Context, req decision.Request) (decision.Response, error)
 }
 
+// OperationResult contains the measurable work completed by one request.
+// Throughput is expressed in Unit, for example input_tokens_per_sec,
+// audio_seconds_per_sec, or pixels_per_sec.
+type OperationResult struct {
+	InputTokens  int
+	OutputTokens int
+	Work         float64
+	Unit         string
+	EngineMS     float64
+}
+
+// Operation is one modality-specific benchmark request.
+type Operation func(context.Context) (OperationResult, error)
+
+// WorkScenario describes repeatable requests for non-decision modalities.
+type WorkScenario struct {
+	Name     string
+	Requests int
+}
+
+// RunOperations measures typed adapter operations using the same warmup and
+// caller-visible latency rules as decision benchmarks.
+func RunOperations(ctx context.Context, op Operation, scenarios []WorkScenario, warmup int, progress func(Result)) ([]Result, error) {
+	results := make([]Result, 0, len(scenarios))
+	for _, scenario := range scenarios {
+		result, err := measureOperation(ctx, op, scenario, warmup)
+		if err != nil {
+			return results, fmt.Errorf("scenario %s: %w", scenario.Name, err)
+		}
+		if progress != nil {
+			progress(result)
+		}
+		results = append(results, result)
+	}
+	return results, nil
+}
+
+func measureOperation(ctx context.Context, op Operation, scenario WorkScenario, warmup int) (Result, error) {
+	for i := 0; i < warmup; i++ {
+		if _, err := op(ctx); err != nil {
+			return Result{}, fmt.Errorf("warmup: %w", err)
+		}
+	}
+	var walls, engine []float64
+	var total time.Duration
+	input, output := 0, 0
+	var work float64
+	unit := ""
+	for i := 0; i < scenario.Requests; i++ {
+		start := time.Now()
+		measurement, err := op(ctx)
+		wall := time.Since(start)
+		if err != nil {
+			return Result{}, fmt.Errorf("request %d: %w", i+1, err)
+		}
+		total += wall
+		walls = append(walls, float64(wall)/float64(time.Millisecond))
+		input += measurement.InputTokens
+		output += measurement.OutputTokens
+		work += measurement.Work
+		unit = measurement.Unit
+		if measurement.EngineMS > 0 {
+			engine = append(engine, measurement.EngineMS)
+		}
+	}
+	result := Result{Scenario: scenario.Name, Requests: scenario.Requests, InputTokens: input / scenario.Requests, OutputTokens: output / scenario.Requests, Latency: summarize(walls), ThroughputUnit: unit}
+	if total.Seconds() > 0 {
+		result.Throughput = round(work/total.Seconds(), 1)
+	}
+	if len(engine) > 0 {
+		stats := summarize(engine)
+		result.Engine = &stats
+	}
+	result.RequestsPerSec = round(float64(scenario.Requests)/total.Seconds(), 2)
+	if input > 0 {
+		result.InputTokensPerSec = round(float64(input)/total.Seconds(), 1)
+	}
+	if output > 0 {
+		result.OutputTokensPerSec = round(float64(output)/total.Seconds(), 1)
+	}
+	return result, nil
+}
+
 // Run measures every scenario in order: warmup requests that are not
 // counted, then the timed ones. progress, if set, is called after each
 // scenario. Any failing request stops the run, because timings of a model

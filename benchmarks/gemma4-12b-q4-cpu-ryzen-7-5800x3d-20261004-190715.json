@@ -1,0 +1,102 @@
+{
+  "schema": 2,
+  "created_at": "2026-10-04T19:07:15Z",
+  "benchmark": {
+    "version": 1,
+    "modality": "text",
+    "iterations": 1,
+    "warmup": 0,
+    "self_commit": "9556152cba31",
+    "self_modified": true
+  },
+  "model": {
+    "id": "gemma4:12b",
+    "quant": "q4",
+    "adapter": "llama-server",
+    "files": [
+      {
+        "name": "gemma-4-12b-it-qat-q4_0.gguf",
+        "role": "model",
+        "size": 6975879296,
+        "sha256": "93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b"
+      },
+      {
+        "name": "mmproj-gemma-4-12b-it-qat-q4_0.gguf",
+        "role": "mmproj",
+        "size": 175115616,
+        "sha256": "cb018338a7538a9814d994bfe54644c71eb7ed54e31eae2f721e45fd3c260da7"
+      }
+    ],
+    "settings": {
+      "context_size": 16384,
+      "min_p": 0,
+      "temperature": 1,
+      "thinking": "off",
+      "top_k": 64,
+      "top_p": 0.95
+    }
+  },
+  "hardware": {
+    "os": "linux/amd64",
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "cpu_threads": 16,
+    "ram_gib": 31.3,
+    "gpus": [
+      {
+        "name": "NVIDIA GeForce RTX 5090",
+        "vram_mib": 32607,
+        "driver": "615.71.09",
+        "compute_capability": "12.0"
+      }
+    ]
+  },
+  "device": {
+    "requested": "auto",
+    "engine": "/workspaces/universal-ai-server/bin/libexec/ai-server/llama-server",
+    "gpu_memory_mib": 117,
+    "gpu_used": false
+  },
+  "load_seconds": 44.79,
+  "checks": {
+    "probes_passed": 0,
+    "probes_total": 0
+  },
+  "results": [
+    {
+      "scenario": "short-chat",
+      "requests": 1,
+      "input_tokens": 25,
+      "output_tokens": 36,
+      "throughput": 5.5,
+      "throughput_unit": "output_tokens_per_sec",
+      "latency_ms": {
+        "min": 6542.07,
+        "mean": 6542.07,
+        "p50": 6542.07,
+        "p95": 6542.07,
+        "max": 6542.07
+      },
+      "requests_per_sec": 0.15,
+      "input_tokens_per_sec": 3.8,
+      "output_tokens_per_sec": 5.5
+    },
+    {
+      "scenario": "long-chat",
+      "requests": 3,
+      "input_tokens": 23,
+      "output_tokens": 53,
+      "throughput": 6,
+      "throughput_unit": "output_tokens_per_sec",
+      "latency_ms": {
+        "min": 5104.41,
+        "mean": 8868.73,
+        "p50": 10458.49,
+        "p95": 11043.3,
+        "max": 11043.3
+      },
+      "requests_per_sec": 0.11,
+      "input_tokens_per_sec": 2.7,
+      "output_tokens_per_sec": 6
+    }
+  ]
+}

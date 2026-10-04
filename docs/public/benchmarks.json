@@ -1,0 +1,354 @@
+[
+  {
+    "file": "clef-flash-9b-q4-cpu-ryzen-7-5800x3d-20261004-190229.json",
+    "url": "/benchmarks/clef-flash-9b-q4-cpu-ryzen-7-5800x3d-20261004-190229.json",
+    "model": "clef-flash:9b",
+    "quant": "q4",
+    "adapter": "clef",
+    "engine": "cpu",
+    "modality": "decision",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:02:29Z"
+  },
+  {
+    "file": "decider-0.8b-q4-cpu-ryzen-7-5800x3d-20261004-190355.json",
+    "url": "/benchmarks/decider-0.8b-q4-cpu-ryzen-7-5800x3d-20261004-190355.json",
+    "model": "decider:0.8b",
+    "quant": "q4",
+    "adapter": "ggmlc-custom-decider",
+    "engine": "auto",
+    "modality": "decision",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:03:55Z"
+  },
+  {
+    "file": "decider-4b-q4-cpu-ryzen-7-5800x3d-20261004-190603.json",
+    "url": "/benchmarks/decider-4b-q4-cpu-ryzen-7-5800x3d-20261004-190603.json",
+    "model": "decider:4b",
+    "quant": "q4",
+    "adapter": "ggmlc-custom-decider",
+    "engine": "auto",
+    "modality": "decision",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:06:03Z"
+  },
+  {
+    "file": "decider-vision-2b-q4-cpu-ryzen-7-5800x3d-20261004-190333.json",
+    "url": "/benchmarks/decider-vision-2b-q4-cpu-ryzen-7-5800x3d-20261004-190333.json",
+    "model": "decider-vision:2b",
+    "quant": "q4",
+    "adapter": "ggmlc-custom-decider",
+    "engine": "auto",
+    "modality": "decision",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:03:33Z"
+  },
+  {
+    "file": "flux2-klein-9b-q4-cpu-ryzen-7-5800x3d-20261004-190624.json",
+    "url": "/benchmarks/flux2-klein-9b-q4-cpu-ryzen-7-5800x3d-20261004-190624.json",
+    "model": "flux2-klein:9b",
+    "quant": "q4",
+    "adapter": "sd-server",
+    "engine": "/workspaces/universal-ai-server/bin/libexec/ai-server/sd-server",
+    "modality": "image",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:06:24Z"
+  },
+  {
+    "file": "gemma4-12b-q4-cpu-ryzen-7-5800x3d-20261004-190715.json",
+    "url": "/benchmarks/gemma4-12b-q4-cpu-ryzen-7-5800x3d-20261004-190715.json",
+    "model": "gemma4:12b",
+    "quant": "q4",
+    "adapter": "llama-server",
+    "engine": "/workspaces/universal-ai-server/bin/libexec/ai-server/llama-server",
+    "modality": "text",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:07:15Z"
+  },
+  {
+    "file": "kev-0.5b-q4-cpu-ryzen-7-5800x3d-20261004-170403.json",
+    "url": "/benchmarks/kev-0.5b-q4-cpu-ryzen-7-5800x3d-20261004-170403.json",
+    "model": "kev:0.5b",
+    "quant": "q4",
+    "adapter": "ggmlc-laya",
+    "engine": "auto",
+    "modality": "decision",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T17:04:03Z"
+  },
+  {
+    "file": "kev-0.5b-q4-cpu-ryzen-7-5800x3d-20261004-190731.json",
+    "url": "/benchmarks/kev-0.5b-q4-cpu-ryzen-7-5800x3d-20261004-190731.json",
+    "model": "kev:0.5b",
+    "quant": "q4",
+    "adapter": "ggmlc-laya",
+    "engine": "auto",
+    "modality": "decision",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:07:31Z"
+  },
+  {
+    "file": "kev-0.8b-q4-cpu-ryzen-7-5800x3d-20261004-190824.json",
+    "url": "/benchmarks/kev-0.8b-q4-cpu-ryzen-7-5800x3d-20261004-190824.json",
+    "model": "kev:0.8b",
+    "quant": "q4",
+    "adapter": "ggmlc-laya",
+    "engine": "auto",
+    "modality": "decision",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:08:24Z"
+  },
+  {
+    "file": "kev-4b-q4-cpu-ryzen-7-5800x3d-20261004-191330.json",
+    "url": "/benchmarks/kev-4b-q4-cpu-ryzen-7-5800x3d-20261004-191330.json",
+    "model": "kev:4b",
+    "quant": "q4",
+    "adapter": "ggmlc-laya",
+    "engine": "auto",
+    "modality": "decision",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:13:30Z"
+  },
+  {
+    "file": "laya-english-421m-q4-cpu-ryzen-7-5800x3d-20261004-170503.json",
+    "url": "/benchmarks/laya-english-421m-q4-cpu-ryzen-7-5800x3d-20261004-170503.json",
+    "model": "laya-english:421m",
+    "quant": "q4",
+    "adapter": "ggmlc-laya",
+    "engine": "auto",
+    "modality": "decision",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T17:05:03Z"
+  },
+  {
+    "file": "laya-english-421m-q4-cpu-ryzen-7-5800x3d-20261004-191338.json",
+    "url": "/benchmarks/laya-english-421m-q4-cpu-ryzen-7-5800x3d-20261004-191338.json",
+    "model": "laya-english:421m",
+    "quant": "q4",
+    "adapter": "ggmlc-laya",
+    "engine": "auto",
+    "modality": "decision",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:13:38Z"
+  },
+  {
+    "file": "laya-multilingual-322m-q8-cpu-ryzen-7-5800x3d-20261004-191342.json",
+    "url": "/benchmarks/laya-multilingual-322m-q8-cpu-ryzen-7-5800x3d-20261004-191342.json",
+    "model": "laya-multilingual:322m",
+    "quant": "q8",
+    "adapter": "ggmlc-laya",
+    "engine": "auto",
+    "modality": "decision",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:13:42Z"
+  },
+  {
+    "file": "laya-typed-decisions-421m-q4-cpu-ryzen-7-5800x3d-20261004-191352.json",
+    "url": "/benchmarks/laya-typed-decisions-421m-q4-cpu-ryzen-7-5800x3d-20261004-191352.json",
+    "model": "laya-typed-decisions:421m",
+    "quant": "q4",
+    "adapter": "ggmlc-laya",
+    "engine": "auto",
+    "modality": "decision",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:13:52Z"
+  },
+  {
+    "file": "nomic-embed-text-v1.5-137m-q4-cpu-ryzen-7-5800x3d-20261004-175309.json",
+    "url": "/benchmarks/nomic-embed-text-v1.5-137m-q4-cpu-ryzen-7-5800x3d-20261004-175309.json",
+    "model": "nomic-embed-text-v1.5:137m",
+    "quant": "q4",
+    "adapter": "llama-server",
+    "engine": "/workspaces/universal-ai-server/bin/libexec/ai-server/llama-server",
+    "modality": "embedding",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T17:53:09Z"
+  },
+  {
+    "file": "nomic-embed-text-v1.5-137m-q4-cpu-ryzen-7-5800x3d-20261004-191357.json",
+    "url": "/benchmarks/nomic-embed-text-v1.5-137m-q4-cpu-ryzen-7-5800x3d-20261004-191357.json",
+    "model": "nomic-embed-text-v1.5:137m",
+    "quant": "q4",
+    "adapter": "llama-server",
+    "engine": "/workspaces/universal-ai-server/bin/libexec/ai-server/llama-server",
+    "modality": "embedding",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:13:57Z"
+  },
+  {
+    "file": "nomic-embed-text-v2-moe-475m-q4-cpu-ryzen-7-5800x3d-20261004-191412.json",
+    "url": "/benchmarks/nomic-embed-text-v2-moe-475m-q4-cpu-ryzen-7-5800x3d-20261004-191412.json",
+    "model": "nomic-embed-text-v2-moe:475m",
+    "quant": "q4",
+    "adapter": "llama-server",
+    "engine": "/workspaces/universal-ai-server/bin/libexec/ai-server/llama-server",
+    "modality": "embedding",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:14:12Z"
+  },
+  {
+    "file": "pocket-tts-en-100m-bf16-cpu-ryzen-7-5800x3d-20261004-191413.json",
+    "url": "/benchmarks/pocket-tts-en-100m-bf16-cpu-ryzen-7-5800x3d-20261004-191413.json",
+    "model": "pocket-tts-en:100m",
+    "quant": "bf16",
+    "adapter": "ggmlc-audio",
+    "engine": "/workspaces/universal-ai-server/bin/libexec/ai-server/ggmlc-audio",
+    "modality": "audio",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:14:13Z"
+  },
+  {
+    "file": "pocket-tts-fr-100m-bf16-cpu-ryzen-7-5800x3d-20261004-191416.json",
+    "url": "/benchmarks/pocket-tts-fr-100m-bf16-cpu-ryzen-7-5800x3d-20261004-191416.json",
+    "model": "pocket-tts-fr:100m",
+    "quant": "bf16",
+    "adapter": "ggmlc-audio",
+    "engine": "/workspaces/universal-ai-server/bin/libexec/ai-server/ggmlc-audio",
+    "modality": "audio",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:14:16Z"
+  },
+  {
+    "file": "qwen-image-2.1-7b-int8-cpu-ryzen-7-5800x3d-20261004-191557.json",
+    "url": "/benchmarks/qwen-image-2.1-7b-int8-cpu-ryzen-7-5800x3d-20261004-191557.json",
+    "model": "qwen-image-2.1:7b",
+    "quant": "int8",
+    "adapter": "sd-server",
+    "engine": "/workspaces/universal-ai-server/bin/libexec/ai-server/sd-server",
+    "modality": "image",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:15:57Z"
+  },
+  {
+    "file": "qwen3-tts-1.7b-q4-cpu-ryzen-7-5800x3d-20261004-191517.json",
+    "url": "/benchmarks/qwen3-tts-1.7b-q4-cpu-ryzen-7-5800x3d-20261004-191517.json",
+    "model": "qwen3-tts:1.7b",
+    "quant": "q4",
+    "adapter": "ggmlc-audio",
+    "engine": "/workspaces/universal-ai-server/bin/libexec/ai-server/ggmlc-audio",
+    "modality": "audio",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:15:17Z"
+  },
+  {
+    "file": "qwen3.5-9b-q4-cpu-ryzen-7-5800x3d-20261004-191510.json",
+    "url": "/benchmarks/qwen3.5-9b-q4-cpu-ryzen-7-5800x3d-20261004-191510.json",
+    "model": "qwen3.5:9b",
+    "quant": "q4",
+    "adapter": "llama-server",
+    "engine": "/workspaces/universal-ai-server/bin/libexec/ai-server/llama-server",
+    "modality": "text",
+    "gpu": null,
+    "availableGpus": [
+      "NVIDIA GeForce RTX 5090"
+    ],
+    "gpuUsed": false,
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "createdAt": "2026-10-04T19:15:10Z"
+  }
+]

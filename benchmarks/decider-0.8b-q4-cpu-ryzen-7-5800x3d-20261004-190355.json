@@ -1,0 +1,139 @@
+{
+  "schema": 2,
+  "created_at": "2026-10-04T19:03:55Z",
+  "benchmark": {
+    "version": 1,
+    "modality": "decision",
+    "iterations": 1,
+    "warmup": 0,
+    "self_commit": "9556152cba31",
+    "self_modified": true
+  },
+  "model": {
+    "id": "decider:0.8b",
+    "quant": "q4",
+    "adapter": "ggmlc-custom-decider",
+    "files": [
+      {
+        "name": "decider-0.8b.Q4_K_M.gguf",
+        "role": "model",
+        "size": 529297856,
+        "sha256": "ce48f94d8f176e6433dc09ee34fd4a39ac16b29043beaeb7b81d98373b27cd67"
+      }
+    ],
+    "settings": {
+      "context_size": 8192,
+      "temperature": 1
+    }
+  },
+  "hardware": {
+    "os": "linux/amd64",
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "cpu_threads": 16,
+    "ram_gib": 31.3,
+    "gpus": [
+      {
+        "name": "NVIDIA GeForce RTX 5090",
+        "vram_mib": 32607,
+        "driver": "615.71.09",
+        "compute_capability": "12.0"
+      }
+    ]
+  },
+  "device": {
+    "requested": "auto",
+    "engine": "auto",
+    "gpu_used": false
+  },
+  "load_seconds": 0.5,
+  "checks": {
+    "probes_passed": 5,
+    "probes_total": 5
+  },
+  "results": [
+    {
+      "scenario": "short-choice",
+      "requests": 1,
+      "input_tokens": 58,
+      "latency_ms": {
+        "min": 199.09,
+        "mean": 199.09,
+        "p50": 199.09,
+        "p95": 199.09,
+        "max": 199.09
+      },
+      "engine_latency_ms": {
+        "min": 198.97,
+        "mean": 198.97,
+        "p50": 198.97,
+        "p95": 198.97,
+        "max": 198.97
+      },
+      "requests_per_sec": 5.02,
+      "input_tokens_per_sec": 291.3
+    },
+    {
+      "scenario": "multi-question",
+      "requests": 1,
+      "input_tokens": 212,
+      "latency_ms": {
+        "min": 702.45,
+        "mean": 702.45,
+        "p50": 702.45,
+        "p95": 702.45,
+        "max": 702.45
+      },
+      "engine_latency_ms": {
+        "min": 702.27,
+        "mean": 702.27,
+        "p50": 702.27,
+        "p95": 702.27,
+        "max": 702.27
+      },
+      "requests_per_sec": 1.42,
+      "input_tokens_per_sec": 301.8
+    },
+    {
+      "scenario": "max-options",
+      "requests": 1,
+      "input_tokens": 134,
+      "latency_ms": {
+        "min": 466.69,
+        "mean": 466.69,
+        "p50": 466.69,
+        "p95": 466.69,
+        "max": 466.69
+      },
+      "engine_latency_ms": {
+        "min": 466.52,
+        "mean": 466.52,
+        "p50": 466.52,
+        "p95": 466.52,
+        "max": 466.52
+      },
+      "requests_per_sec": 2.14,
+      "input_tokens_per_sec": 287.1
+    },
+    {
+      "scenario": "long-context",
+      "requests": 3,
+      "input_tokens": 1684,
+      "latency_ms": {
+        "min": 5760.74,
+        "mean": 5779.99,
+        "p50": 5787.23,
+        "p95": 5792,
+        "max": 5792
+      },
+      "engine_latency_ms": {
+        "min": 5760.52,
+        "mean": 5779.77,
+        "p50": 5787.02,
+        "p95": 5791.76,
+        "max": 5791.76
+      },
+      "requests_per_sec": 0.17,
+      "input_tokens_per_sec": 291.4
+    }
+  ]
+}

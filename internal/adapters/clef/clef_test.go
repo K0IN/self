@@ -14,7 +14,7 @@ func TestArgs(t *testing.T) {
 	cfg := decision.RuntimeConfig{
 		Device:   "cuda:0",
 		Files:    decision.ModelFiles{Model: "/m/model.gguf", MMProj: "/m/mmproj.gguf", Head: "/m/joint_head.safetensors"},
-		Settings: settings.Values{"context_size": int64(8192), "gpu_layers": int64(-1)},
+		Settings: settings.Values{"context_size": int64(8192)},
 	}
 	got := strings.Join(Spec.Args(cfg), " ")
 	want := "--model /m/model.gguf --head /m/joint_head.safetensors --device cuda:0 --mmproj /m/mmproj.gguf --ctx 8192 --gpu-layers -1"

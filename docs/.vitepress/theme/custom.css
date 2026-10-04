@@ -225,6 +225,85 @@
     color: var(--catalog-ink);
 }
 
+.benchmark-table {
+    margin: 1.25rem 0 2rem;
+}
+
+.benchmark-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    justify-content: space-between;
+    color: var(--catalog-muted);
+    font-size: 0.85rem;
+}
+
+.benchmark-heading p {
+    margin: 0;
+}
+
+.benchmark-hardware-note {
+    flex: 1 1 20rem;
+}
+
+.benchmark-heading select {
+    margin-left: 0.45rem;
+    border: 1px solid var(--catalog-line);
+    border-radius: 5px;
+    background: var(--vp-c-bg);
+    color: var(--catalog-ink);
+    padding: 0.35rem 0.5rem;
+}
+
+.benchmark-report {
+    overflow-x: auto;
+    margin: 0.9rem 0;
+    border: 1px solid var(--catalog-line);
+    border-radius: 6px;
+}
+
+.benchmark-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    border-bottom: 1px solid var(--catalog-line);
+    padding: 0.75rem 0.85rem;
+    color: var(--catalog-muted);
+    font-size: 0.78rem;
+}
+
+.benchmark-meta strong {
+    color: var(--catalog-ink);
+    font-size: 0.9rem;
+}
+
+.benchmark-report table {
+    width: 100%;
+    min-width: 620px;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+.benchmark-report th,
+.benchmark-report td {
+    border-bottom: 1px solid var(--catalog-line);
+    padding: 0.55rem 0.85rem;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.benchmark-report th:first-child,
+.benchmark-report td:first-child {
+    text-align: left;
+}
+
+.benchmark-report tr:last-child td {
+    border-bottom: 0;
+}
+
 /* API reference: field docs on the left, examples on the right */
 .api-page .content-container {
     max-width: 1360px;

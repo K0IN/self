@@ -73,7 +73,7 @@ func TestResolveSettingsPrecedence(t *testing.T) {
 		t.Fatalf("cli override: %v", v)
 	}
 	args := customdecider.Spec.Args(decision.RuntimeConfig{Files: decision.ModelFiles{Model: "m.gguf"}, Device: "cuda", Settings: v})
-	want := []string{"--model", "m.gguf", "--device", "cuda", "--ctx", "2048", "--temperature", "1.5", "--flash-attn", "on"}
+	want := []string{"--model", "m.gguf", "--device", "cuda", "--ctx", "2048", "--temperature", "1.5", "--gpu-layers", "-1", "--flash-attn", "on"}
 	if !reflect.DeepEqual(args, want) {
 		t.Fatalf("args = %v", args)
 	}

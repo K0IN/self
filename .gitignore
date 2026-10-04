@@ -12,3 +12,4 @@ docs/.vitepress/cache/
 docs/public/models.yml
 docs/public/registry.json
 docs/registry/
+/docs/public/benchmarks

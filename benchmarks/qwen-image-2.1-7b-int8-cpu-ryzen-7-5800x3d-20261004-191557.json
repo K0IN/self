@@ -1,0 +1,92 @@
+{
+  "schema": 2,
+  "created_at": "2026-10-04T19:15:57Z",
+  "benchmark": {
+    "version": 1,
+    "modality": "image",
+    "iterations": 1,
+    "warmup": 0,
+    "self_commit": "9556152cba31",
+    "self_modified": true
+  },
+  "model": {
+    "id": "qwen-image-2.1:7b",
+    "quant": "int8",
+    "adapter": "sd-server",
+    "files": [
+      {
+        "name": "diffusion_models/qwen_image_2.1_int8_convrot.safetensors",
+        "role": "model",
+        "size": 7256783064,
+        "sha256": "cb74113cb03faecd79611b01fd7fd642f0aa60d6f0b95086abee214d75eaa57d"
+      },
+      {
+        "name": "vae/qwen_image_2.1_vae_bf16.safetensors",
+        "role": "vae",
+        "size": 675509688,
+        "sha256": "bb21f7473051e1ac368515dd3f2e15cd44d7a11748ee8823e1ddca3e4876b7c9"
+      },
+      {
+        "name": "Qwen3VL-8B-Instruct-Q4_K_M.gguf",
+        "role": "text-encoder",
+        "size": 5027784800,
+        "sha256": "67d1659bfe71b89d50b45a4ad1a9e5b997e5bb16ce5da66a6a6167abd569e9e2"
+      },
+      {
+        "name": "mmproj-Qwen3VL-8B-Instruct-F16.gguf",
+        "role": "mmproj",
+        "size": 1159029824,
+        "sha256": "ca524100ebf825c9a870db1c580d03879e0da0ab2541697e2458e64891cf9d38"
+      }
+    ],
+    "settings": {
+      "cfg_scale": 6,
+      "flash_attention": true,
+      "offload_to_cpu": true,
+      "sampling_method": "euler",
+      "steps": 40
+    }
+  },
+  "hardware": {
+    "os": "linux/amd64",
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "cpu_threads": 16,
+    "ram_gib": 31.3,
+    "gpus": [
+      {
+        "name": "NVIDIA GeForce RTX 5090",
+        "vram_mib": 32607,
+        "driver": "615.71.09",
+        "compute_capability": "12.0"
+      }
+    ]
+  },
+  "device": {
+    "requested": "auto",
+    "engine": "/workspaces/universal-ai-server/bin/libexec/ai-server/sd-server",
+    "gpu_used": false
+  },
+  "load_seconds": 22.57,
+  "checks": {
+    "probes_passed": 0,
+    "probes_total": 0
+  },
+  "results": [
+    {
+      "scenario": "generation-256",
+      "requests": 1,
+      "input_tokens": 0,
+      "throughput": 20778.7,
+      "throughput_unit": "pixels_per_sec",
+      "latency_ms": {
+        "min": 3154,
+        "mean": 3154,
+        "p50": 3154,
+        "p95": 3154,
+        "max": 3154
+      },
+      "requests_per_sec": 0.32,
+      "input_tokens_per_sec": 0
+    }
+  ]
+}

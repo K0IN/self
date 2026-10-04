@@ -1,0 +1,166 @@
+{
+  "schema": 2,
+  "created_at": "2026-10-04T19:03:33Z",
+  "benchmark": {
+    "version": 1,
+    "modality": "decision",
+    "iterations": 1,
+    "warmup": 0,
+    "self_commit": "9556152cba31",
+    "self_modified": true
+  },
+  "model": {
+    "id": "decider-vision:2b",
+    "quant": "q4",
+    "adapter": "ggmlc-custom-decider",
+    "files": [
+      {
+        "name": "decider-2b-vision.Q4_K_M.gguf",
+        "role": "model",
+        "size": 1274397056,
+        "sha256": "b3e38aa90856d6b93df0d2b186e941e57fa6fd4b022a3a89fe538ff01ebd9985"
+      },
+      {
+        "name": "decider-2b-vision.mmproj-Q8_0.gguf",
+        "role": "mmproj",
+        "size": 364664448,
+        "sha256": "79e636085e90f1b4bdc5df22003cde0dd0d88086a04b7c101e6bd7d1cc9f2c91"
+      }
+    ],
+    "settings": {
+      "context_size": 8192,
+      "temperature": 1
+    }
+  },
+  "hardware": {
+    "os": "linux/amd64",
+    "cpu": "AMD Ryzen 7 5800X3D 8-Core Processor",
+    "cpu_threads": 16,
+    "ram_gib": 31.3,
+    "gpus": [
+      {
+        "name": "NVIDIA GeForce RTX 5090",
+        "vram_mib": 32607,
+        "driver": "615.71.09",
+        "compute_capability": "12.0"
+      }
+    ]
+  },
+  "device": {
+    "requested": "auto",
+    "engine": "auto",
+    "gpu_used": false
+  },
+  "load_seconds": 0.78,
+  "checks": {
+    "probes_passed": 5,
+    "probes_total": 5
+  },
+  "results": [
+    {
+      "scenario": "short-choice",
+      "requests": 1,
+      "input_tokens": 58,
+      "latency_ms": {
+        "min": 450.82,
+        "mean": 450.82,
+        "p50": 450.82,
+        "p95": 450.82,
+        "max": 450.82
+      },
+      "engine_latency_ms": {
+        "min": 450.68,
+        "mean": 450.68,
+        "p50": 450.68,
+        "p95": 450.68,
+        "max": 450.68
+      },
+      "requests_per_sec": 2.22,
+      "input_tokens_per_sec": 128.7
+    },
+    {
+      "scenario": "multi-question",
+      "requests": 1,
+      "input_tokens": 212,
+      "latency_ms": {
+        "min": 1549.94,
+        "mean": 1549.94,
+        "p50": 1549.94,
+        "p95": 1549.94,
+        "max": 1549.94
+      },
+      "engine_latency_ms": {
+        "min": 1549.76,
+        "mean": 1549.76,
+        "p50": 1549.76,
+        "p95": 1549.76,
+        "max": 1549.76
+      },
+      "requests_per_sec": 0.65,
+      "input_tokens_per_sec": 136.8
+    },
+    {
+      "scenario": "max-options",
+      "requests": 1,
+      "input_tokens": 134,
+      "latency_ms": {
+        "min": 1007.69,
+        "mean": 1007.69,
+        "p50": 1007.69,
+        "p95": 1007.69,
+        "max": 1007.69
+      },
+      "engine_latency_ms": {
+        "min": 1007.52,
+        "mean": 1007.52,
+        "p50": 1007.52,
+        "p95": 1007.52,
+        "max": 1007.52
+      },
+      "requests_per_sec": 0.99,
+      "input_tokens_per_sec": 133
+    },
+    {
+      "scenario": "long-context",
+      "requests": 3,
+      "input_tokens": 1684,
+      "latency_ms": {
+        "min": 12164.37,
+        "mean": 12223.64,
+        "p50": 12222.32,
+        "p95": 12284.21,
+        "max": 12284.21
+      },
+      "engine_latency_ms": {
+        "min": 12164.15,
+        "mean": 12223.41,
+        "p50": 12222.09,
+        "p95": 12284,
+        "max": 12284
+      },
+      "requests_per_sec": 0.08,
+      "input_tokens_per_sec": 137.8
+    },
+    {
+      "scenario": "vision",
+      "requests": 5,
+      "input_tokens": 255,
+      "latency_ms": {
+        "min": 3644.15,
+        "mean": 3686.33,
+        "p50": 3700.47,
+        "p95": 3706.9,
+        "max": 3706.9
+      },
+      "engine_latency_ms": {
+        "min": 3643.45,
+        "mean": 3685.64,
+        "p50": 3699.84,
+        "p95": 3706.26,
+        "max": 3706.26
+      },
+      "requests_per_sec": 0.27,
+      "input_tokens_per_sec": 69.2
+    }
+  ]
+}
