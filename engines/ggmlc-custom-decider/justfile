@@ -116,29 +116,48 @@ verify target=dest variant="cuda-13.4":
     #!/usr/bin/env bash
     set -euo pipefail
     cd {{target}}
-    test -x ggmlc-custom-decider
-    test -x llama-server
+    require_executable() {
+      local path=$1
+      [[ -x "$path" ]] || { echo "ERROR: missing executable: $(pwd)/$path" >&2; exit 1; }
+    }
+    require_file() {
+      local path=$1
+      [[ -e "$path" ]] || { echo "ERROR: missing file: $(pwd)/$path" >&2; exit 1; }
+    }
+    require_symlink() {
+      local path=$1 expected=$2 actual
+      [[ -L "$path" ]] || { echo "ERROR: expected symlink: $(pwd)/$path" >&2; exit 1; }
+      actual=$(readlink "$path")
+      [[ "$actual" == "$expected" ]] || {
+        echo "ERROR: wrong symlink: $(pwd)/$path -> $actual (expected $expected)" >&2
+        exit 1
+      }
+      [[ -e "$path" ]] || { echo "ERROR: broken symlink: $(pwd)/$path" >&2; exit 1; }
+    }
+
+    require_executable ggmlc-custom-decider
+    require_executable llama-server
     for lib in libllama.so libllama-common.so libllama-server-impl.so libmtmd.so libggml.so libggml-base.so libggml-cpu-x64.so; do
-      test -e "lib/$lib"
+      require_file "lib/$lib"
     done
     case "{{variant}}" in
-      cuda-*) test -e lib/libggml-cuda.so ;;
-      vulkan) test -e lib/libggml-vulkan.so ;;
+      cuda-*) require_file lib/libggml-cuda.so ;;
+      vulkan) require_file lib/libggml-vulkan.so ;;
     esac
     for backend in lib/libggml-*.so*; do
-      test -L "$(basename "$backend")"
-      test "$(readlink "$(basename "$backend")")" = "$backend"
-      test -e "$(basename "$backend")"
+      link=$(basename "$backend")
+      require_symlink "$link" "$backend"
     done
     missing=$(LD_LIBRARY_PATH=lib ldd ggmlc-custom-decider llama-server lib/libllama-server-impl.so 2>/dev/null | grep 'not found' | sort -u || true)
     if [[ -n "$missing" ]]; then
-      echo "WARNING: missing shared libraries:" >&2
+      echo "ERROR: missing shared libraries:" >&2
       echo "$missing" >&2
       if [[ "{{variant}}" == cuda-* ]]; then
         echo "Run 'just runtime' in the repo root to bundle the CUDA runtime into $(pwd)/lib" >&2
       else
         echo "Install the runtime libraries required by the {{variant}} build" >&2
       fi
+      exit 1
     else
       echo "All shared libraries resolved"
     fi

@@ -36,11 +36,17 @@ compile variant="cuda-13.4":
     just clef compile
 
 verify target="../bin/libexec/ai-server" variant="cuda-13.4":
-    just decider verify "$(realpath '{{target}}')" "{{variant}}"
-    test -x "{{target}}/laya"
-    test -x "{{target}}/clef"
-    test -x "{{target}}/ggmlc-audio"
-    test -x "{{target}}/sd-server"
+        #!/usr/bin/env bash
+        set -euo pipefail
+        bundle=$(realpath '{{target}}')
+        just decider verify "$bundle" "{{variant}}"
+        for engine in laya clef ggmlc-audio sd-server; do
+            if [[ ! -x "$bundle/$engine" ]]; then
+                echo "ERROR: missing engine executable: $bundle/$engine" >&2
+                exit 1
+            fi
+        done
+        echo "All engine executables present"
 
 clean:
     just decider clean
