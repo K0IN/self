@@ -56,13 +56,12 @@ libs variant:
     tar_patterns=(
       '*/libllama.so*' '*/libllama-common.so*' '*/libllama-server-impl.so*'
       '*/libmtmd.so*' '*/libggml.so*' '*/libggml-base.so*' '*/libggml-cpu-x64.so*'
-      '*/llama-server'
     )
     case "{{variant}}" in
       cuda-*) tar_patterns+=( '*/libggml-cuda.so*' ) ;;
       vulkan) tar_patterns+=( '*/libggml-vulkan.so*' ) ;;
     esac
-    tar -xzf "$tmp/l.tgz" -C {{deps}}/lib --strip-components=1 --wildcards "${tar_patterns[@]:0:${#tar_patterns[@]}-1}"
+    tar -xzf "$tmp/l.tgz" -C {{deps}}/lib --strip-components=1 --wildcards "${tar_patterns[@]}"
     tar -xzf "$tmp/l.tgz" -C {{deps}} --strip-components=1 --wildcards '*/llama-server'
     chmod 0755 {{deps}}/llama-server
     echo "{{tag}}-{{variant}}" > {{deps}}/.tag
