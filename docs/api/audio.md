@@ -6,11 +6,10 @@ aside: false
 <div class="api-row">
 <div class="api-doc">
 
-# Audio API (text to speech)
+# Audio Generation
 
 Audio models expose an OpenAI-compatible speech endpoint. The server runs one
-selected audio model per process and returns WAV audio. Reference recordings are
-kept only in memory and must be sent again for each request.
+selected audio model per process and returns WAV audio.
 
 Health, model metadata and the error format are shared by all modalities; see
 the [API overview](/api/).
@@ -43,12 +42,19 @@ self serve qwen3-tts:1.7b
 ## How voices work
 
 Audio synthesis uses the text in `input` and, optionally, a short reference
-recording that tells the model which speaker to imitate. A voice name does not
-identify a server-side person: the OpenAI-compatible names are aliases for the
-loaded model's default voice.
+recording that conditions the speaker identity for that request. The API has
+three different voice concepts:
 
-When a request is synthesized, the server chooses the first available voice in
-this order:
+- An OpenAI voice name such as `alloy` is only an alias for the loaded model's
+  default voice. It does not select a named speaker.
+- `voice.audio` or `ref_audio` is inline reference audio. It is sent with the
+  request and is not stored as a server-side voice profile.
+- A registry `role: voice` file is a model's bundled default reference audio.
+  It is used only when the request does not include reference audio.
+
+When a request is synthesized, the server chooses reference audio in this
+order. The first three forms are request-scoped; the last is bundled with the
+model:
 
 1. Inline audio in `voice.audio`.
 2. A JSON `ref_audio` value.
@@ -56,9 +62,8 @@ this order:
 4. The model's registry-provided default reference voice.
 5. No reference audio, if the model has no default voice.
 
-The selected recording is read into memory and attached to this engine request.
-It is discarded after synthesis. The server does not create a persistent voice
-profile, voice ID, fine-tune, or speaker database.
+If more than one reference-audio form is supplied, `voice.audio` wins over
+JSON `ref_audio`, and JSON `ref_audio` wins over multipart `ref_audio`.
 
 </div>
 <div class="api-example">
@@ -237,16 +242,17 @@ The response body is the generated WAV file with `Content-Type: audio/wav` and
 <div class="api-row">
 <div class="api-doc">
 
-#### Voice cloning
+#### Reference-audio cloning
 
-Voice cloning here means reference-audio conditioning: the recording is sent
-with the text request and the model generates new WAV audio with a similar
-speaker identity. It is not a persistent voice profile or a server-side
-fine-tune.
+Reference-audio cloning here means conditioning: the recording is sent with
+the text request and the model generates new WAV audio with a similar speaker
+identity. It is not a persistent voice profile or a server-side fine-tune.
 
 Use a clean 5 to 20 second recording of one speaker with little background
-noise. The reference must be MP3 or WAV. The server validates the audio bytes,
-rejects empty or unsupported files, and keeps the recording only in memory.
+noise. This is a recommendation for cloning quality, not a server-enforced
+duration limit. The reference must be MP3 or WAV. The server validates the
+audio bytes, rejects empty or unsupported files, and keeps the recording only
+in memory.
 
 </div>
 <div class="api-example">

@@ -6,8 +6,8 @@
 write registry entry (size + sha256 from HF LFS metadata)  ->  add readme + description  ->  models/registry.yml  ->  go test ./...  ->  publish (12)  ->  self check <model>
 ```
 
-The entry is written by hand (see `docs/ONBOARDING.md` for the user-facing
-guide). `internal/onboard` can analyze a Hugging Face repo (quant buckets,
+The entry is written by hand using this document and the registry rules in 03.
+`internal/onboard` can analyze a Hugging Face repo (quant buckets,
 mmproj, adapter from the GGUF header, LFS pins) and render a YAML skeleton, but
 no CLI command calls it yet.
 

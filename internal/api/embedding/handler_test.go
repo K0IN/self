@@ -74,8 +74,8 @@ func TestSimilarityReturnsCosineScoresInReferenceOrder(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &result); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if len(result.Similarities) != 3 || result.Similarities[0] != 1 || result.Similarities[1] != 0 || result.Similarities[2] != -1 {
-		t.Fatalf("scores = %v, want [1 0 -1]", result.Similarities)
+	if len(result.Similarities) != 3 || result.Similarities[0] != 1 || result.Similarities[1] != 0.5 || result.Similarities[2] != 0 {
+		t.Fatalf("scores = %v, want [1 0.5 0]", result.Similarities)
 	}
 	if result.Usage.LatencyMS < 0 {
 		t.Fatalf("latency_ms = %v, want non-negative", result.Usage.LatencyMS)

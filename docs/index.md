@@ -6,10 +6,8 @@ Run a local AI model server with a registry-driven workflow.
 
 ## Quick start
 
-Native installation is not supported. The development commands below are
-Docker-backed shorthand: `just setup` means running the image's `setup`
-command, and `just serve <model>` means running the image's `serve <model>`
-command with the host model directory mounted.
+The preferred way to run `self` is through Docker.
+The development commands below are Docker-backed shorthand: `self serve <model>` means running the image's `docker run --rm -p 8080:8080 ghcr.io/k0in/self:latest serve <model>`.
 
 ```bash
 # Docker-backed development
@@ -27,7 +25,13 @@ docker run --rm -p 8080:8080 \
   ghcr.io/k0in/self:latest
 ```
 
-The server fetches the registry from `https://k0in.github.io/self/models.yml` at runtime and keeps a copy in the models directory (`.registry.yml`). If it cannot reach that URL or the registry is invalid, it logs a warning and uses the cached copy, so models that are already downloaded keep working offline. The very first run needs network access: without a cached registry the command fails, and there is no bundled registry. See [Docker and model paths](/docker) for running fully offline.
+Images are published to GHCR for Linux hosts:
+
+| Tag | Runtime |
+| :--- | :--- |
+| `latest` | NVIDIA CUDA 13 |
+| `cuda-12` | NVIDIA CUDA 12 |
+| `cpu` | CPU-only |
 
 ## Choose a model
 
@@ -38,8 +42,4 @@ self ls-remote
 self pull kev:0.5b
 ```
 
-The registry pins every download by size and SHA-256. A changed upstream artifact is rejected until the registry is updated.
-
-## API
-
-The default server listens on `127.0.0.1:8080` and exposes `/health`, `/v1/model`, and `/v1/systemone`. Use `--host 0.0.0.0` in a container so the published port is reachable.
+The registry pins every download by size and SHA-256.

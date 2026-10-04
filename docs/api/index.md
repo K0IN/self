@@ -13,7 +13,7 @@ aside: false
 | Modality | Endpoints | Status |
 | --- | --- | --- |
 | [Decision](/api/decision) | `POST /v1/systemone`, `/v1/decide` | Available |
-| [Audio (text to speech)](/api/audio) | `POST /v1/audio/speech`, `/v1/audio/voice` | Available, OpenAI-compatible |
+| [Audio (text to speech)](/api/audio) | `POST /v1/audio/speech`, `/v1/audio/voice`, `/v1/audio/voices` | Available, OpenAI-compatible |
 | [Text generation](/api/text) | `POST /v1/chat/completions` | Available, OpenAI-compatible |
 | [Embeddings](/api/embeddings) | `POST /v1/embeddings`, `POST /similarity` | llama.cpp embedding models |
 | [Image generation and editing](/api/images) | `POST /v1/images/generations`, `POST /v1/images/edits` | OpenAI-compatible |

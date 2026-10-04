@@ -61,7 +61,6 @@
 - Model cards are generated stubs. Need real text.
 - macOS / Windows engine builds.
 - `internal/onboard` is not reachable from the CLI (no `self onboard` command).
-- `docs/ONBOARDING.md` (user docs) still mentions `just check-model` and `just settings`, which no longer exist.
 - Engine crash seen once during manual testing (server on :8080, cause unknown).
   - Likely the engine binary was replaced by a rebuild while running.
   - Check with `just serve kev:0.5b --verbose` if it happens again.

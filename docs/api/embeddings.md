@@ -4,6 +4,7 @@ aside: false
 ---
 <div class="api-row">
 <div class="api-doc">
+
 # Embeddings API
 Embedding models expose the official OpenAI-compatible embeddings endpoint.
 The server runs one selected embedding model per process.
@@ -195,8 +196,9 @@ fields return `400 invalid_request`. Unsupported `encoding_format` values and
 
 ## `POST /similarity`
 
-Compute cosine similarity between `input` and every sentence in `ref`. Scores
-are in the range `[-1, 1]` and have the same order as the supplied `ref` array.
+Compute normalized cosine similarity between `input` and every sentence in
+`ref`. Scores are in the range `[0, 1]` and have the same order as the supplied
+`ref` array.
 
 #### Request body
 
@@ -233,8 +235,11 @@ curl http://localhost:8080/similarity \
 ```
 
 `similarities` contains one score per reference string. A score of `1` means
-identical vector direction, `0` means orthogonal vectors, and `-1` means
-opposite direction. `usage.latency_ms` is the total time spent handling the
+identical vector direction, `0.5` means orthogonal vectors, and `0` means
+opposite direction. Scores are normalized from cosine similarity with
+`(cosine + 1) / 2`; they are measured between `input` and each `ref`
+independently, so they do not imply a global similarity across all references
+or add up to 1. `usage.latency_ms` is the total time spent handling the
 request, including all embedding calls.
 Missing or empty fields, empty reference strings, unknown fields, mismatched
 embedding dimensions, and zero-magnitude vectors return an error.

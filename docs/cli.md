@@ -64,10 +64,3 @@ self serve kev:4b --host 0.0.0.0 --port 8080
 self ls
 self completion bash
 ```
-
-The container image starts `kev:0.5b` when no command is supplied. Use the
-`cpu` image tag instead of `latest` on a host without NVIDIA CUDA support:
-
-```bash
-ghcr.io/k0in/self:cpu
-```

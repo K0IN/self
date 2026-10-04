@@ -10,11 +10,7 @@ aside: false
 
 Decision models answer typed questions about a state in one pass: `choice`,
 `score` and `noul` (calibrated yes/no). Vision-capable decision models also
-accept images. Start a decision model, such as `kev:0.5b` or
-`decider-vision:2b`, before sending requests.
-
-Health, model metadata and the error format are shared by all modalities; see
-the [API overview](/api/).
+accept images. [Browse Decision models](/registry/?type=decision)
 
 </div>
 <div class="api-example">
@@ -42,7 +38,7 @@ self serve kev:0.5b
 
 ## `POST /v1/systemone`
 
-The canonical decision endpoint. The `/v1/decide` path is an equivalent alias. Requests must use `Content-Type: application/json`, and unknown JSON fields are rejected.
+The canonical decision endpoint. The `/v1/decide` path is an equivalent alias.
 
 #### Request body
 
@@ -86,7 +82,7 @@ What the model should decide.
 
 <ApiField name="criteria" type="object | array" optional>
 
-Options for `choice` and ordered levels for `score`. Omit it for `noul`.
+Required for `choice` and `score`: defines the available choices or rating levels. Omit it for `noul`.
 
 </ApiField>
 
@@ -114,6 +110,15 @@ curl http://localhost:8080/v1/systemone \
           "billing": "Payments and refunds",
           "technical": "Technical problems"
         }
+      },
+      "urgency": {
+        "type": "score",
+        "instructions": "How urgently should this ticket be handled?",
+        "criteria": [
+          "Low: routine request with no immediate impact",
+          "Medium: customer affected, but a workaround exists",
+          "High: customer blocked or money at risk"
+        ]
       },
       "refund_required": {
         "type": "noul",
@@ -181,6 +186,12 @@ console.log(await response.json())
       "probabilities": { "billing": 0.94, "technical": 0.06 },
       "confidence": 0.94
     },
+    "urgency": {
+      "type": "score",
+      "score": 1.8,
+      "probabilities": { "0": 0.05, "1": 0.1, "2": 0.85 },
+      "confidence": 0.85
+    },
     "refund_required": {
       "type": "noul",
       "noul": 0.91,
@@ -204,11 +215,21 @@ console.log(await response.json())
 
 #### Criteria
 
-`choice` criteria use an object whose keys are stable output values and whose values describe those choices.
+`criteria` tells the model which answers or rating levels are available. Its format depends on the question's `type`.
 
-`score` criteria use an ordered array of levels.
+**`choice`: pick one named option.** Supply a non-empty object:
 
-`noul` is a calibrated yes/no question and does not need criteria.
+- Each **key** is a value your application can receive, such as `"billing"`.
+- Each **value** describes when to choose that option, such as `"Payments, refunds, and invoices"`.
+- The response's `choice` contains the selected key, not its description. `probabilities` uses the same keys.
+
+For the example, `"choice": "billing"` means the ticket should go to billing. If no descriptions are needed, a string array such as `["billing", "technical"]` is also accepted.
+
+**`score`: rate on an ordered scale.** Supply a non-empty array of strings, from lowest to highest. Each string describes a level; its position assigns its numeric value, starting at `0`.
+
+For `["low", "medium", "high"]`, the levels are `0`, `1`, and `2`. The response's `score` is the probability-weighted average of these values, so it can be fractional: `1.8` means a rating near `"high"`, not an array index to look up directly. `probabilities` uses the index keys `"0"`, `"1"`, and `"2"`.
+
+**`noul`: estimate whether something is true.** Ask a yes/no question in `instructions` and omit `criteria`; this type does not accept choices or levels. The response's `noul` is a probability from `0` to `1`: near `0` means no, near `1` means yes. For example, `"noul": 0.91` means an estimated 91% probability that a refund is required, not a boolean result.
 
 </div>
 <div class="api-example">
@@ -249,10 +270,10 @@ One answer for each question, keyed by the question ID. The fields depend on the
 | Answer type | Fields |
 | --- | --- |
 | `choice` | `choice`, `probabilities`, `confidence` |
-| `score` | `score`, `probabilities` |
+| `score` | `score`, `probabilities`, `confidence` |
 | `noul` | `noul`, `confidence` |
 
-`choice` is the selected criteria key. `score` is a zero-based index into the submitted criteria array. `noul` is a probability from `0` to `1`, where values closer to `1` mean yes/true. `confidence` and probabilities are model output confidence values.
+`choice` is the selected criteria key. `score` is the probability-weighted average of the zero-based level indexes in the submitted criteria array. `noul` is a probability from `0` to `1`, where values closer to `1` mean yes/true. `confidence` and probabilities are model output confidence values.
 
 </ApiField>
 
@@ -284,6 +305,12 @@ Runtime usage and latency counters.
         "technical": 0.09
       },
       "confidence": 0.91
+    },
+    "urgency": {
+      "type": "score",
+      "score": 1.8,
+      "probabilities": { "0": 0.05, "1": 0.1, "2": 0.85 },
+      "confidence": 0.85
     },
     "refund_required": {
       "type": "noul",

@@ -12,7 +12,7 @@
 #                    base_model, source, license, languages, context_length,
 #                    max_options, homepage). max_options also caps requests.
 #     settings:      engine parameters for the adapter, e.g. context_size,
-#                    threads, temperature (see docs/ONBOARDING.md). Can be
+#                    threads, temperature (see dev-docs/11-onboarding.md). Can be
 #                    overridden per quant (`settings:` under the quant) and
 #                    at run time with `self serve <id> --set key=value`.
 #     <quant>:

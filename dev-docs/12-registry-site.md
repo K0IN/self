@@ -3,8 +3,8 @@
 ## What
 
 - One VitePress site in `docs/` (Node 22, `vitepress`, `yaml`): the user guide
-  (`index.md`, `docker.md`, `settings.md`, `cli.md`, `api.md`, `examples.md`) and a
-  model catalog generated from the registry. `ONBOARDING.md` is a page that is not in the sidebar.
+  (`index.md`, `docker.md`, `settings.md`, `cli.md`) and API reference pages,
+  plus a model catalog generated from the registry.
 - Config: `docs/.vitepress/config.mjs` (`base` from `DOCS_BASE`, default `/`;
   local search; sidebar). Theme: `docs/.vitepress/theme/` (`ModelCatalog.vue`,
   `ApiField.vue`, `custom.css`).
@@ -23,7 +23,7 @@
 ## Commands
 
 - `just site` -> `npm install` + `npm run build` in `docs/`, then copy `docs/.vitepress/dist` to `site/`.
-- `just site-serve` -> `just site`, then `vitepress preview` on http://127.0.0.1:8000 (local builds use base `/`).
+- `just serve-site` -> `just site`, then starts the local VitePress server on port 8000 (local builds use base `/`).
 - `cd docs && npm run dev` -> live-reloading dev server.
 - `DOCS_BASE=/self/` -> base path used by GitHub Pages.
 

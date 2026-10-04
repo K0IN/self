@@ -93,9 +93,8 @@ rm image-*.b64
 
 ## `POST /v1/images/generations`
 
-Generates one or more images from a text prompt. Requests must use
-`Content-Type: application/json`, and unknown JSON fields are rejected. The
-server loads one image model at startup; `model` is accepted for client
+Generates one or more images from a text prompt. 
+The server loads one image model at startup; `model` is accepted for client
 compatibility and is not used to select a different model.
 
 #### Request body

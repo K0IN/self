@@ -102,12 +102,13 @@ compile variant="cuda-13.4": (deps variant)
     cmake --build {{build_dir}}
 
 # Build and install the engine + libraries into the bundle (default: bin/libexec/ai-server)
-build variant="cuda-13.4" target=dest: (compile variant) && (verify target variant)
+build variant="cuda-13.4" target=dest: (compile variant)
     mkdir -p {{target}}/lib
     install -m 0755 {{build_dir}}/ggmlc-custom-decider {{target}}/ggmlc-custom-decider
     install -m 0755 {{deps}}/llama-server {{target}}/llama-server
     cp -P {{deps}}/lib/*.so* {{target}}/lib/
     for backend in "{{target}}"/lib/libggml-*.so*; do ln -sf "lib/$(basename "$backend")" "{{target}}/$(basename "$backend")"; done
+    just verify "{{target}}" "{{variant}}"
     @echo "Installed {{target}}/ggmlc-custom-decider"
 
 # Check the upstream server bundle and warn about missing host shared libraries.

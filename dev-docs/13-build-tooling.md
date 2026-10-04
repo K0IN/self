@@ -40,7 +40,7 @@ use the checked-out registry and print the engine command and logs.
 | `just test-model <model>` | Same for one model, e.g. `kev:0.5b` or `kev:4b@q8` |
 | `just fmt` | `gofmt -w .` |
 | `just site` | Build the documentation site into `site/` (see 12) |
-| `just site-serve` | `just site`, then preview on port 8000 |
+| `just serve-site` | `just site`, then preview on port 8000 |
 | `just runtime [variant]` (private) | `just engine runtime <variant> $GGMLC_VERSION`: download upstream Laya + bundle CUDA libs |
 | `just engine-decider [variant]` (private) | `just engine build <variant>`: build our Decider engine |
 | `just bootstrap` (private) | Build only missing runtimes |

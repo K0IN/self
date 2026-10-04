@@ -40,9 +40,6 @@ self serve qwen3.5:9b
 
 ## `POST /v1/chat/completions`
 
-Requests must use `Content-Type: application/json`. Unknown top-level fields
-are rejected. `messages` is required and must not be empty.
-
 #### Request body
 
 <ApiField name="model" type="string" optional>

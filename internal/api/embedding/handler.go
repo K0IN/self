@@ -115,6 +115,12 @@ func (h *Handler) similarity(w http.ResponseWriter, r *http.Request) {
 			apiroot.WriteError(w, errs.New(errs.RuntimeCrashed, "cannot compare embedding for ref[%d]: %s", i, err))
 			return
 		}
+		score = (score + 1) / 2
+		if score < 0 {
+			score = 0
+		} else if score > 1 {
+			score = 1
+		}
 		scores[i] = score
 		totalTokens += tokens
 	}
