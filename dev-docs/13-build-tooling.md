@@ -76,8 +76,8 @@ Environment: `GGMLC_VERSION` (Laya release, default `v0.9.6`), `MODEL` (default
 The same recipes are reachable as `just engine decider <recipe>` and
 `just engine laya fetch`.
 
-- Decider and audio variants: `cuda-12.8` (default of `just engine build`), `cuda-13.4`
-  (default of `just engine-decider` and so of `just setup` / `just serve`: the dev container is CUDA 13),
+- Decider and audio variants: `cuda-13.4` (default of `just engine build`,
+  `just engine-decider`, `just setup` and `just serve`), `cuda-12.8`,
   `vulkan`, `cpu`.
   Both engines share `engines/ggmlc-custom-decider/deps` and the bundle `lib/`, so
   build them with the same variant; `just engine audio` without a variant reuses

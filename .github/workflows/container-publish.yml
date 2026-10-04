@@ -48,6 +48,18 @@ jobs:
           sudo apt-get install -y --no-install-recommends cmake curl libvulkan1 mesa-vulkan-drivers ninja-build
           curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | sudo bash -s -- --to /usr/local/bin --tag 1.43.0
 
+      - name: Install CUDA Toolkit
+        if: startsWith(matrix.engine_variant, 'cuda-')
+        env:
+          ENGINE_VARIANT: ${{ matrix.engine_variant }}
+        run: |
+          curl --fail --location --output /tmp/cuda-keyring.deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
+          sudo dpkg -i /tmp/cuda-keyring.deb
+          sudo apt-get update
+          cuda_version="${ENGINE_VARIANT#cuda-}"
+          sudo apt-get install -y --no-install-recommends "cuda-toolkit-${cuda_version//./-}"
+          "/usr/local/${ENGINE_VARIANT}/bin/nvcc" --version
+
       - name: Build server and engines
         env:
           LLAMA_CPP_TAG: b11256

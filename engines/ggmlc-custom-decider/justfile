@@ -3,7 +3,7 @@
 # Links the prebuilt llama.cpp release libraries (libllama, libmtmd, ggml
 # backends); nothing from llama.cpp is compiled and no CUDA toolkit is needed.
 #
-#   just engine build                      # default: cuda-12.8, installs into ../../bin/libexec/ai-server
+#   just engine build                      # default: cuda-13.4, installs into ../../bin/libexec/ai-server
 #   just engine build vulkan               # or: cuda-13.4, cpu
 #   just engine deps cuda-12.8 b11300      # other llama.cpp release
 #   just engine deps cuda-13.4             # CUDA 13 runtime
@@ -23,7 +23,7 @@ default:
     @just --list
 
 # Download prebuilt llama.cpp libraries + matching headers into deps/ (variant: cuda-12.8 | cuda-13.4 | vulkan | cpu)
-deps variant="cuda-12.8": (libs variant) headers
+deps variant="cuda-13.4": (libs variant) headers
 
 # Prebuilt runtime libraries (skipped when deps/ already has this tag+variant)
 [private]
@@ -84,7 +84,7 @@ headers:
     [[ -s "$out" ]] || curl -fsSL -o "$out" "{{raw}}/vendor/nlohmann/json.hpp"
 
 # Compile main.cpp against deps/ (Release, Ninja)
-compile variant="cuda-12.8": (deps variant)
+compile variant="cuda-13.4": (deps variant)
     #!/usr/bin/env bash
     set -euo pipefail
     test -f {{deps}}/.tag && test "$(cat {{deps}}/.tag)" = "{{tag}}-{{variant}}"
@@ -93,7 +93,7 @@ compile variant="cuda-12.8": (deps variant)
     cmake --build {{build_dir}}
 
 # Build and install the engine + libraries into the bundle (default: bin/libexec/ai-server)
-build variant="cuda-12.8" target=dest: (compile variant) && (verify target variant)
+build variant="cuda-13.4" target=dest: (compile variant) && (verify target variant)
     mkdir -p {{target}}/lib
     install -m 0755 {{build_dir}}/ggmlc-custom-decider {{target}}/ggmlc-custom-decider
     install -m 0755 {{deps}}/llama-server {{target}}/llama-server
@@ -102,7 +102,7 @@ build variant="cuda-12.8" target=dest: (compile variant) && (verify target varia
     @echo "Installed {{target}}/ggmlc-custom-decider"
 
 # Check the upstream server bundle and warn about missing host shared libraries.
-verify target=dest variant="cuda-12.8":
+verify target=dest variant="cuda-13.4":
     #!/usr/bin/env bash
     set -euo pipefail
     cd {{target}}

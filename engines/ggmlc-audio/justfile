@@ -3,7 +3,7 @@
 # Links the same prebuilt llama.cpp libraries as the Decider engine
 # (../ggmlc-custom-decider/deps), so both engines share one lib/ in the bundle.
 #
-#   just engine audio                 # variant of the existing decider deps, else cuda-12.8
+#   just engine audio                 # variant of the existing decider deps, else cuda-13.4
 #   just engine audio cpu             # or: vulkan, cuda-12.8, cuda-13.4
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
@@ -18,7 +18,7 @@ build variant="" target=dest:
     set -euo pipefail
     v="{{variant}}"
     if [[ -z "$v" ]]; then
-      v=$(cut -d- -f2- {{deps}}/.tag 2>/dev/null || echo cuda-12.8)
+      v=$(cut -d- -f2- {{deps}}/.tag 2>/dev/null || echo cuda-13.4)
     fi
     (cd ../ggmlc-custom-decider && just deps "$v")
     rm -rf {{build_dir}}

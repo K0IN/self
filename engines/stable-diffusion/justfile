@@ -27,6 +27,7 @@ build variant="cpu" target=dest:
       -DSD_SERVER_BUILD_FRONTEND=OFF \
       -DSD_WEBP=ON \
       -DSD_CUDA=$cuda \
+      -DGGML_NATIVE=OFF \
       -DCMAKE_BUILD_TYPE=Release
     cmake --build "{{build_dir}}" --target sd-server --parallel "${CMAKE_BUILD_PARALLEL_LEVEL:-2}"
     mkdir -p "{{target}}"

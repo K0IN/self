@@ -12,7 +12,7 @@ default:
     @just --list
 
 # Build all native engines, including the bundled upstream llama-server.
-build variant="cuda-12.8" target="":
+build variant="cuda-13.4" target="":
     #!/usr/bin/env bash
     set -euo pipefail
     if [[ -n "{{target}}" ]]; then
@@ -28,14 +28,14 @@ build variant="cuda-12.8" target="":
             just imageengine build "{{variant}}"
     fi
 
-deps variant="cuda-12.8":
+deps variant="cuda-13.4":
     just decider deps "{{variant}}"
 
-compile variant="cuda-12.8":
+compile variant="cuda-13.4":
     just decider compile "{{variant}}"
     just clef compile
 
-verify target="../bin/libexec/ai-server" variant="cuda-12.8":
+verify target="../bin/libexec/ai-server" variant="cuda-13.4":
     just decider verify "$(realpath '{{target}}')" "{{variant}}"
     test -x "{{target}}/laya"
     test -x "{{target}}/clef"

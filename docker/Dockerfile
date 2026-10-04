@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-ARG CUDA_VARIANT=cpu
+ARG CUDA_VARIANT=cuda-13
 
 FROM nvidia/cuda:13.4.1-runtime-ubuntu24.04 AS runtime-cuda-13
 FROM nvidia/cuda:12.8.1-runtime-ubuntu24.04 AS runtime-cuda-12

@@ -256,7 +256,7 @@ The whole build lives in `engines/ggmlc-custom-decider/justfile`, imported
 into the root justfile as the module `engine`:
 
 ```bash
-just engine-decider                      # = just engine build (cuda-12.8)
+just engine-decider                      # = just engine build (cuda-13.4)
 just engine build vulkan                 # or cpu
 just engine deps                         # only fetch llama.cpp libs + headers into deps/
 just engine compile                      # only cmake + ninja into build/
