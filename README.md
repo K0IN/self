@@ -1,7 +1,5 @@
 # self
 
-[View the source on GitHub](https://github.com/k0in/self)
-
 `self` is a simple Dockerized wrapper around
 [llama.cpp](https://github.com/ggml-org/llama.cpp),
 [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp), and
