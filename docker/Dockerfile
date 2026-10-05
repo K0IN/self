@@ -2,6 +2,60 @@
 
 ARG CUDA_VARIANT=cuda-13
 
+FROM nvidia/cuda:13.4.1-devel-ubuntu24.04 AS builder-cuda-13
+FROM nvidia/cuda:12.8.1-devel-ubuntu24.04 AS builder-cuda-12
+FROM ubuntu:24.04 AS builder-cpu
+
+FROM builder-${CUDA_VARIANT} AS builder
+
+ARG CUDA_VARIANT
+ARG ENGINE_VARIANT=cuda-13.4
+ARG LAYA_VARIANT=vulkan
+ARG LLAMA_CPP_TAG=b11256
+ARG TARGETARCH=amd64
+ARG GO_VERSION=1.26.0
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LAYA_VARIANT=${LAYA_VARIANT}
+ENV LLAMA_CPP_TAG=${LLAMA_CPP_TAG}
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        cmake \
+        curl \
+        gcc \
+        g++ \
+        git \
+        libvulkan1 \
+        libvulkan-dev \
+        mesa-vulkan-drivers \
+        ninja-build \
+        pkg-config \
+        tar \
+        vulkan-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN case "${TARGETARCH}" in \
+        amd64) go_arch=amd64 ;; \
+        arm64) go_arch=arm64 ;; \
+        *) echo "unsupported Go architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac \
+    && curl --fail --location --silent --show-error \
+        "https://go.dev/dl/go${GO_VERSION}.linux-${go_arch}.tar.gz" \
+        | tar -C /usr/local -xzf -
+ENV PATH=/usr/local/go/bin:${PATH}
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh \
+    | bash -s -- --to /usr/local/bin --tag 1.43.0
+
+WORKDIR /src
+COPY . .
+
+RUN go test ./... \
+    && just --unstable setup \
+    && just --unstable engine verify bin/libexec/ai-server "${ENGINE_VARIANT}"
+
 FROM nvidia/cuda:13.4.1-runtime-ubuntu24.04 AS runtime-cuda-13
 FROM nvidia/cuda:12.8.1-runtime-ubuntu24.04 AS runtime-cuda-12
 FROM ubuntu:24.04 AS runtime-cpu
@@ -17,8 +71,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY bin/self /app/self
-COPY bin/libexec /app/libexec
+COPY --from=builder /src/bin/self /app/self
+COPY --from=builder /src/bin/libexec /app/libexec
 
 ENV AI_SERVER_RUNTIME_DIR=/app/libexec/ai-server
 ENV LD_LIBRARY_PATH=/app/libexec/ai-server/lib

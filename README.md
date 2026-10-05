@@ -53,6 +53,30 @@ docker run --rm \
 
 The `/models` volume keeps downloaded models between container runs.
 
+### Build an image
+
+Docker builds the server and native engines inside a builder stage. No local Go,
+CUDA, or engine build is required:
+
+```bash
+docker buildx build --file docker/Dockerfile \
+  --build-arg CUDA_VARIANT=cuda-13 \
+  --build-arg ENGINE_VARIANT=cuda-13.4 \
+  --tag self:latest .
+```
+
+For a CPU-only image, set both build arguments to `cpu`. To build directly from
+a public Git repository and ref without checking it out locally:
+
+```bash
+just docker-build-git K0IN/self main self:latest cuda-13 cuda-13.4
+```
+
+The recipe accepts `repository ref image variant engine_variant`, in that
+order. `repository` is the GitHub `owner/repo`; use `variant` values `cuda-13`,
+`cuda-12`, or `cpu`, and the matching `engine_variant` values `cuda-13.4`,
+`cuda-12.8`, or `cpu`.
+
 ## Configuration
 
 The container entrypoint accepts `serve` options after the image name:

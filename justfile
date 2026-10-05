@@ -27,6 +27,10 @@ default:
 # Build self and all bundled engines.
 setup: build (runtime laya_variant) (engine-decider variant) && verify-engines
 
+# Build an image directly from a Git repository or ref without a local checkout.
+docker-build-git repository ref="main" image="self:git" variant="cuda-13" engine_variant="cuda-13.4":
+    docker buildx build --load --file docker/Dockerfile --build-arg CUDA_VARIANT="{{variant}}" --build-arg ENGINE_VARIANT="{{engine_variant}}" --tag "{{image}}" "https://github.com/{{repository}}.git#{{ref}}"
+
 [private]
 verify-engines:
     just engine verify "{{justfile_directory()}}/{{engine_dir}}" "{{variant}}"

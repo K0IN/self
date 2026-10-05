@@ -115,13 +115,14 @@ release tarball recipe; releases are container images.
 
 ## Container images
 
-- `docker/Dockerfile` copies a prebuilt `bin/self` and `bin/libexec` into `/app`, so run
-  `just setup` (or the CI steps below) first. Build arg `CUDA_VARIANT` selects the base:
+- `docker/Dockerfile` builds the Go server and engines in a builder stage and copies
+  the generated `bin/self` and `bin/libexec` into `/app`. No host build is required.
+  Build arg `CUDA_VARIANT` selects the base:
   `cuda-13` (`nvidia/cuda:13.4.1-runtime`), `cuda-12` (`12.8.1-runtime`), or `cpu` (`ubuntu:24.04`).
 - Defaults: `AI_SERVER_RUNTIME_DIR=/app/libexec/ai-server`, `AI_SERVER_MODELS=/models` (volume),
   `AI_SERVER_HOST=0.0.0.0`, `AI_SERVER_PORT=8080`; entrypoint `/app/self`, default command `serve kev:0.5b`.
 - `.github/workflows/container-publish.yml` (push to `main`, tags `v*.*.*`, manual dispatch) builds three
-  variants, each after `go test ./...`:
+  variants; `go test ./...` runs inside each Docker builder stage:
 
   | Variant | Base | Decider engine | Laya |
   | :--- | :--- | :--- | :--- |
