@@ -69,13 +69,15 @@ For a CPU-only image, set both build arguments to `cpu`. To build directly from
 a public Git repository and ref without checking it out locally:
 
 ```bash
-just docker-build-git K0IN/self main self:latest cuda-13 cuda-13.4
+docker build -f docker/Dockerfile \
+  --build-arg CUDA_VARIANT=cuda-13 \
+  --build-arg ENGINE_VARIANT=cuda-13.4 \
+  --tag self:latest \
+  https://github.com/K0IN/self.git#main
 ```
 
-The recipe accepts `repository ref image variant engine_variant`, in that
-order. `repository` is the GitHub `owner/repo`; use `variant` values `cuda-13`,
-`cuda-12`, or `cpu`, and the matching `engine_variant` values `cuda-13.4`,
-`cuda-12.8`, or `cpu`.
+For a CPU-only image, set both build arguments to `cpu`. CUDA 12 uses
+`CUDA_VARIANT=cuda-12` and `ENGINE_VARIANT=cuda-12.8`.
 
 ## Configuration
 

@@ -124,6 +124,10 @@ release tarball recipe; releases are container images.
 - `.github/workflows/container-publish.yml` (push to `main`, tags `v*.*.*`, manual dispatch) builds three
   variants; `go test ./...` runs inside each Docker builder stage:
 
+  A remote Git ref can be built directly without a local checkout:
+
+  `docker build -f docker/Dockerfile --build-arg CUDA_VARIANT=cuda-13 --build-arg ENGINE_VARIANT=cuda-13.4 -t self:latest https://github.com/K0IN/self.git#main`
+
   | Variant | Base | Decider engine | Laya |
   | :--- | :--- | :--- | :--- |
   | `cuda-13` | CUDA 13 | `cuda-13.4` | `vulkan` |

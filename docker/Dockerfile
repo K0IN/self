@@ -2,9 +2,9 @@
 
 ARG CUDA_VARIANT=cuda-13
 
-FROM nvidia/cuda:13.4.1-devel-ubuntu24.04 AS builder-cuda-13
-FROM nvidia/cuda:12.8.1-devel-ubuntu24.04 AS builder-cuda-12
-FROM ubuntu:24.04 AS builder-cpu
+FROM docker.io/nvidia/cuda:13.4.1-devel-ubuntu24.04 AS builder-cuda-13
+FROM docker.io/nvidia/cuda:12.8.1-devel-ubuntu24.04 AS builder-cuda-12
+FROM docker.io/library/ubuntu:24.04 AS builder-cpu
 
 FROM builder-${CUDA_VARIANT} AS builder
 
@@ -54,11 +54,11 @@ COPY . .
 
 RUN go test ./... \
     && just --unstable setup \
-    && just --unstable engine verify bin/libexec/ai-server "${ENGINE_VARIANT}"
+    && just --unstable engine verify /src/bin/libexec/ai-server "${ENGINE_VARIANT}"
 
-FROM nvidia/cuda:13.4.1-runtime-ubuntu24.04 AS runtime-cuda-13
-FROM nvidia/cuda:12.8.1-runtime-ubuntu24.04 AS runtime-cuda-12
-FROM ubuntu:24.04 AS runtime-cpu
+FROM docker.io/nvidia/cuda:13.4.1-runtime-ubuntu24.04 AS runtime-cuda-13
+FROM docker.io/nvidia/cuda:12.8.1-runtime-ubuntu24.04 AS runtime-cuda-12
+FROM docker.io/library/ubuntu:24.04 AS runtime-cpu
 
 FROM runtime-${CUDA_VARIANT} AS runtime
 
