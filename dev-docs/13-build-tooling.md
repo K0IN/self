@@ -52,7 +52,7 @@ no wrappers for `pull`, `ls`, `check`, or the HTTP smoke requests; use
 `just test-model <model>` (see 14).
 
 Environment: `GGMLC_VERSION` (Laya release, default `v0.9.6`), `MODEL` (default
-`kev:0.5b`), `PORT` (default `8080`), `LLAMA_CPP_TAG` (default `b11256`),
+`kev:0.5b`), `PORT` (default `8080`), `LLAMA_CPP_TAG` (default `b11476`),
 `CUDA_LIB_DIRS` (extra directories searched for CUDA 12 libraries).
 
 ## Engine build (`engines/`)
@@ -82,7 +82,7 @@ The same recipes are reachable as `just engine decider <recipe>` and
   Both engines share `engines/ggmlc-custom-decider/deps` and the bundle `lib/`, so
   build them with the same variant; `just engine audio` without a variant reuses
   the one in `deps/.tag`.
-- llama.cpp version: `LLAMA_CPP_TAG` (default `b11256`).
+- llama.cpp version: `LLAMA_CPP_TAG` (default `b11476`).
 - `deps/` skipped if tag + variant unchanged (`deps/.tag`).
 - `verify` only warns about libraries it cannot resolve.
 - The variant must match the host's CUDA major. ggml skips a CUDA backend whose runtime

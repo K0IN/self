@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"ai-server/internal/decision"
+	domembedding "ai-server/internal/embedding"
 	"ai-server/internal/errs"
 	"ai-server/internal/ggufmeta"
 	"ai-server/internal/runtime"
@@ -103,7 +104,7 @@ func (a *Adapter) Start(ctx context.Context, cfg dom.RuntimeConfig) error {
 		}
 	}
 	md, err := ggufmeta.ReadFile(cfg.Files.Model)
-	if err == nil {
+	if err == nil && !cfg.Embedding {
 		if err := CheckModel(md); err != nil {
 			return errs.New(errs.UnsupportedModel, "%s: %s", cfg.ModelID, err)
 		}
@@ -226,9 +227,17 @@ func (a *Adapter) Chat(ctx context.Context, req dom.Request, onDelta func(dom.De
 }
 
 func (a *Adapter) Embed(ctx context.Context, input string) ([]float32, int, error) {
+	return a.EmbedInput(ctx, domembedding.Input{Text: input})
+}
+
+func (a *Adapter) EmbedInput(ctx context.Context, input domembedding.Input) ([]float32, int, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	body, _ := json.Marshal(map[string]any{"input": input, "encoding_format": "float"})
+	var value any = input.Text
+	if len(input.Content) > 0 {
+		value = []any{map[string]any{"content": input.Content}}
+	}
+	body, _ := json.Marshal(map[string]any{"input": value, "encoding_format": "float"})
 	hreq, err := http.NewRequestWithContext(ctx, http.MethodPost, a.baseURL+"/v1/embeddings", bytes.NewReader(body))
 	if err != nil {
 		return nil, 0, err

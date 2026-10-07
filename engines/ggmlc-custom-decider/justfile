@@ -13,7 +13,7 @@
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
-tag       := env_var_or_default("LLAMA_CPP_TAG", "b11256")
+tag       := env_var_or_default("LLAMA_CPP_TAG", "b11476")
 deps      := "deps"
 build_dir := "build"
 dest      := "../../bin/libexec/ai-server"
@@ -41,6 +41,7 @@ libs variant:
     for lib in libllama.so libllama-common.so libllama-server-impl.so libmtmd.so libggml.so libggml-base.so libggml-cpu-x64.so; do
       [[ -e "{{deps}}/lib/$lib" ]] || complete=false
     done
+    [[ -e "{{deps}}/lib/libggml-cpu-sse42.so" ]] || complete=false
     case "{{variant}}" in
       cuda-*) [[ -e {{deps}}/lib/libggml-cuda.so ]] || complete=false ;;
       vulkan) [[ -e {{deps}}/lib/libggml-vulkan.so ]] || complete=false ;;
@@ -55,7 +56,7 @@ libs variant:
     curl -fL --progress-bar -o "$tmp/l.tgz" "https://github.com/ggml-org/llama.cpp/releases/download/{{tag}}/$asset"
     tar_patterns=(
       '*/libllama.so*' '*/libllama-common.so*' '*/libllama-server-impl.so*'
-      '*/libmtmd.so*' '*/libggml.so*' '*/libggml-base.so*' '*/libggml-cpu-x64.so*'
+      '*/libmtmd.so*' '*/libggml.so*' '*/libggml-base.so*' '*/libggml-cpu-*.so*'
     )
     case "{{variant}}" in
       cuda-*) tar_patterns+=( '*/libggml-cuda.so*' ) ;;

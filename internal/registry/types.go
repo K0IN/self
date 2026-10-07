@@ -42,8 +42,8 @@ var modelTypes = map[ModelType]typeSpec{
 		Roles:        []FileRole{RoleModel, RoleMMProj},
 	},
 	TypeEmbedding: {
-		Capabilities: []Capability{CapText, CapEmbedding},
-		Roles:        []FileRole{RoleModel},
+		Capabilities: []Capability{CapText, CapVision, CapAudio, CapEmbedding},
+		Roles:        []FileRole{RoleModel, RoleMMProj},
 	},
 	TypeImage: {
 		Capabilities: []Capability{CapText, CapImage, CapImageEdit, CapMultiImage},
@@ -147,8 +147,8 @@ const (
 	// RoleVoice is a WAV/MP3 reference voice used when a request brings none.
 	RoleVoice FileRole = "voice"
 	// RoleHead is a trained decision head (safetensors) that a decision engine needs next to the GGUF.
-	RoleHead FileRole = "head"
-	RoleVAE  FileRole = "vae"
+	RoleHead        FileRole = "head"
+	RoleVAE         FileRole = "vae"
 	RoleTextEncoder FileRole = "text-encoder"
 )
 

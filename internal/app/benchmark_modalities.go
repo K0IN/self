@@ -109,13 +109,13 @@ func benchmarkEmbedding(ctx context.Context, cfg config.Serve, t target, files m
 	}
 	adapter := entry.New()
 	settings := benchmarkRuntimeSettings(t.settings, cfg.Device)
-	if err := adapter.Start(ctx, embedding.RuntimeConfig{ModelID: t.res.ID(), Files: embedding.ModelFiles{Model: files[registry.RoleModel]}, Device: cfg.Device, EnginePath: engine.Path, LibDir: engine.LibDir, Log: benchmarkLog(cfg), Settings: settings}); err != nil {
+	if err := adapter.Start(ctx, embedding.RuntimeConfig{ModelID: t.res.ID(), Files: embedding.ModelFiles{Model: files[registry.RoleModel], MMProj: files[registry.RoleMMProj]}, Device: cfg.Device, EnginePath: engine.Path, LibDir: engine.LibDir, Log: benchmarkLog(cfg), Settings: settings}); err != nil {
 		return nil, "", err
 	}
 	defer closeAdapter(ctx, adapter.Close)
 	results, err := benchmark.RunOperations(ctx, func(ctx context.Context) (benchmark.OperationResult, error) {
 		input := "A compact sentence for measuring embedding throughput across repeated requests."
-		_, tokens, err := adapter.Embed(ctx, input)
+		_, tokens, err := adapter.Embed(ctx, embedding.Input{Text: input})
 		return benchmark.OperationResult{InputTokens: tokens, Work: float64(tokens), Unit: "input_tokens_per_sec"}, err
 	}, []benchmark.WorkScenario{{Name: "embedding", Requests: opt.Iterations}}, opt.Warmup, benchmarkProgress(out))
 	return results, "input_tokens_per_sec", err

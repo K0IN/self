@@ -8,7 +8,7 @@
 ## What
 
 - `main.cpp` (single file, ~720 lines C++). SELFIPC1 on stdio.
-- Links **prebuilt** llama.cpp release libs (`LLAMA_CPP_TAG`, default b11256): `libllama`, `libmtmd`, ggml backends.
+- Links **prebuilt** llama.cpp release libs (`LLAMA_CPP_TAG`, default b11476): `libllama`, `libmtmd`, ggml backends.
 - No llama.cpp compile. No CUDA toolkit needed.
 - Backends are loaded at start from `lib/` next to the executable.
 - Vision via `libmtmd` (Qwen-VL resize, M-RoPE). Marker `<__media__>`.

@@ -39,13 +39,32 @@ self serve nomic-embed-text-v1.5:137m
 
 This is the OpenAI-compatible embeddings endpoint. Requests must use
 `Content-Type: application/json`; unknown top-level fields are rejected. The
-route accepts one string or a non-empty array of strings.
+route accepts one string or a non-empty batch of strings and content objects.
+Unknown fields are rejected at every level. Content objects follow llama.cpp's
+multimodal embedding extension; they are not part of the standard OpenAI text API.
 
 #### Request body
 
-<ApiField name="input" type="string | array of strings" required>
+<ApiField name="input" type="string | array of strings or content objects" required>
 
-Text to embed, either one string or a list of strings.
+Text to embed, or a batch of `{content: [...]}` objects. Each content part is
+`{type: "text", text: "..."}`, `{type: "image_url", image_url: {url: "data:image/png;base64,..."}}`,
+or `{type: "input_audio", input_audio: {data: "...", format: "wav"}}`.
+Audio data accepts raw base64 or an `audio/wav` base64 data URL. Images must be
+PNG or JPEG data URLs or remote HTTPS URLs, using the same `image_url` content
+part as the chat API. Media requires the corresponding loaded-model capability.
+
+Media is limited to 10 MiB decoded per part; the JSON body limit is 32 MiB.
+Images are limited to 16 megapixels and 8192 pixels per side. Audio must be
+PCM16 WAV, mono or stereo, 8-96 kHz. Local file URLs are rejected.
+Remote images use the same guarded fetcher as decision and chat models: HTTPS
+and public destinations only by default, a 15-second fetch timeout, and at most
+three redirects. Use `--allow-http-images` to permit plain HTTP, and
+`--allow-private-images` to permit private or loopback destinations. These flags
+weaken the default network restrictions and should only be enabled for trusted
+clients. Audio remains inline-only.
+Empty text, empty content, malformed media and mismatched MIME types return 400.
+Unsupported content types or model modalities return 422 before any inference.
 
 </ApiField>
 
@@ -194,23 +213,87 @@ fields return `400 invalid_request`. Unsupported `encoding_format` values and
 <div class="api-row">
 <div class="api-doc">
 
+## Multimodal Examples
+
+Remote image input uses the same image content part as chat completions:
+
+```json
+{
+  "input": [{"content": [
+    {"type": "image_url", "image_url": {"url": "https://example.com/picture.png"}}
+  ]}]
+}
+```
+
+Start the multimodal model (the pinned projector downloads automatically):
+
+```bash
+self serve embeddinggemma-2:740m
+```
+
+The following Node.js example sends a text scalar, a text/image object, and an
+audio object in one batch. Replace the two filenames with your own media files.
+
+```js
+import { readFileSync } from 'node:fs'
+
+const image = `data:image/png;base64,${readFileSync('picture.png').toString('base64')}`
+const audio = readFileSync('recording.wav').toString('base64')
+const input = [
+  'A bird singing in a tree.',
+  { content: [
+    { type: 'text', text: 'A bird in a tree.' },
+    { type: 'image_url', image_url: { url: image } }
+  ] },
+  { content: [{ type: 'input_audio', input_audio: { data: audio, format: 'wav' } }] }
+]
+const response = await fetch('http://localhost:8080/v1/embeddings', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ input })
+})
+if (!response.ok) throw new Error(await response.text())
+const result = await response.json()
+console.log(result.data.map(item => ({ index: item.index, dimensions: item.embedding.length })))
+```
+
+EmbeddingGemma 2 returns full 768-dimensional vectors. Text-only scalar and
+string-batch requests remain compatible. `/v1/models` reports the actual declared
+input capabilities (`text`, `vision`, `audio` for this model).
+
+Multimodal similarity uses a single string or content object as `input` and a
+non-empty array of strings or content objects as `ref`:
+
+```js
+const response = await fetch('http://localhost:8080/similarity', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    input: { content: [{ type: 'image_url', image_url: { url: image } }] },
+    ref: ['A bird in a tree.', { content: [{ type: 'input_audio', input_audio: { data: audio, format: 'wav' } }] }]
+  })
+})
+if (!response.ok) throw new Error(await response.text())
+console.log((await response.json()).similarities)
+```
+
 ## `POST /similarity`
 
-Compute normalized cosine similarity between `input` and every sentence in
+Compute normalized cosine similarity between `input` and every item in
 `ref`. Scores are in the range `[0, 1]` and have the same order as the supplied
 `ref` array.
 
 #### Request body
 
-<ApiField name="input" type="string" required>
+<ApiField name="input" type="string | content object" required>
 
-The sentence to compare against.
+The text or multimodal content object to compare against.
 
 </ApiField>
 
-<ApiField name="ref" type="array of strings" required>
+<ApiField name="ref" type="array of strings or content objects" required>
 
-One or more sentences to compare with `input`.
+One or more text or multimodal items to compare with `input`.
 
 </ApiField>
 

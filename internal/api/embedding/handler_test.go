@@ -1,6 +1,8 @@
 package embedding
 
 import (
+	dom "ai-server/internal/embedding"
+	"ai-server/internal/registry"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -15,11 +17,13 @@ type testService struct {
 	inputs []string
 }
 
-func (s *testService) ModelID() string          { return "test-embedding" }
-func (s *testService) Quant() string            { return "f16" }
-func (s *testService) Info() any                { return nil }
-func (s *testService) Settings() map[string]any { return nil }
-func (s *testService) Embed(_ context.Context, input string) ([]float32, int, error) {
+func (s *testService) ModelID() string                     { return "test-embedding" }
+func (s *testService) Quant() string                       { return "f16" }
+func (s *testService) Info() any                           { return nil }
+func (s *testService) Settings() map[string]any            { return nil }
+func (s *testService) Capabilities() registry.Capabilities { return registry.Capabilities{} }
+func (s *testService) Embed(_ context.Context, value dom.Input) ([]float32, int, error) {
+	input := value.Text
 	s.inputs = append(s.inputs, input)
 	vectors := map[string][]float32{
 		"reference": {1, 0},

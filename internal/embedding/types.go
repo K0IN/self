@@ -9,7 +9,29 @@ import (
 )
 
 type ModelFiles struct {
-	Model string
+	Model  string
+	MMProj string
+}
+
+type Input struct {
+	Text    string
+	Content []Part `json:"content"`
+}
+
+type Part struct {
+	Type       string    `json:"type"`
+	Text       *string   `json:"text,omitempty"`
+	ImageURL   *ImageURL `json:"image_url,omitempty"`
+	InputAudio *Audio    `json:"input_audio,omitempty"`
+}
+
+type ImageURL struct {
+	URL string `json:"url"`
+}
+
+type Audio struct {
+	Data   string `json:"data"`
+	Format string `json:"format"`
 }
 
 type RuntimeConfig struct {
@@ -32,7 +54,7 @@ type Adapter interface {
 	Start(context.Context, RuntimeConfig) error
 	Close(context.Context) error
 	Info(context.Context) (RuntimeInfo, error)
-	Embed(context.Context, string) ([]float32, int, error)
+	Embed(context.Context, Input) ([]float32, int, error)
 	Done() <-chan struct{}
 }
 
