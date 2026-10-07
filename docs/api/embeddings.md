@@ -277,6 +277,12 @@ if (!response.ok) throw new Error(await response.text())
 console.log((await response.json()).similarities)
 ```
 
+</div>
+</div>
+
+<div class="api-row">
+<div class="api-doc">
+
 ## `POST /similarity`
 
 Compute normalized cosine similarity between `input` and every item in
