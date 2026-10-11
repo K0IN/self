@@ -84,3 +84,14 @@ func TestOfficialServerEagerLoadAndDevice(t *testing.T) {
 		}
 	}
 }
+
+func TestCustomSigmaArgs(t *testing.T) {
+	values, err := Settings.Validate(map[string]any{"sigmas": "1.0,0.5,0.0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	args := strings.Join(Args(dom.RuntimeConfig{Settings: values}, 8081), " ")
+	if !strings.Contains(args, "--sigmas 1.0,0.5,0.0") {
+		t.Fatalf("custom schedule missing: %s", args)
+	}
+}

@@ -93,6 +93,40 @@ Optional end-user identifier. It is accepted and ignored.
 
 </ApiField>
 
+<ApiField name="multi_embedding" type="boolean" optional>
+
+Request a matrix of token vectors for each input. Defaults to false. Requires
+the loaded model's `multi-embedding` output capability and a compatible adapter;
+otherwise the request returns `422 unsupported_capability` before inference.
+
+</ApiField>
+
+<ApiField name="input_type" type="query | document" optional>
+
+Select query or document encoding for multi-vector retrieval. Requires
+`multi_embedding: true`; defaults to `document` in that mode.
+
+</ApiField>
+
+#### Multi-vector embeddings
+
+`multi-embedding` is an additive capability for late-interaction retrievers,
+including PPLX Embed v2 Late 0.6B and 9B. It means multiple vectors per input,
+not a batch of single-vector inputs. Model metadata exposes the capability under
+`capabilities.output` in `GET /v1/model`.
+
+For `multi_embedding: true`, each data item has `object: "multi-embedding"`
+and an `embedding` matrix: `[token][dimension]`. A batch still has one data
+item per input. Query and document inputs use separate encoding calls. These
+fields and the matrix response are extensions to the standard OpenAI API.
+
+PPLX's two sizes produce 128-dimensional token vectors in a shared embedding
+space. Retrieval uses MaxSim, not pooled cosine similarity. The existing
+`/similarity` endpoint remains a single-vector cosine operation. Multi-vector-only
+models reject that operation and ordinary single-vector embedding calls rather
+than silently pooling their vectors. Neither PPLX checkpoint is registered yet;
+the capability contract does not supply its inference runtime or converted weights.
+
 </div>
 <div class="api-example">
 

@@ -28,6 +28,7 @@ var Settings = settings.Schema{
 	{Name: "threads", Flag: "--threads", Kind: settings.Int, Min: 1, Max: 1024, Help: "CPU threads"},
 	{Name: "offload_to_cpu", Flag: "--offload-to-cpu", Kind: settings.Bool, Help: "offload inactive model stages to CPU"},
 	{Name: "steps", Flag: "--steps", Kind: settings.Int, Min: 1, Max: 200, Help: "sampling steps"},
+	{Name: "sigmas", Flag: "--sigmas", Kind: settings.String, Help: "comma-separated custom sampling sigmas including terminal zero"},
 	{Name: "cfg_scale", Flag: "--cfg-scale", Kind: settings.Float, Min: 0, Max: 50, Help: "guidance scale"},
 	{Name: "sampling_method", Flag: "--sampling-method", Kind: settings.String, Enum: []string{"euler"}, Help: "sampling method"},
 	{Name: "flash_attention", Flag: "--fa", Kind: settings.Bool, Help: "flash attention"},

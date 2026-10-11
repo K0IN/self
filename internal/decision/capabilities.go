@@ -13,9 +13,12 @@ type Capabilities struct {
 	Vision     bool `json:"vision"`
 	MultiImage bool `json:"multi_image"`
 
-	Choice bool `json:"choice"`
-	Score  bool `json:"score"`
-	Noul   bool `json:"noul"`
+	Choice  bool `json:"choice"`
+	Score   bool `json:"score"`
+	Noul    bool `json:"noul"`
+	Number  bool `json:"number"`
+	Excerpt bool `json:"excerpt"`
+	Cite    bool `json:"cite"`
 
 	// MaxImages is the maximum number of images per request (0 = none).
 	MaxImages int `json:"max_images"`
@@ -29,6 +32,7 @@ func CapabilitiesFromRegistry(c registry.Capabilities) Capabilities {
 		Text: c.Input.Has(registry.CapText), Vision: c.Input.Has(registry.CapVision), MultiImage: c.Input.Has(registry.CapMultiImage),
 		Choice: c.Output.Has(registry.CapChoice), Score: c.Output.Has(registry.CapScore), Noul: c.Output.Has(registry.CapNoul),
 		MaxImages: c.MaxImages,
+		Number:    c.Output.Has(registry.CapNumber), Excerpt: c.Output.Has(registry.CapExcerpt), Cite: c.Output.Has(registry.CapCite),
 	}
 	if out.Vision && out.MaxImages == 0 {
 		out.MaxImages = 1
@@ -51,6 +55,9 @@ func (c Capabilities) MarshalJSON() ([]byte, error) {
 			Choice     bool `json:"choice"`
 			Score      bool `json:"score"`
 			Noul       bool `json:"noul"`
+			Number     bool `json:"number,omitempty"`
+			Excerpt    bool `json:"excerpt,omitempty"`
+			Cite       bool `json:"cite,omitempty"`
 			MaxOptions int  `json:"max_options,omitempty"`
 		} `json:"output"`
 	}{Input: struct {
@@ -62,8 +69,11 @@ func (c Capabilities) MarshalJSON() ([]byte, error) {
 		Choice     bool `json:"choice"`
 		Score      bool `json:"score"`
 		Noul       bool `json:"noul"`
+		Number     bool `json:"number,omitempty"`
+		Excerpt    bool `json:"excerpt,omitempty"`
+		Cite       bool `json:"cite,omitempty"`
 		MaxOptions int  `json:"max_options,omitempty"`
-	}{c.Choice, c.Score, c.Noul, c.MaxOptions}})
+	}{c.Choice, c.Score, c.Noul, c.Number, c.Excerpt, c.Cite, c.MaxOptions}})
 }
 
 // Intersect returns capabilities supported by both a and b. Limits take the
@@ -76,6 +86,9 @@ func (a Capabilities) Intersect(b Capabilities) Capabilities {
 		Choice:     a.Choice && b.Choice,
 		Score:      a.Score && b.Score,
 		Noul:       a.Noul && b.Noul,
+		Number:     a.Number && b.Number,
+		Excerpt:    a.Excerpt && b.Excerpt,
+		Cite:       a.Cite && b.Cite,
 		MaxImages:  minPositive(a.MaxImages, b.MaxImages),
 		MaxOptions: minPositive(a.MaxOptions, b.MaxOptions),
 	}
@@ -102,6 +115,10 @@ func minPositive(a, b int) int {
 // Supports reports whether a question type is supported.
 func (c Capabilities) Supports(t QuestionType) bool {
 	switch t {
+	case QuestionNumber:
+		return c.Number
+	case QuestionExcerpt:
+		return c.Excerpt
 	case QuestionChoice:
 		return c.Choice
 	case QuestionScore:
@@ -116,6 +133,9 @@ func (c Capabilities) Supports(t QuestionType) bool {
 // served by a model with these capabilities.
 func (c Capabilities) CheckQuestions(qs Questions) error {
 	for _, q := range qs {
+		if q.Cite && !c.Cite {
+			return fmt.Errorf("question %q: the loaded model does not support citations", q.ID)
+		}
 		t := q.Body.Type()
 		if !c.Supports(t) {
 			return fmt.Errorf("question %q: the loaded model does not support %s questions", q.ID, t)

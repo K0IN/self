@@ -68,7 +68,7 @@ Images supplied to vision-capable models. See [Vision input](#vision-input).
 
 #### Question object
 
-<ApiField name="type" type="choice | score | noul" required>
+<ApiField name="type" type="choice | score | noul | number | excerpt" required>
 
 Output type requested from the model.
 
@@ -84,7 +84,37 @@ What the model should decide.
 
 Required for `choice` and `score`: defines the available choices or rating levels. Omit it for `noul`.
 
+For `number`, optionally supply `min`, `max` and `precision` (a non-negative
+rounding increment, such as `0.01`). `min` must not exceed `max`. Omit criteria
+for `excerpt`.
+
 </ApiField>
+
+<ApiField name="cite" type="boolean" optional>
+
+Request supporting document spans with probabilities. Defaults to false.
+
+</ApiField>
+
+#### Extraction capabilities
+
+`number`, `excerpt` and `cite` are additive decision capabilities. Inspect
+`GET /v1/model` under `capabilities.output` before requesting them. Effective
+support is the intersection of the registry and engine capabilities. A model
+that does not support the requested type or citations returns HTTP `422` with
+`unsupported_capability` before inference. `cite: false` needs no citation
+capability. These fields do not enable extraction on existing choice-only models.
+
+`number` answers contain `value` (a number or `null` when not stated),
+`probability`, `not_stated`, nullable `confidence`, and `candidates` with
+`value`, `probability` and `context`. `excerpt` answers contain nullable `text`,
+`probability`, and, when text is found, `start` and `end` character offsets
+(zero-based, end-exclusive), plus optional `parts`. Citations appear in a
+`citations` array on any answer, with `text`, `start`, `end` and `probability`.
+Offsets count Unicode code points, not UTF-8 bytes.
+
+THX-01 uses these shapes for document lookup, verbatim extraction and supporting
+citations. API support alone does not provide a THX-01 inference runtime.
 
 </div>
 <div class="api-example">

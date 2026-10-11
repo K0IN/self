@@ -13,13 +13,15 @@ import (
 type QuestionType string
 
 const (
-	QuestionChoice QuestionType = "choice"
-	QuestionScore  QuestionType = "score"
-	QuestionNoul   QuestionType = "noul"
+	QuestionChoice  QuestionType = "choice"
+	QuestionScore   QuestionType = "score"
+	QuestionNoul    QuestionType = "noul"
+	QuestionNumber  QuestionType = "number"
+	QuestionExcerpt QuestionType = "excerpt"
 )
 
 // QuestionBody is the sealed union of concrete question forms:
-// *ChoiceQuestion, *ScoreQuestion, *NoulQuestion.
+// *ChoiceQuestion, *ScoreQuestion, *NoulQuestion, *NumberQuestion, *ExcerptQuestion.
 type QuestionBody interface {
 	Type() QuestionType
 	instructions() string
@@ -50,6 +52,26 @@ type NoulQuestion struct {
 	Instructions string
 }
 
+type NumberCriteria struct {
+	Min       *float64 `json:"min,omitempty"`
+	Max       *float64 `json:"max,omitempty"`
+	Precision *float64 `json:"precision,omitempty"`
+}
+
+type NumberQuestion struct {
+	Instructions string
+	Criteria     *NumberCriteria
+}
+
+type ExcerptQuestion struct{ Instructions string }
+
+func (*NumberQuestion) Type() QuestionType      { return QuestionNumber }
+func (*ExcerptQuestion) Type() QuestionType     { return QuestionExcerpt }
+func (q *NumberQuestion) instructions() string  { return q.Instructions }
+func (q *ExcerptQuestion) instructions() string { return q.Instructions }
+func (*NumberQuestion) sealedQuestion()         {}
+func (*ExcerptQuestion) sealedQuestion()        {}
+
 func (*ChoiceQuestion) Type() QuestionType { return QuestionChoice }
 func (*ScoreQuestion) Type() QuestionType  { return QuestionScore }
 func (*NoulQuestion) Type() QuestionType   { return QuestionNoul }
@@ -79,6 +101,7 @@ func OptionCount(q QuestionBody) int {
 type Question struct {
 	ID   string
 	Body QuestionBody
+	Cite bool
 }
 
 // Questions is an ordered set of questions. JSON form is an object keyed by
@@ -93,7 +116,13 @@ func (qs *Questions) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return fmt.Errorf("questions.%s: %w", id, err)
 		}
-		out = append(out, Question{ID: id, Body: body})
+		var options struct {
+			Cite bool `json:"cite"`
+		}
+		if err := json.Unmarshal(raw, &options); err != nil {
+			return err
+		}
+		out = append(out, Question{ID: id, Body: body, Cite: options.Cite})
 		return nil
 	})
 	if err != nil {
@@ -110,12 +139,15 @@ func (qs *Questions) UnmarshalJSON(data []byte) error {
 func (qs Questions) MarshalJSON() ([]byte, error) {
 	var w jsonx.ObjectWriter
 	for _, q := range qs {
-		w.Add(q.ID, questionJSON{q.Body})
+		w.Add(q.ID, questionJSON{q.Body, q.Cite})
 	}
 	return w.Bytes()
 }
 
-type questionJSON struct{ QuestionBody }
+type questionJSON struct {
+	QuestionBody
+	Cite bool
+}
 
 func (q questionJSON) MarshalJSON() ([]byte, error) {
 	var w jsonx.ObjectWriter
@@ -134,6 +166,13 @@ func (q questionJSON) MarshalJSON() ([]byte, error) {
 		w.Add("criteria", json.RawMessage(b))
 	case *ScoreQuestion:
 		w.Add("criteria", v.Criteria)
+	case *NumberQuestion:
+		if v.Criteria != nil {
+			w.Add("criteria", v.Criteria)
+		}
+	}
+	if q.Cite {
+		w.Add("cite", true)
 	}
 	return w.Bytes()
 }
@@ -143,6 +182,7 @@ func parseQuestion(raw json.RawMessage) (QuestionBody, error) {
 		Type         *string         `json:"type"`
 		Instructions *string         `json:"instructions"`
 		Criteria     json.RawMessage `json:"criteria"`
+		Cite         bool            `json:"cite"`
 	}
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	dec.DisallowUnknownFields()
@@ -150,7 +190,7 @@ func parseQuestion(raw json.RawMessage) (QuestionBody, error) {
 		return nil, fmt.Errorf("must be an object with type, instructions and criteria: %v", err)
 	}
 	if head.Type == nil {
-		return nil, fmt.Errorf("type is required (choice, score, or noul)")
+		return nil, fmt.Errorf("type is required (choice, score, noul, number, or excerpt)")
 	}
 	if head.Instructions == nil || strings.TrimSpace(*head.Instructions) == "" {
 		return nil, fmt.Errorf("instructions must be a non-empty string")
@@ -158,6 +198,27 @@ func parseQuestion(raw json.RawMessage) (QuestionBody, error) {
 	ins := *head.Instructions
 	hasCriteria := len(head.Criteria) > 0 && string(head.Criteria) != "null"
 	switch QuestionType(*head.Type) {
+	case QuestionNumber:
+		var criteria *NumberCriteria
+		if hasCriteria {
+			decoder := json.NewDecoder(bytes.NewReader(head.Criteria))
+			decoder.DisallowUnknownFields()
+			if err := decoder.Decode(&criteria); err != nil {
+				return nil, fmt.Errorf("number criteria must contain min, max or precision: %w", err)
+			}
+			if criteria.Min != nil && criteria.Max != nil && *criteria.Min > *criteria.Max {
+				return nil, fmt.Errorf("number criteria min exceeds max")
+			}
+			if criteria.Precision != nil && *criteria.Precision < 0 {
+				return nil, fmt.Errorf("number precision must be non-negative")
+			}
+		}
+		return &NumberQuestion{Instructions: ins, Criteria: criteria}, nil
+	case QuestionExcerpt:
+		if hasCriteria {
+			return nil, fmt.Errorf("excerpt questions do not take criteria")
+		}
+		return &ExcerptQuestion{Instructions: ins}, nil
 	case QuestionChoice:
 		if !hasCriteria {
 			return nil, fmt.Errorf("choice questions require criteria")
@@ -185,7 +246,7 @@ func parseQuestion(raw json.RawMessage) (QuestionBody, error) {
 		}
 		return &NoulQuestion{Instructions: ins}, nil
 	}
-	return nil, fmt.Errorf("unknown question type %q (choice, score, or noul)", *head.Type)
+	return nil, fmt.Errorf("unknown question type %q (choice, score, noul, number, or excerpt)", *head.Type)
 }
 
 // parseChoiceCriteria accepts {"key": "description"|null, ...} (ordered) or

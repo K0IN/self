@@ -54,14 +54,20 @@ func (h *Handler) Mount(r chi.Router) apiroot.ModelInfo {
 }
 
 type request struct {
-	Model          string          `json:"model"`
-	Input          json.RawMessage `json:"input"`
-	EncodingFormat string          `json:"encoding_format"`
-	Dimensions     *int            `json:"dimensions"`
-	User           string          `json:"user"`
+	Model          string              `json:"model"`
+	Input          json.RawMessage     `json:"input"`
+	EncodingFormat string              `json:"encoding_format"`
+	Dimensions     *int                `json:"dimensions"`
+	User           string              `json:"user"`
+	MultiEmbedding bool                `json:"multi_embedding"`
+	InputType      dom.EncodingPurpose `json:"input_type"`
 }
 
-type parsedRequest struct{ inputs []dom.Input }
+type parsedRequest struct {
+	inputs  []dom.Input
+	multi   bool
+	purpose dom.EncodingPurpose
+}
 
 type similarityRequest struct {
 	Input json.RawMessage   `json:"input"`
@@ -82,6 +88,20 @@ func (h *Handler) embeddings(w http.ResponseWriter, r *http.Request) {
 	}
 	totalTokens := 0
 	for i, input := range req.inputs {
+		if req.multi {
+			vectors, tokens, err := h.svc.(dom.MultiVectorEmbedder).EmbedMulti(r.Context(), input, req.purpose)
+			if err != nil {
+				apiroot.WriteError(w, err)
+				return
+			}
+			if err := validateMultiVectors(vectors); err != nil {
+				apiroot.WriteError(w, errs.Wrap(errs.RuntimeCrashed, err, "invalid multi-embedding result"))
+				return
+			}
+			data = append(data, map[string]any{"object": "multi-embedding", "embedding": vectors, "index": i})
+			totalTokens += tokens
+			continue
+		}
 		vector, tokens, err := h.svc.Embed(r.Context(), input)
 		if err != nil {
 			apiroot.WriteError(w, err)
@@ -98,6 +118,10 @@ func (h *Handler) embeddings(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) similarity(w http.ResponseWriter, r *http.Request) {
 	started := time.Now()
+	if err := h.validateSingleOutput(); err != nil {
+		apiroot.WriteError(w, err)
+		return
+	}
 	var req similarityRequest
 	if err := decodeJSON(w, r, &req); err != nil {
 		apiroot.WriteError(w, err)
@@ -162,6 +186,31 @@ func elapsedMS(started time.Time) float64 {
 	return float64(time.Since(started).Microseconds()) / 1000
 }
 
+func (h *Handler) validateSingleOutput() error {
+	caps := h.svc.Capabilities()
+	if caps.Output.Has(registry.CapMultiEmbedding) && !caps.Output.Has(registry.CapEmbedding) {
+		return errs.New(errs.UnsupportedCapability, "loaded model supports multi-embedding output only; set multi_embedding to true")
+	}
+	return nil
+}
+
+func validateMultiVectors(vectors [][]float32) error {
+	if len(vectors) == 0 || len(vectors[0]) == 0 {
+		return errors.New("token vectors must not be empty")
+	}
+	for _, vector := range vectors {
+		if len(vector) != len(vectors[0]) {
+			return errors.New("token vector dimensions do not match")
+		}
+		for _, value := range vector {
+			if math.IsNaN(float64(value)) || math.IsInf(float64(value), 0) {
+				return errors.New("token vectors must contain finite numbers")
+			}
+		}
+	}
+	return nil
+}
+
 func cosine(left, right []float32) (float32, error) {
 	if len(left) == 0 || len(left) != len(right) {
 		return 0, errors.New("embedding dimensions do not match")
@@ -189,7 +238,29 @@ func (h *Handler) decode(w http.ResponseWriter, r *http.Request) (parsedRequest,
 	if err := decodeJSON(w, r, &req); err != nil {
 		return parsedRequest{}, err
 	}
-	return parseRequest(r.Context(), req, h.fetcher)
+	if req.MultiEmbedding {
+		_, implemented := h.svc.(dom.MultiVectorEmbedder)
+		if !h.svc.Capabilities().Output.Has(registry.CapMultiEmbedding) || !implemented {
+			return parsedRequest{}, errs.New(errs.UnsupportedCapability, "loaded model does not support multi-embedding output")
+		}
+		if req.InputType == "" {
+			req.InputType = dom.PurposeDocument
+		}
+		if req.InputType != dom.PurposeQuery && req.InputType != dom.PurposeDocument {
+			return parsedRequest{}, errs.New(errs.InvalidRequest, "input_type must be query or document")
+		}
+	} else if req.InputType != "" {
+		return parsedRequest{}, errs.New(errs.UnsupportedCapability, "input_type requires multi_embedding output")
+	}
+	if !req.MultiEmbedding {
+		if err := h.validateSingleOutput(); err != nil {
+			return parsedRequest{}, err
+		}
+	}
+	parsed, err := parseRequest(r.Context(), req, h.fetcher)
+	parsed.multi = req.MultiEmbedding
+	parsed.purpose = req.InputType
+	return parsed, err
 }
 
 func decodeJSON(w http.ResponseWriter, r *http.Request, target any) error {

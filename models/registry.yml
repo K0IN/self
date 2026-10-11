@@ -7,7 +7,7 @@
 #     readme:        model card, Markdown file relative to this file (readmes/<name>/<version-size>.md)
 #     type:          decision | audio | text | embedding | image
 #     default:       quant used when --quant is not given
-#     capabilities:  text | vision | multi-image | choice | score | noul | audio | embedding | image | image-edit
+#     capabilities:  text | vision | multi-image | choice | score | noul | number | excerpt | cite | audio | embedding | multi-embedding | image | image-edit
 #     info:          descriptive metadata (family, parameters, architecture,
 #                    base_model, source, license, languages, context_length,
 #                    max_options, homepage). max_options also caps requests.
@@ -80,6 +80,47 @@ models:
       repo: unsloth/Qwen-Image-2.1-GGUF
       files:
         - {file: qwen-image-2.1-Q8_0.gguf, revision: 2c31ccd392b367a6637841a143813320a02dff55, size: 7640860384, sha256: c0ed4b2ffd56cbe9c3df1e4a4098045256484ebe94ba5a7e4338d35ec046baa5}
+        - {file: vae/qwen_image_2.1_vae_bf16.safetensors, role: vae, repo: Comfy-Org/Qwen-Image-2.1, revision: cb504a4090723e43f17ad01cec0359490e2de613, size: 675509688, sha256: bb21f7473051e1ac368515dd3f2e15cd44d7a11748ee8823e1ddca3e4876b7c9}
+        - {file: Qwen3VL-8B-Instruct-Q4_K_M.gguf, role: text-encoder, repo: Qwen/Qwen3-VL-8B-Instruct-GGUF, revision: f982a07559d4a2f6c8744d840bf6fccab30eea96, size: 5027784800, sha256: 67d1659bfe71b89d50b45a4ad1a9e5b997e5bb16ce5da66a6a6167abd569e9e2}
+        - {file: mmproj-Qwen3VL-8B-Instruct-F16.gguf, role: mmproj, repo: Qwen/Qwen3-VL-8B-Instruct-GGUF, revision: f982a07559d4a2f6c8744d840bf6fccab30eea96, size: 1159029824, sha256: ca524100ebf825c9a870db1c580d03879e0da0ab2541697e2458e64891cf9d38}
+
+  qwen-image-2.1-turbo:7b:
+    description: "Qwen Image 2.1 Turbo 7B: eight-step generation and multi-reference image editing"
+    readme: readmes/qwen-image-2.1-turbo/7b.md
+    type: image
+    default: q4
+    capabilities:
+      input: [text, image, multi-image]
+      output: [image, image-edit]
+    max_images: 8
+    info:
+      family: qwen-image-2.1
+      parameters: 7B
+      architecture: qwen-image-2.1
+      base_model: Qwen/Qwen-Image-2.1
+      source: Qwen/Qwen-Image-2.1-Turbo
+      license: qwen-research
+      homepage: "https://huggingface.co/Qwen/Qwen-Image-2.1-Turbo"
+    settings:
+      cfg_scale: 1.0
+      sampling_method: euler
+      flash_attention: true
+      offload_to_cpu: true
+      steps: 8
+      sigmas: "1.0,0.978453,0.95418,0.926626,0.89508,0.845148,0.704534,0.414568,0.0"
+    q4:
+      adapter: sd-server
+      repo: unsloth/Qwen-Image-2.1-Turbo-GGUF
+      files:
+        - {file: qwen-image-2.1-turbo-Q4_K_M.gguf, revision: 5d1f9f759ea877ae556cda88dbec958b62ad3809, size: 4199565120, sha256: 8940e8b522af886e0c0f5afddf720e82dd223cb9a43580b5f61c4d740452ac20}
+        - {file: vae/qwen_image_2.1_vae_bf16.safetensors, role: vae, repo: Comfy-Org/Qwen-Image-2.1, revision: cb504a4090723e43f17ad01cec0359490e2de613, size: 675509688, sha256: bb21f7473051e1ac368515dd3f2e15cd44d7a11748ee8823e1ddca3e4876b7c9}
+        - {file: Qwen3VL-8B-Instruct-Q4_K_M.gguf, role: text-encoder, repo: Qwen/Qwen3-VL-8B-Instruct-GGUF, revision: f982a07559d4a2f6c8744d840bf6fccab30eea96, size: 5027784800, sha256: 67d1659bfe71b89d50b45a4ad1a9e5b997e5bb16ce5da66a6a6167abd569e9e2}
+        - {file: mmproj-Qwen3VL-8B-Instruct-F16.gguf, role: mmproj, repo: Qwen/Qwen3-VL-8B-Instruct-GGUF, revision: f982a07559d4a2f6c8744d840bf6fccab30eea96, size: 1159029824, sha256: ca524100ebf825c9a870db1c580d03879e0da0ab2541697e2458e64891cf9d38}
+    q8:
+      adapter: sd-server
+      repo: unsloth/Qwen-Image-2.1-Turbo-GGUF
+      files:
+        - {file: qwen-image-2.1-turbo-Q8_0.gguf, revision: 5d1f9f759ea877ae556cda88dbec958b62ad3809, size: 7640860480, sha256: 399d2ddc3636f36456e2f5bfa57187da4e38721bc046430317f42a9eab5b1712}
         - {file: vae/qwen_image_2.1_vae_bf16.safetensors, role: vae, repo: Comfy-Org/Qwen-Image-2.1, revision: cb504a4090723e43f17ad01cec0359490e2de613, size: 675509688, sha256: bb21f7473051e1ac368515dd3f2e15cd44d7a11748ee8823e1ddca3e4876b7c9}
         - {file: Qwen3VL-8B-Instruct-Q4_K_M.gguf, role: text-encoder, repo: Qwen/Qwen3-VL-8B-Instruct-GGUF, revision: f982a07559d4a2f6c8744d840bf6fccab30eea96, size: 5027784800, sha256: 67d1659bfe71b89d50b45a4ad1a9e5b997e5bb16ce5da66a6a6167abd569e9e2}
         - {file: mmproj-Qwen3VL-8B-Instruct-F16.gguf, role: mmproj, repo: Qwen/Qwen3-VL-8B-Instruct-GGUF, revision: f982a07559d4a2f6c8744d840bf6fccab30eea96, size: 1159029824, sha256: ca524100ebf825c9a870db1c580d03879e0da0ab2541697e2458e64891cf9d38}

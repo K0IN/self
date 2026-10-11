@@ -11,6 +11,7 @@ import (
 	apiembedding "ai-server/internal/api/embedding"
 	"ai-server/internal/config"
 	dom "ai-server/internal/embedding"
+	"ai-server/internal/errs"
 	"ai-server/internal/imageutil"
 	"ai-server/internal/registry"
 )
@@ -29,7 +30,18 @@ func (s *embeddingService) Info() any                           { return s.info 
 func (s *embeddingService) Settings() map[string]any            { return s.settings }
 func (s *embeddingService) Capabilities() registry.Capabilities { return s.capabilities }
 func (s *embeddingService) Embed(ctx context.Context, input dom.Input) ([]float32, int, error) {
+	if s.capabilities.Output.Has(registry.CapMultiEmbedding) && !s.capabilities.Output.Has(registry.CapEmbedding) {
+		return nil, 0, errs.New(errs.UnsupportedCapability, "loaded model supports multi-embedding output only; set multi_embedding to true")
+	}
 	return s.adapter.Embed(ctx, input)
+}
+
+func (s *embeddingService) EmbedMulti(ctx context.Context, input dom.Input, purpose dom.EncodingPurpose) ([][]float32, int, error) {
+	adapter, ok := s.adapter.(dom.MultiVectorEmbedder)
+	if !s.capabilities.Output.Has(registry.CapMultiEmbedding) || !ok {
+		return nil, 0, errs.New(errs.UnsupportedCapability, "loaded model does not support multi-embedding output")
+	}
+	return adapter.EmbedMulti(ctx, input, purpose)
 }
 
 func serveEmbedding(ctx context.Context, cfg config.Serve, t target, out io.Writer, isTTY bool) error {
@@ -62,7 +74,17 @@ func serveEmbedding(ctx context.Context, cfg config.Serve, t target, out io.Writ
 		defer cancel()
 		_ = adapter.Close(c)
 	}
-	info, _ := adapter.Info(ctx)
+	info, err := adapter.Info(ctx)
+	if err != nil {
+		closeEngine()
+		return err
+	}
+	if t.res.Model.Capabilities.Output.Has(registry.CapMultiEmbedding) {
+		if _, ok := adapter.(dom.MultiVectorEmbedder); !ok || !info.MultiEmbedding {
+			closeEngine()
+			return errs.New(errs.UnsupportedModel, "%s: registry requires multi-embedding output but the engine does not support it", t.res.ID())
+		}
+	}
 	var tail func(int) []string
 	if s, ok := adapter.(interface{ StderrTail(int) []string }); ok {
 		tail = s.StderrTail

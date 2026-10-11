@@ -64,7 +64,17 @@ func encodeQuestions(qs decision.Questions) ([]byte, error) {
 		var w jsonx.ObjectWriter
 		w.Add("id", q.ID)
 		w.Add("type", q.Body.Type())
+		if q.Cite {
+			w.Add("cite", true)
+		}
 		switch b := q.Body.(type) {
+		case *decision.NumberQuestion:
+			w.Add("instructions", b.Instructions)
+			if b.Criteria != nil {
+				w.Add("criteria", b.Criteria)
+			}
+		case *decision.ExcerptQuestion:
+			w.Add("instructions", b.Instructions)
 		case *decision.ChoiceQuestion:
 			w.Add("instructions", b.Instructions)
 			var c jsonx.ObjectWriter

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math"
 
 	"ai-server/internal/jsonx"
 )
@@ -79,9 +80,44 @@ func (*NoulAnswer) sealedAnswer()        {}
 
 // Answer is a named answer.
 type Answer struct {
-	ID   string
-	Body AnswerBody
+	ID        string
+	Body      AnswerBody
+	Citations []Citation
 }
+
+type Citation struct {
+	Text        string  `json:"text"`
+	Start       int     `json:"start"`
+	End         int     `json:"end"`
+	Probability float64 `json:"probability"`
+}
+
+type NumberCandidate struct {
+	Value       float64 `json:"value"`
+	Probability float64 `json:"probability"`
+	Context     string  `json:"context"`
+}
+
+type NumberAnswer struct {
+	Value       *float64          `json:"value"`
+	Probability float64           `json:"probability"`
+	NotStated   float64           `json:"not_stated"`
+	Confidence  *float64          `json:"confidence"`
+	Candidates  []NumberCandidate `json:"candidates"`
+}
+
+type ExcerptAnswer struct {
+	Text        *string  `json:"text"`
+	Start       *int     `json:"start,omitempty"`
+	End         *int     `json:"end,omitempty"`
+	Probability float64  `json:"probability"`
+	Parts       []string `json:"parts,omitempty"`
+}
+
+func (*NumberAnswer) Type() QuestionType  { return QuestionNumber }
+func (*ExcerptAnswer) Type() QuestionType { return QuestionExcerpt }
+func (*NumberAnswer) sealedAnswer()       {}
+func (*ExcerptAnswer) sealedAnswer()      {}
 
 // Answers is ordered; JSON form is an object keyed by question id.
 type Answers []Answer
@@ -93,6 +129,20 @@ func (as Answers) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		if a.Citations != nil {
+			var fields map[string]json.RawMessage
+			if err := json.Unmarshal(b, &fields); err != nil {
+				return nil, err
+			}
+			fields["citations"], err = json.Marshal(a.Citations)
+			if err != nil {
+				return nil, err
+			}
+			b, err = json.Marshal(fields)
+			if err != nil {
+				return nil, err
+			}
+		}
 		w.Add(a.ID, json.RawMessage(b))
 	}
 	return w.Bytes()
@@ -102,6 +152,24 @@ func marshalAnswer(a AnswerBody) ([]byte, error) {
 	var w jsonx.ObjectWriter
 	w.Add("type", a.Type())
 	switch v := a.(type) {
+	case *NumberAnswer:
+		w.Add("value", v.Value)
+		w.Add("probability", v.Probability)
+		w.Add("not_stated", v.NotStated)
+		w.Add("confidence", v.Confidence)
+		w.Add("candidates", v.Candidates)
+	case *ExcerptAnswer:
+		w.Add("text", v.Text)
+		w.Add("probability", v.Probability)
+		if v.Start != nil {
+			w.Add("start", v.Start)
+		}
+		if v.End != nil {
+			w.Add("end", v.End)
+		}
+		if v.Parts != nil {
+			w.Add("parts", v.Parts)
+		}
 	case *ChoiceAnswer:
 		w.Add("choice", v.Choice)
 		w.Add("probabilities", v.Probabilities)
@@ -126,7 +194,13 @@ func (as *Answers) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return fmt.Errorf("answers.%s: %w", id, err)
 		}
-		out = append(out, Answer{ID: id, Body: body})
+		var metadata struct {
+			Citations []Citation `json:"citations"`
+		}
+		if err := json.Unmarshal(raw, &metadata); err != nil {
+			return err
+		}
+		out = append(out, Answer{ID: id, Body: body, Citations: metadata.Citations})
 		return nil
 	})
 	if err != nil {
@@ -147,6 +221,10 @@ func UnmarshalAnswer(raw json.RawMessage) (AnswerBody, error) {
 	}
 	var body AnswerBody
 	switch head.Type {
+	case QuestionNumber:
+		body = &NumberAnswer{}
+	case QuestionExcerpt:
+		body = &ExcerptAnswer{}
 	case QuestionChoice:
 		body = &ChoiceAnswer{}
 	case QuestionScore:
@@ -171,6 +249,35 @@ func CheckAnswers(qs Questions, as Answers) error {
 	}
 	byID := make(map[string]AnswerBody, len(as))
 	for _, a := range as {
+		if _, exists := byID[a.ID]; exists {
+			return fmt.Errorf("duplicate answer %q", a.ID)
+		}
+		for _, citation := range a.Citations {
+			if citation.Start < 0 || citation.End < citation.Start || !validProbability(citation.Probability) {
+				return fmt.Errorf("answer %q has invalid citation offsets or probability", a.ID)
+			}
+		}
+		switch body := a.Body.(type) {
+		case *NumberAnswer:
+			if !validProbability(body.Probability) || !validProbability(body.NotStated) {
+				return fmt.Errorf("answer %q has invalid number probability", a.ID)
+			}
+			if body.Value != nil && (math.IsNaN(*body.Value) || math.IsInf(*body.Value, 0)) {
+				return fmt.Errorf("answer %q has invalid number value", a.ID)
+			}
+			for _, candidate := range body.Candidates {
+				if !validProbability(candidate.Probability) || math.IsNaN(candidate.Value) || math.IsInf(candidate.Value, 0) {
+					return fmt.Errorf("answer %q has invalid number candidate", a.ID)
+				}
+			}
+		case *ExcerptAnswer:
+			if !validProbability(body.Probability) {
+				return fmt.Errorf("answer %q has invalid excerpt probability", a.ID)
+			}
+			if body.Text != nil && (body.Start == nil || body.End == nil || *body.Start < 0 || *body.End < *body.Start) {
+				return fmt.Errorf("answer %q has invalid excerpt offsets", a.ID)
+			}
+		}
 		byID[a.ID] = a.Body
 	}
 	for _, q := range qs {
@@ -180,6 +287,18 @@ func CheckAnswers(qs Questions, as Answers) error {
 		}
 		if a.Type() != q.Body.Type() {
 			return fmt.Errorf("answer %q has type %s, question is %s", q.ID, a.Type(), q.Body.Type())
+		}
+		if q.Cite {
+			found := false
+			for _, answer := range as {
+				if answer.ID == q.ID && answer.Citations != nil {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return fmt.Errorf("answer %q omitted requested citations", q.ID)
+			}
 		}
 		if cq, ok := q.Body.(*ChoiceQuestion); ok {
 			ca := a.(*ChoiceAnswer)
@@ -200,16 +319,20 @@ func CheckAnswers(qs Questions, as Answers) error {
 	return nil
 }
 
+func validProbability(value float64) bool {
+	return !math.IsNaN(value) && value >= 0 && value <= 1
+}
+
 // Reorder returns answers in question order.
 func Reorder(qs Questions, as Answers) Answers {
-	byID := make(map[string]AnswerBody, len(as))
+	byID := make(map[string]Answer, len(as))
 	for _, a := range as {
-		byID[a.ID] = a.Body
+		byID[a.ID] = a
 	}
 	out := make(Answers, 0, len(qs))
 	for _, q := range qs {
 		if b, ok := byID[q.ID]; ok {
-			out = append(out, Answer{ID: q.ID, Body: b})
+			out = append(out, b)
 		}
 	}
 	return out

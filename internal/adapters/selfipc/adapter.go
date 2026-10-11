@@ -81,6 +81,9 @@ type readyMsg struct {
 		Choice     bool  `json:"choice"`
 		Score      bool  `json:"score"`
 		Noul       bool  `json:"noul"`
+		Number     bool  `json:"number"`
+		Excerpt    bool  `json:"excerpt"`
+		Cite       bool  `json:"cite"`
 		MaxOptions int   `json:"max_options"`
 		Vision     struct {
 			Enabled   bool                    `json:"enabled"`
@@ -144,10 +147,11 @@ func parseReady(header []byte, device string) (decision.RuntimeInfo, error) {
 	}
 	c := m.Capabilities
 	caps := decision.Capabilities{
-		Text:       c.Text == nil || *c.Text,
-		Choice:     c.Choice,
-		Score:      c.Score,
-		Noul:       c.Noul,
+		Text:   c.Text == nil || *c.Text,
+		Choice: c.Choice,
+		Score:  c.Score,
+		Noul:   c.Noul,
+		Number: c.Number, Excerpt: c.Excerpt, Cite: c.Cite,
 		MaxOptions: c.MaxOptions,
 	}
 	info := decision.RuntimeInfo{EngineModel: m.Model, Device: m.Device, Capabilities: caps}

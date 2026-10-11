@@ -50,7 +50,12 @@ The Go adapter drains stdout, supervises stderr and serializes HTTP calls.
 Readiness polling stops if the child exits; CPU maps to both compute and
 parameter CPU placement, and CUDA indices map to upstream device names.
 
-Registered models are `qwen-image-2.1:7b` and `flux2-klein:9b`. Image-only
+Registered models are `qwen-image-2.1:7b`, `qwen-image-2.1-turbo:7b` and
+`flux2-klein:9b`. Turbo uses eight steps, guidance scale 1 and its published
+sigma schedule. Both Turbo quantizations passed local CUDA generation smoke
+tests on an RTX 5090; Q4 also passed single-reference editing. See
+`models/readmes/qwen-image-2.1-turbo/7b.md` for coverage and remaining limits.
+Image-only
 `vae` and `text-encoder` roles accept safetensors; diffusion and projector
 files remain GGUF. Every artifact has revision, byte-size and SHA-256 pins.
 Qwen 2.1 requires its own VAE and the Qwen3-VL-8B F16 projector for editing.

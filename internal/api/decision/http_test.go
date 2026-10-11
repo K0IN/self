@@ -61,6 +61,15 @@ func (f *fakeAdapter) Decide(_ context.Context, req dom.Request) (dom.Response, 
 			as = append(as, dom.Answer{ID: q.ID, Body: &dom.ScoreAnswer{Score: 1, Probabilities: dom.Probabilities{{Key: "0", P: 0.5}, {Key: "1", P: 0.5}}}})
 		case *dom.NoulQuestion:
 			as = append(as, dom.Answer{ID: q.ID, Body: &dom.NoulAnswer{Noul: 0.9, Confidence: 0.8}})
+		case *dom.NumberQuestion:
+			value := 42.0
+			as = append(as, dom.Answer{ID: q.ID, Body: &dom.NumberAnswer{Value: &value, Probability: 0.9}})
+		case *dom.ExcerptQuestion:
+			text, start, end := "hello", 0, 5
+			as = append(as, dom.Answer{ID: q.ID, Body: &dom.ExcerptAnswer{Text: &text, Start: &start, End: &end, Probability: 0.9}})
+		}
+		if q.Cite {
+			as[len(as)-1].Citations = []dom.Citation{{Text: "hello", Start: 0, End: 5, Probability: 0.9}}
 		}
 	}
 	return dom.Response{Answers: as, Usage: dom.Usage{InputTokens: 10, LatencyMS: 1.5}}, nil
@@ -177,6 +186,9 @@ func TestSystemOneErrors(t *testing.T) {
 		typ    string
 	}{
 		{`{`, 400, "invalid_request"},
+		{`{"state":"x","questions":{"q":{"type":"number","instructions":"Amount?"}}}`, 422, "unsupported_capability"},
+		{`{"state":"x","questions":{"q":{"type":"excerpt","instructions":"Quote?"}}}`, 422, "unsupported_capability"},
+		{`{"state":"x","questions":{"q":{"type":"noul","instructions":"True?","cite":true}}}`, 422, "unsupported_capability"},
 		{`{"questions":{"q":{"type":"noul","instructions":"x"}}}`, 400, "invalid_request"},
 		{`{"state":"x","questions":{}}`, 400, "invalid_request"},
 		{`{"state":"x","questions":{"q":{"type":"essay","instructions":"x"}}}`, 400, "invalid_request"},
@@ -198,6 +210,26 @@ func TestSystemOneErrors(t *testing.T) {
 	resp.Body.Close()
 	if resp.StatusCode != 400 {
 		t.Errorf("unknown route: %d", resp.StatusCode)
+	}
+}
+
+func TestSystemOneExtraction(t *testing.T) {
+	fake := newFake()
+	caps := textCaps
+	caps.Number, caps.Excerpt, caps.Cite = true, true, true
+	server := setup(t, caps, nil, 4, fake)
+	status, response := post(t, server.URL, `{"state":"hello 42","questions":{"amount":{"type":"number","instructions":"Amount?","cite":true},"quote":{"type":"excerpt","instructions":"Quote?"}}}`)
+	if status != 200 {
+		t.Fatalf("%d %v", status, response)
+	}
+	answers := response["answers"].(map[string]any)
+	amount := answers["amount"].(map[string]any)
+	if amount["value"] != 42.0 || len(amount["citations"].([]any)) != 1 || !fake.lastReq().Questions[0].Cite {
+		t.Fatalf("lost extraction request or response: %v", response)
+	}
+	quote := answers["quote"].(map[string]any)
+	if quote["text"] != "hello" || quote["start"] != 0.0 || quote["end"] != 5.0 {
+		t.Fatalf("lost excerpt: %v", quote)
 	}
 }
 

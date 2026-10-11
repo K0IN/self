@@ -45,9 +45,10 @@ type RuntimeConfig struct {
 }
 
 type RuntimeInfo struct {
-	EngineModel string
-	Device      string
-	ContextSize int
+	EngineModel    string
+	Device         string
+	ContextSize    int
+	MultiEmbedding bool
 }
 
 type Adapter interface {
@@ -59,3 +60,14 @@ type Adapter interface {
 }
 
 type Factory func() Adapter
+
+type EncodingPurpose string
+
+const (
+	PurposeQuery    EncodingPurpose = "query"
+	PurposeDocument EncodingPurpose = "document"
+)
+
+type MultiVectorEmbedder interface {
+	EmbedMulti(context.Context, Input, EncodingPurpose) ([][]float32, int, error)
+}

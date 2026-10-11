@@ -41,6 +41,61 @@ func TestParseQuestions(t *testing.T) {
 	}
 }
 
+func TestExtractionCapabilities(t *testing.T) {
+	qs := parseQs(t, `{"amount":{"type":"number","instructions":"Amount?","criteria":{"min":0,"max":100,"precision":0.01},"cite":true},"quote":{"type":"excerpt","instructions":"Quote?"}}`)
+	if qs[0].Body.(*NumberQuestion).Criteria == nil || !qs[0].Cite {
+		t.Fatal("lost number criteria or cite")
+	}
+	caps := Capabilities{Number: true, Excerpt: true, Cite: true}
+	if err := caps.CheckQuestions(qs); err != nil {
+		t.Fatal(err)
+	}
+	if err := caps.Intersect(Capabilities{}).CheckQuestions(qs); err == nil {
+		t.Fatal("intersection allowed unsupported extraction")
+	}
+	raw, err := json.Marshal(qs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	back := parseQs(t, string(raw))
+	if !back[0].Cite || *back[0].Body.(*NumberQuestion).Criteria.Precision != 0.01 {
+		t.Fatal("lost extraction options on round trip")
+	}
+	var answers Answers
+	if err := json.Unmarshal([]byte(`{"amount":{"type":"number","value":null,"probability":0.9,"not_stated":0.9,"confidence":null,"candidates":[],"citations":[]},"quote":{"type":"excerpt","text":"hello","start":0,"end":5,"probability":0.8}}`), &answers); err != nil {
+		t.Fatal(err)
+	}
+	if err := CheckAnswers(qs, answers); err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := json.Marshal(Reorder(qs, answers))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(encoded), `"value":null`) || !strings.Contains(string(encoded), `"citations":[]`) {
+		t.Fatalf("lost null or citations: %s", encoded)
+	}
+}
+
+func TestCitationCapabilityAndResult(t *testing.T) {
+	qs := parseQs(t, `{"q":{"type":"noul","instructions":"True?","cite":true}}`)
+	if err := (Capabilities{Noul: true}).CheckQuestions(qs); err == nil {
+		t.Fatal("allowed citations without capability")
+	}
+	answers := Answers{{ID: "q", Body: &NoulAnswer{Noul: 0.8}}}
+	if err := CheckAnswers(qs, answers); err == nil {
+		t.Fatal("allowed missing citation result")
+	}
+	answers[0].Citations = []Citation{}
+	if err := CheckAnswers(qs, answers); err != nil {
+		t.Fatal(err)
+	}
+	qs[0].Cite = false
+	if err := (Capabilities{Noul: true}).CheckQuestions(qs); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestQuestionErrors(t *testing.T) {
 	cases := map[string]string{
 		"unknown type":      `{"q":{"type":"essay","instructions":"x"}}`,

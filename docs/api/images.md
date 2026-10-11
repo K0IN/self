@@ -12,6 +12,10 @@ Image models generate new images from text prompts and edit one or more
 reference images. The endpoints use the OpenAI image API shapes: generation
 requests are JSON, while edit requests use `multipart/form-data`.
 
+[Qwen Image 2.1 Turbo](/registry/qwen-image-2.1-turbo/7b) is available in Q4
+and Q8 with eight-step sampling defaults. Both variants passed local CUDA
+generation smoke tests; Q4 also passed a single-reference edit.
+
 Health, model metadata and the error format are shared by all modalities; see
 the [API overview](/api/).
 

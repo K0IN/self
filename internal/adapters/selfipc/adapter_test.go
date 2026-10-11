@@ -249,3 +249,31 @@ func contains(s, sub string) bool {
 		return false
 	})()
 }
+
+func TestExtractionProtocol(t *testing.T) {
+	info, err := parseReady([]byte(`{"type":"ready","protocol":1,"capabilities":{"number":true,"excerpt":true,"cite":true}}`), "cpu")
+	if err != nil {
+		t.Fatal(err)
+	}
+	qs := questions(t, `{"value":{"type":"number","instructions":"Amount?","criteria":{"precision":0.01},"cite":true},"span":{"type":"excerpt","instructions":"Quote?"}}`)
+	if err := info.Capabilities.CheckQuestions(qs); err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := encodeQuestions(qs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded []struct {
+		Type     string `json:"type"`
+		Cite     bool   `json:"cite"`
+		Criteria struct {
+			Precision float64 `json:"precision"`
+		} `json:"criteria"`
+	}
+	if err := json.Unmarshal(encoded, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	if len(decoded) != 2 || !decoded[0].Cite || decoded[0].Criteria.Precision != 0.01 || decoded[1].Type != "excerpt" {
+		t.Fatalf("lost extraction options: %s", encoded)
+	}
+}

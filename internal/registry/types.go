@@ -30,7 +30,7 @@ type typeSpec struct {
 // modelTypes is the one place a new model type is declared for the registry.
 var modelTypes = map[ModelType]typeSpec{
 	TypeDecision: {
-		Capabilities: []Capability{CapText, CapVision, CapMultiImage, CapChoice, CapScore, CapNoul},
+		Capabilities: []Capability{CapText, CapVision, CapMultiImage, CapChoice, CapScore, CapNoul, CapNumber, CapExcerpt, CapCite},
 		Roles:        []FileRole{RoleModel, RoleMMProj, RoleHead},
 	},
 	TypeAudio: {
@@ -42,7 +42,7 @@ var modelTypes = map[ModelType]typeSpec{
 		Roles:        []FileRole{RoleModel, RoleMMProj},
 	},
 	TypeEmbedding: {
-		Capabilities: []Capability{CapText, CapVision, CapAudio, CapEmbedding},
+		Capabilities: []Capability{CapText, CapVision, CapAudio, CapEmbedding, CapMultiEmbedding},
 		Roles:        []FileRole{RoleModel, RoleMMProj},
 	},
 	TypeImage: {
@@ -55,17 +55,21 @@ var modelTypes = map[ModelType]typeSpec{
 type Capability string
 
 const (
-	CapText         Capability = "text"
-	CapVision       Capability = "vision"
-	CapMultiImage   Capability = "multi-image"
-	CapChoice       Capability = "choice"
-	CapScore        Capability = "score"
-	CapNoul         Capability = "noul"
-	CapAudio        Capability = "audio"
-	CapInstructions Capability = "instructions"
-	CapEmbedding    Capability = "embedding"
-	CapImage        Capability = "image"
-	CapImageEdit    Capability = "image-edit"
+	CapText           Capability = "text"
+	CapVision         Capability = "vision"
+	CapMultiImage     Capability = "multi-image"
+	CapChoice         Capability = "choice"
+	CapScore          Capability = "score"
+	CapNoul           Capability = "noul"
+	CapNumber         Capability = "number"
+	CapExcerpt        Capability = "excerpt"
+	CapCite           Capability = "cite"
+	CapAudio          Capability = "audio"
+	CapInstructions   Capability = "instructions"
+	CapEmbedding      Capability = "embedding"
+	CapMultiEmbedding Capability = "multi-embedding"
+	CapImage          Capability = "image"
+	CapImageEdit      Capability = "image-edit"
 )
 
 // Capabilities separates accepted input features from produced output types.
