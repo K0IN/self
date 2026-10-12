@@ -33,6 +33,10 @@ Images are published to GHCR for Linux hosts:
 | `cuda-12` | NVIDIA CUDA 12 |
 | `cpu` | CPU-only |
 
+CUDA images require a host NVIDIA driver and the NVIDIA Container Toolkit.
+They exit at startup if no NVIDIA GPU is accessible. Use the `cpu` tag on
+hosts without a GPU.
+
 CUDA 13:
 
 ```bash

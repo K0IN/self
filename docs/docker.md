@@ -2,9 +2,14 @@
 
 The image contains the server and engine binaries, but model files live in `/models`.
 
+CUDA images check for an accessible NVIDIA GPU at startup and exit with an error
+if none is found. Run them with `--gpus=all` on a host with an NVIDIA driver and
+the NVIDIA Container Toolkit installed. CPU images do not require a GPU.
+
 ```bash
 mkdir -p "$HOME/.ai-server/models"
 docker run --rm \
+  --gpus=all \
   --publish 8080:8080 \
   --volume "$HOME/.ai-server/models:/models" \
   ghcr.io/k0in/self:latest serve kev:0.5b
@@ -13,10 +18,16 @@ docker run --rm \
 The image sets `AI_SERVER_MODELS=/models` and starts `kev:0.5b` on `0.0.0.0:8080`. To use another registry model:
 
 ```bash
-docker run --rm -p 8080:8080 -v "$HOME/.ai-server/models:/models" \
+docker run --gpus=all --rm -p 8080:8080 -v "$HOME/.ai-server/models:/models" \
   ghcr.io/k0in/self:latest serve kev:4b@q4 --host 0.0.0.0 --port 8080
 ```
 
+For hosts without an NVIDIA GPU, use the `cpu` tag without `--gpus=all`:
+
+```bash
+docker run --rm -p 8080:8080 -v "$HOME/.ai-server/models:/models" \
+  ghcr.io/k0in/self:cpu serve kev:0.5b
+```
 
 ## Offline use
 
@@ -28,7 +39,7 @@ started without network access by mounting the same directory and using the
 model reference as usual:
 
 ```bash
-docker run --rm --network none -p 8080:8080 \
+docker run --gpus=all --rm --network none -p 8080:8080 \
   -v "$HOME/.ai-server/models:/models" \
   ghcr.io/k0in/self:latest serve kev:4b --host 0.0.0.0 --port 8080
 ```

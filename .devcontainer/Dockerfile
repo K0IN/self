@@ -1,4 +1,4 @@
-FROM nvidia/cuda:13.4.1-devel-ubuntu24.04
+FROM docker.io/nvidia/cuda:13.4.1-devel-ubuntu24.04
 
 ARG GO_VERSION=1.27.1
 

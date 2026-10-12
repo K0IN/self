@@ -40,6 +40,7 @@ Bash and Zsh:
 ```bash
 self() {
 	docker run --rm \
+	     --gpus=all \
 		--publish 8080:8080 \
 		--volume "$HOME/.ai-server/models:/models" \
 		ghcr.io/k0in/self:latest "$@"
@@ -51,6 +52,7 @@ Fish:
 ```fish
 function self
 		docker run --rm \
+							 --gpus=all \
 				--publish 8080:8080 \
 				--volume "$HOME/.ai-server/models:/models" \
 				ghcr.io/k0in/self:latest $argv

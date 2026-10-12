@@ -73,7 +73,9 @@ RUN apt-get update \
 WORKDIR /app
 COPY --from=builder /src/bin/self /app/self
 COPY --from=builder /src/bin/libexec /app/libexec
+COPY --chmod=755 docker/entrypoint.sh /app/entrypoint.sh
 
+ENV AI_SERVER_CUDA_VARIANT=${CUDA_VARIANT}
 ENV AI_SERVER_RUNTIME_DIR=/app/libexec/ai-server
 ENV LD_LIBRARY_PATH=/app/libexec/ai-server/lib
 ENV AI_SERVER_MODELS=/models
@@ -109,5 +111,5 @@ RUN set -eu; \
 EXPOSE 8080
 VOLUME ["/models"]
 
-ENTRYPOINT ["/app/self"]
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["serve", "kev:0.5b"]
