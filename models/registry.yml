@@ -552,7 +552,7 @@ models:
       adapter: clef
       repo: bartowski/Cloudflare_clef-flash-GGUF
       files:
-        - {file: Cloudflare_clef-flash-Q4_K_M.gguf, size: 5841052992, sha256: 45f803cbcb6144784653bc31cde957e0d184d963a5198d423dc589a79e178d45}
+        - {file: Cloudflare_clef-flash-Q4_K_M.gguf, size: 6040541344, sha256: cf747351878a0e569fd9d6681395bd723e111f63a4f6fe6e26e7563dfdfa9b0a}
         - {file: mmproj-Cloudflare_clef-flash-f16.gguf, role: mmproj, size: 918165984, sha256: c8a6e9e00e1baf6433c4874dbc73bed2a56e887bcbb582fffcb00b533bc638dd}
         - {file: joint_head.safetensors, role: head, repo: Cloudflare/clef-flash, size: 243538016, sha256: 19cdcec8c81dc9212be320fff47462ab342fbc1278be4368fb3da71241cf5ba0}
 
