@@ -159,6 +159,62 @@ models:
   # Every model lists its multimodal projector with role: mmproj (image input).
   # settings carry each model card's recommended sampling; `thinking` is the model's own default.
 
+  winnow:12b:
+    description: "Winnow 12B: Gemma 4 fine-tune served for chat and image input"
+    readme: readmes/winnow/12b.md
+    type: text
+    default: q8
+    capabilities:
+      input: [text, vision]
+      output: [text]
+    info:
+      family: winnow
+      parameters: 12B
+      architecture: gemma4
+      base_model: google/gemma-4-12B-it
+      source: EldanRing/Winnow-12B
+      license: apache-2.0
+      languages: [multilingual]
+      context_length: 65536
+      homepage: "https://huggingface.co/EldanRing/Winnow-12B"
+    settings:
+      context_size: 8192
+      thinking: "off"
+    q8:
+      adapter: llama-server
+      repo: EldanRing/Winnow-12B
+      files:
+        - {file: gguf/Winnow-12B-Q8_0.gguf, revision: 859a2cb24921d8b579badce6caa469f9290f3bc1, size: 12669646592, sha256: b710efc4c0d048ee61eed92c5fef5ce323a4d17e7c51f9f0533cc72ae50818ea}
+        - {file: gguf/mmproj-Winnow-12B.gguf, role: mmproj, revision: 859a2cb24921d8b579badce6caa469f9290f3bc1, size: 175115840, sha256: 91f086971e56d7a7d8d39e271873fccdb49541bd259d6e02c401a4f1cb7a219e}
+
+  winnow:4b:
+    description: "Winnow E4B: efficient Gemma 4 fine-tune served for chat and image input"
+    readme: readmes/winnow/4b.md
+    type: text
+    default: q8
+    capabilities:
+      input: [text, vision]
+      output: [text]
+    info:
+      family: winnow
+      parameters: 4.5B effective (8B with embeddings)
+      architecture: gemma4
+      base_model: google/gemma-4-E4B-it
+      source: EldanRing/Winnow-E4B
+      license: apache-2.0
+      languages: [multilingual]
+      context_length: 65536
+      homepage: "https://huggingface.co/EldanRing/Winnow-E4B"
+    settings:
+      context_size: 8192
+      thinking: "off"
+    q8:
+      adapter: llama-server
+      repo: EldanRing/Winnow-E4B
+      files:
+        - {file: gguf/Winnow-E4B-Q8_0.gguf, revision: ed891438b340bb60e2962e335fe100b2796c2124, size: 8005437472, sha256: 840e3f50e5a9c218727f44e121d1b37cc9e2c3b318c8eb422ba6ef2e27b618a2}
+        - {file: gguf/mmproj-Winnow-E4B.gguf, role: mmproj, revision: ed891438b340bb60e2962e335fe100b2796c2124, size: 990372672, sha256: ddf46c21d7078e95338cfc22306b19b276a29a5ad089023449dd54d4b6170a51}
+
   qwen3.5:9b:
     description: "Qwen3.5 9B: multilingual chat model with reasoning and image input"
     readme: readmes/qwen3.5/9b.md
