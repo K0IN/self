@@ -160,13 +160,13 @@ models:
   # settings carry each model card's recommended sampling; `thinking` is the model's own default.
 
   winnow:12b:
-    description: "Winnow 12B: Gemma 4 fine-tune served for chat and image input"
+    description: "Winnow 12B: Gemma 4 typed decisions about text and images"
     readme: readmes/winnow/12b.md
-    type: text
+    type: decision
     default: q8
     capabilities:
       input: [text, vision]
-      output: [text]
+      output: [choice, score, noul]
     info:
       family: winnow
       parameters: 12B
@@ -176,25 +176,27 @@ models:
       license: apache-2.0
       languages: [multilingual]
       context_length: 65536
+      max_options: 64
       homepage: "https://huggingface.co/EldanRing/Winnow-12B"
     settings:
       context_size: 8192
-      thinking: "off"
+      protocol: winnow
+      temperature: 1.0
     q8:
-      adapter: llama-server
+      adapter: ggmlc-custom-decider
       repo: EldanRing/Winnow-12B
       files:
         - {file: gguf/Winnow-12B-Q8_0.gguf, revision: 859a2cb24921d8b579badce6caa469f9290f3bc1, size: 12669646592, sha256: b710efc4c0d048ee61eed92c5fef5ce323a4d17e7c51f9f0533cc72ae50818ea}
         - {file: gguf/mmproj-Winnow-12B.gguf, role: mmproj, revision: 859a2cb24921d8b579badce6caa469f9290f3bc1, size: 175115840, sha256: 91f086971e56d7a7d8d39e271873fccdb49541bd259d6e02c401a4f1cb7a219e}
 
   winnow:4b:
-    description: "Winnow E4B: efficient Gemma 4 fine-tune served for chat and image input"
+    description: "Winnow E4B: efficient Gemma 4 typed decisions about text and images"
     readme: readmes/winnow/4b.md
-    type: text
+    type: decision
     default: q8
     capabilities:
       input: [text, vision]
-      output: [text]
+      output: [choice, score, noul]
     info:
       family: winnow
       parameters: 4.5B effective (8B with embeddings)
@@ -204,12 +206,14 @@ models:
       license: apache-2.0
       languages: [multilingual]
       context_length: 65536
+      max_options: 64
       homepage: "https://huggingface.co/EldanRing/Winnow-E4B"
     settings:
       context_size: 8192
-      thinking: "off"
+      protocol: winnow
+      temperature: 1.2574172017327816
     q8:
-      adapter: llama-server
+      adapter: ggmlc-custom-decider
       repo: EldanRing/Winnow-E4B
       files:
         - {file: gguf/Winnow-E4B-Q8_0.gguf, revision: ed891438b340bb60e2962e335fe100b2796c2124, size: 8005437472, sha256: 840e3f50e5a9c218727f44e121d1b37cc9e2c3b318c8eb422ba6ef2e27b618a2}

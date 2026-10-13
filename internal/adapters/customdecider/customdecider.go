@@ -21,6 +21,8 @@ const Engine = "ggmlc-custom-decider"
 // Settings are the engine parameters (registry `settings:` / `--set`).
 // Keep in sync with the flags in engines/ggmlc-custom-decider/main.cpp.
 var Settings = settings.Schema{
+	{Name: "protocol", Flag: "--protocol", Kind: settings.String, Enum: []string{"decider", "winnow"},
+		Help: "model-specific decision prompt and readout; default decider"},
 	{Name: "context_size", Flag: "--ctx", Kind: settings.Int, Min: 512, Max: 262144,
 		Help: "llama.cpp context size in tokens (prompt + image tokens); default 8192"},
 	{Name: "threads", Flag: "--threads", Kind: settings.Int, Min: 1, Max: 1024,

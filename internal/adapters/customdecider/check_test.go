@@ -6,6 +6,7 @@ import (
 
 	"ai-server/internal/decision"
 	"ai-server/internal/ggufmeta"
+	"ai-server/internal/settings"
 )
 
 func TestCheckModel(t *testing.T) {
@@ -38,5 +39,16 @@ func TestArgs(t *testing.T) {
 	want := "--model /m/model.gguf --device cuda:0 --mmproj /m/mmproj.gguf --gpu-layers -1"
 	if got != want {
 		t.Fatalf("args = %q", got)
+	}
+}
+
+func TestWinnowArgs(t *testing.T) {
+	got := strings.Join(Spec.Args(decision.RuntimeConfig{
+		Device:   "cpu",
+		Files:    decision.ModelFiles{Model: "/m/winnow.gguf"},
+		Settings: settings.Values{"protocol": "winnow", "temperature": 1.2574172017327816},
+	}), " ")
+	if !strings.Contains(got, "--protocol winnow") || !strings.Contains(got, "--temperature 1.2574172017327816") {
+		t.Fatalf("Winnow args = %q", got)
 	}
 }

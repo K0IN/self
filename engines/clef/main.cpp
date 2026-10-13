@@ -322,15 +322,15 @@ struct Segment {
 };
 
 struct Capture {
-    llama_context* ctx;
+    const clef::Vec* hidden;
     float* dst;
     int64_t n_embd, rows, got;
 };
 
 int32_t capture_cb(const mtmd_helper_embd_batch* b, void* user) {
     auto* c = static_cast<Capture*>(user);
-    const float* e = llama_get_embeddings(c->ctx);
-    if (!e || c->got + b->n_tokens > c->rows) return 1;
+    const float* e = c->hidden->data();
+    if (c->hidden->size() != size_t(b->n_tokens * c->n_embd) || c->got + b->n_tokens > c->rows) return 1;
     std::memcpy(c->dst + c->got * c->n_embd, e, size_t(b->n_tokens) * size_t(c->n_embd) * sizeof(float));
     c->got += b->n_tokens;
     return 0;
@@ -372,7 +372,7 @@ public:
         }
         model_ = llama_model_load_from_file(opt_.model.c_str(), mp);
         if (!model_) throw std::runtime_error("cannot load model " + opt_.model);
-        n_embd_ = llama_model_n_embd_out(model_);
+        n_embd_ = llama_model_n_embd(model_);
 
         llama_context_params cp = llama_context_default_params();
         // Every position's hidden state is needed, so embeddings are enabled
@@ -384,6 +384,8 @@ public:
         cp.n_seq_max = 1;
         cp.embeddings = true;
         cp.pooling_type = LLAMA_POOLING_TYPE_NONE;
+        cp.cb_eval = capture_hidden;
+        cp.cb_eval_user_data = this;
         cp.flash_attn_type = flash_type();
         cp.n_threads = cp.n_threads_batch = threads_;
         ctx_ = llama_init_from_model(model_, cp);
@@ -667,11 +669,10 @@ private:
             if (seg.image) {
                 const int64_t n = seg.size();
                 if (mtmd_encode_chunk(mtmd_, seg.image) != 0) throw std::runtime_error("image encoding failed");
-                Capture cap{ctx_, hidden.data() + size_t(row) * size_t(n_embd_), n_embd_, n, 0};
+                Capture cap{&batch_hidden_, hidden.data() + size_t(row) * size_t(n_embd_), n_embd_, n, 0};
                 llama_pos next = 0;
                 if (mtmd_helper_decode_image_chunk(mtmd_, ctx_, seg.image, mtmd_get_output_embd(mtmd_), n_past, 0, kBatch, &next,
-                                                   capture_cb, &cap) != 0 ||
-                    cap.got != n)
+                                                   capture_cb, &cap) != 0 || cap.got != n)
                     throw std::runtime_error("image decode failed");
                 n_past = next;
                 row += n;
@@ -679,18 +680,19 @@ private:
             }
             for (size_t off = 0; off < seg.tokens.size(); off += kBatch) {
                 const size_t n = std::min<size_t>(kBatch, seg.tokens.size() - off);
+                std::unique_ptr<llama_batch_ext, decltype(&llama_batch_ext_free)> text_batch(
+                    llama_batch_ext_init(ctx_), llama_batch_ext_free);
                 for (size_t i = 0; i < n; ++i) {
-                    batch_.token[i] = seg.tokens[off + i];
-                    batch_.pos[i] = n_past + llama_pos(i);
-                    batch_.n_seq_id[i] = 1;
-                    batch_.seq_id[i][0] = 0;
-                    batch_.logits[i] = 1;
+                    int32_t index = llama_batch_ext_add_token(text_batch.get(), 0, seg.tokens[off + i]);
+                    llama_pos position = n_past + llama_pos(i);
+                    llama_batch_ext_set_pos(text_batch.get(), index, &position);
+                    llama_batch_ext_set_output_logits(text_batch.get(), index, true);
                 }
-                batch_.n_tokens = int32_t(n);
-                int rc = llama_decode(ctx_, batch_);
+                batch_hidden_.clear();
+                int rc = llama_process(ctx_, LLAMA_PROCESS_TYPE_DECODE, text_batch.get());
                 if (rc != 0) throw std::runtime_error("llama_decode returned " + std::to_string(rc));
-                const float* e = llama_get_embeddings(ctx_);
-                if (!e) throw std::runtime_error("backbone returned no hidden states");
+                const float* e = batch_hidden_.data();
+                if (batch_hidden_.size() != n * size_t(n_embd_)) throw std::runtime_error("backbone returned no decoder hidden states");
                 std::memcpy(hidden.data() + size_t(row) * size_t(n_embd_), e, n * size_t(n_embd_) * sizeof(float));
                 n_past += llama_pos(n);
                 row += int64_t(n);
@@ -715,6 +717,18 @@ private:
         ggml_backend_load_all();
     }
 
+    static bool capture_hidden(ggml_tensor* tensor, bool ask, void* user) {
+        auto* engine = static_cast<Engine*>(user);
+        bool selected = std::strcmp(tensor->name, "result_norm") == 0;
+        if (ask) return selected;
+        if (!selected) return true;
+        if (tensor->type != GGML_TYPE_F32 || tensor->ne[0] != engine->n_embd_ || !ggml_is_contiguous(tensor)) return false;
+        engine->batch_hidden_.resize(size_t(ggml_nelements(tensor)));
+        ggml_backend_tensor_get(tensor, engine->batch_hidden_.data(), 0, ggml_nbytes(tensor));
+        return true;
+    }
+
+    clef::Vec batch_hidden_;
     Options opt_;
     int threads_ = 1;
     std::string device_ = "cpu";
