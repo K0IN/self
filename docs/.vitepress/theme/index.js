@@ -2,6 +2,7 @@ import DefaultTheme from 'vitepress/theme'
 import ApiField from './ApiField.vue'
 import ModelCatalog from './ModelCatalog.vue'
 import BenchmarkTable from './BenchmarkTable.vue'
+import QualityBenchmarks from './QualityBenchmarks.vue'
 import './custom.css'
 
 export default {
@@ -10,5 +11,6 @@ export default {
         app.component('ApiField', ApiField)
         app.component('ModelCatalog', ModelCatalog)
         app.component('BenchmarkTable', BenchmarkTable)
+        app.component('QualityBenchmarks', QualityBenchmarks)
     }
 }

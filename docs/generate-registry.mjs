@@ -1,12 +1,14 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import yaml from 'yaml'
+import { definitions, modelBenchmarks, snapshotPath } from './quality-benchmarks.mjs'
 
 const root = path.resolve(import.meta.dirname, '..')
 const docs = import.meta.dirname
 const registryPath = process.env.REGISTRY_FILE || path.join(root, 'models', 'registry.yml')
 const registryText = fs.readFileSync(registryPath, 'utf8')
 const registry = yaml.parse(registryText)
+const qualitySnapshot = fs.existsSync(snapshotPath) ? JSON.parse(fs.readFileSync(snapshotPath, 'utf8')) : {}
 const output = path.join(docs, 'registry')
 const publicDir = path.join(docs, 'public')
 const publicBenchmarkDir = path.join(publicDir, 'benchmarks')
@@ -55,6 +57,7 @@ const catalog = rows.map(({ id, model, quants, slug, size, capabilities }) => ({
         }
     }),
     capabilities,
+    qualityBenchmarks: modelBenchmarks(id, model, qualitySnapshot),
     size,
     href: `/registry/${slug}`
 }))
@@ -118,7 +121,8 @@ fs.writeFileSync(path.join(publicDir, 'benchmarks.json'), JSON.stringify(benchma
 })), null, 2) + '\n')
 
 const catalogJSON = JSON.stringify(catalog.map(({ variants, ...card }) => card)).replaceAll('&', '&amp;').replaceAll('"', '&quot;')
-const index = `# Model registry\n\nThe registry is the source of truth for downloadable models. Search the catalog or [download models.yml](/models.yml).\n\n<ModelCatalog :models="${catalogJSON}" />\n`
+const benchmarkReferences = Object.entries(definitions.types).map(([type, ids]) => `| ${type} | ${ids.map(id => `[${definitions.benchmarks[id].name}](${definitions.benchmarks[id].url})`).join(', ')} |`).join('\n') + '\n\n[Benchmark selection and verified model coverage](/quality-benchmarks).'
+const index = `# Model registry\n\nThe registry is the source of truth for downloadable models. Search the catalog or [download models.yml](/models.yml).\n\n<ModelCatalog :models="${catalogJSON}" />\n\n## Quality benchmarks\n\n| Model type | Primary benchmark |\n| --- | --- |\n${benchmarkReferences}\n\nRanks require an exact verified upstream model identity, not a GGUF repository. MTEB membership is not a suite rank; HF model-card scores are publisher-reported and may use different datasets. Only confirmed benchmark entries are displayed. These results do not evaluate local quantizations.\n`
 fs.writeFileSync(path.join(output, 'index.md'), index)
 
 function formatBytes(bytes) {
@@ -134,11 +138,14 @@ function formatBytes(bytes) {
 }
 
 for (const { id, model, quants, slug } of rows) {
+    const qualityResults = modelBenchmarks(id, model, qualitySnapshot)
+    const qualityJSON = JSON.stringify(qualityResults).replaceAll('&', '&amp;').replaceAll('"', '&quot;')
+    const qualitySection = qualityResults.length ? `## Quality benchmarks\n\n<QualityBenchmarks :results="${qualityJSON}" />\n` : ''
     const readmePath = path.join(root, 'models', model.readme)
     const readme = fs.readFileSync(readmePath, 'utf8')
     if (/^## Quantizations and Files\s*$/m.test(readme)) {
         fs.mkdirSync(path.dirname(path.join(output, slug)), { recursive: true })
-        fs.writeFileSync(path.join(output, `${slug}.md`), `${readme.trim()}\n\n## Benchmarks\n\n<BenchmarkTable model-id="${id}" />\n`)
+        fs.writeFileSync(path.join(output, `${slug}.md`), `${readme.trim()}\n\n${qualitySection}\n## Benchmarks\n\n<BenchmarkTable model-id="${id}" />\n`)
         continue
     }
     const lines = [`${readme.trim()}`, '', `## Registry details`, '', `- Registry id: \`${id}\``, `- Type: ${model.type}`, `- Default quantization: \`${model.default}\``, `- Capabilities: ${(model.capabilities?.input ?? []).join(', ')} -> ${(model.capabilities?.output ?? []).join(', ')}`, '', '## Benchmarks', '', `<BenchmarkTable model-id="${id}" />`, '', '## Available quants', '', '| Quant | Adapter | Repository | File | Size | SHA-256 |', '| --- | --- | --- | --- | --- | --- |']
@@ -154,5 +161,5 @@ for (const { id, model, quants, slug } of rows) {
         })
     }
     fs.mkdirSync(path.dirname(path.join(output, slug)), { recursive: true })
-    fs.writeFileSync(path.join(output, `${slug}.md`), lines.join('\n') + '\n')
+    fs.writeFileSync(path.join(output, `${slug}.md`), lines.join('\n') + '\n\n' + qualitySection)
 }

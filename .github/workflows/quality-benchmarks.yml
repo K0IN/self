@@ -1,0 +1,53 @@
+name: Refresh model quality benchmarks
+
+on:
+  schedule:
+    - cron: '41 7 * * 1'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'models/quality-benchmarks.yml'
+      - 'docs/quality-benchmarks*.mjs'
+      - '.github/workflows/quality-benchmarks.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+      - name: Install dependencies
+        working-directory: docs
+        run: npm ci
+      - name: Test exact identity matching
+        run: node --test docs/quality-benchmarks.test.mjs
+      - name: Fetch verified upstream results
+        if: github.event_name != 'pull_request'
+        run: node docs/quality-benchmarks.mjs
+      - name: Upload snapshot for review
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-quality-rankings
+          path: models/quality-rankings.json
+          retention-days: 30
+      - name: Propose snapshot update
+        if: github.event_name != 'pull_request'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: automation/model-quality-rankings
+          add-paths: models/quality-rankings.json
+          commit-message: 'Update verified model quality results'
+          title: 'Update model quality benchmark snapshot'
+          body: 'Refresh exact upstream Arena ranks, MTEB membership and publisher-reported HF evaluations. Missing coverage and stale results remain explicit. Curated citations are not automatically re-evaluated.'

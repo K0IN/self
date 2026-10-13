@@ -1,0 +1,180 @@
+version: 1
+types:
+  text: [mmlu-pro]
+  decision: [decision-index]
+  embedding: [mteb]
+  image: [arena-image]
+  audio: [seed-tts]
+supplementary_types:
+  text: [arena-text, hf-evaluations]
+  decision: [jevbench, typed-decisions, hf-evaluations]
+  embedding: [hf-evaluations]
+  audio: [hf-evaluations]
+benchmarks:
+  decision-index:
+    name: Decision Index
+    url: https://huggingface.co/spaces/multimodalart/jev-decision-index
+    export_url: https://huggingface.co/spaces/multimodalart/jev-decision-index/raw/main/data/index.json
+    metric: Full score
+    rationale: Community decision-model evaluation combining public benchmarks, private same-skill tests and private new-domain tasks. Evaluated versions and configurations are retained; scores do not establish equality with local artifacts.
+  jevbench:
+    name: JevBench
+    url: https://benchmarkheaven.com/jev-models/v1.6.1
+    export_url: https://benchmarkheaven.com/api/jevbench/v1.6.1
+    metric: Composite score (official weights)
+    rationale: Independent decision evaluation of intelligence, calibration, speed and cost. Versioned export; hardware, serving configuration and model revisions affect scores.
+  typed-decisions:
+    name: Typed Decisions
+    url: https://huggingface.co/datasets/LocalLLaMA/typed-decisions
+    metric: Test-set teacher agreement and calibration
+    rationale: Public modality-specific benchmark with 400 test cases and 2000 probabilistic decisions. Smaller than MMLU/MTEB; synthetic teacher agreement is not ground-truth correctness. Fine-tuned and zero-shot results must remain separate.
+  seed-tts:
+    name: Seed-TTS test set
+    url: https://github.com/BytedanceSpeech/seed-tts-eval
+    metric: Word error rate (%) - lower is better
+    rationale: Widely used reproducible zero-shot voice-cloning evaluation. Publisher-reported scores, not independent listening preference ranks.
+  hf-evaluations:
+    name: Hugging Face model-card evaluations
+    url: https://huggingface.co/docs/hub/model-cards#evaluation-results
+    metric: Dataset-specific published metrics
+    rationale: Exact upstream checkpoint results from structured model-index metadata. Publisher-reported, not an independent leaderboard; datasets and protocols are not interchangeable.
+  arena-text:
+    name: Arena Text (style controlled)
+    url: https://arena.ai/leaderboard/text
+    metric: Arena Score
+    arena_subset: text_style_control
+    rationale: Large independent crowdsourced pairwise human-preference leaderboard; style-controlled overall category.
+  arena-vision:
+    name: Arena Vision (style controlled)
+    url: https://arena.ai/leaderboard/vision
+    metric: Arena Score
+    arena_subset: vision_style_control
+    rationale: Human preference for image understanding, separate from text-only and image-generation rankings.
+  arena-image:
+    name: Arena Text-to-Image
+    url: https://arena.ai/leaderboard/text-to-image
+    metric: Arena Score
+    arena_subset: text_to_image
+    rationale: Large independent human-preference comparison of generated images.
+  arena-edit:
+    name: Arena Image Edit
+    url: https://arena.ai/leaderboard/image-edit
+    metric: Arena Score
+    arena_subset: image_edit
+    rationale: Image editing is evaluated separately from text-to-image generation.
+  mteb:
+    name: MTEB
+    url: https://huggingface.co/spaces/mteb/leaderboard
+    metric: Suite-specific mean score
+    membership_url: https://huggingface.co/spaces/mteb/leaderboard/raw/main/models.py
+    rationale: Widely used open embedding evaluation covering retrieval, classification, clustering and similarity. Compare only the same suite, languages and version.
+  tts-arena:
+    name: TTS Arena
+    url: https://huggingface.co/spaces/TTS-AGI/TTS-Arena-V2
+    metric: Human preference
+    rationale: Independent human listening comparisons; smaller and less comprehensive than text Arena. Language and voice settings affect comparability.
+  mmlu-pro:
+    name: MMLU-Pro
+    url: https://huggingface.co/spaces/TIGER-Lab/MMLU-Pro
+    metric: Accuracy
+    rationale: Expert-reviewed 12K multiple-choice reasoning questions. A reference for choice quality, not typed-output protocol compliance, calibration or extraction.
+  mmmu:
+    name: MMMU
+    url: https://mmmu-benchmark.github.io/
+    metric: Split-specific accuracy
+    rationale: Academic multimodal reasoning benchmark with 11.5K questions across 30 subjects. Compare only identical splits and prompting.
+aliases:
+  qwen-image-2.1:7b:
+    arena-image: [qwen-image-2.1]
+    arena-edit: [qwen-image-2.1]
+  flux2-klein:9b:
+    arena-image: [flux-2-klein-9b]
+    arena-edit: [flux-2-klein-9b]
+model_benchmarks:
+  qwen3-tts:1.7b: [seed-tts]
+reports:
+  winnow:12b:
+    typed-decisions:
+      status: reported
+      evaluatedModel: EldanRing/Winnow-12B
+      url: https://huggingface.co/EldanRing/Winnow-12B/blob/main/docs/BENCHMARKS.md
+      verifiedAt: '2026-10-13'
+      scope: Winnow publisher comparison, Q8 weights and Q8 KV, 400 cases / 2000 decisions. Teacher agreement, not correctness. Development exposure disclosed; not an official leaderboard rank.
+      evaluations:
+        - {dataset: LocalLLaMA/typed-decisions, split: test, metric: Teacher agreement (%), score: 70.0}
+  kev:4b:
+    typed-decisions:
+      status: reported
+      evaluatedModel: jaredpalmer/kev-4b
+      url: https://huggingface.co/EldanRing/Winnow-12B/blob/main/docs/BENCHMARKS.md
+      verifiedAt: '2026-10-13'
+      scope: Winnow publisher comparison of Kev-4B BF16 using pinned author runtime, 400 cases / 2000 decisions. Evaluated release may differ from current upstream; teacher agreement, not correctness or an official rank.
+      evaluations:
+        - {dataset: LocalLLaMA/typed-decisions, split: test, metric: Teacher agreement (%), score: 65.75}
+  laya-english:421m:
+    typed-decisions:
+      status: reported
+      evaluatedModel: convaiinnovations/laya
+      url: https://huggingface.co/EldanRing/Winnow-12B/blob/main/docs/BENCHMARKS.md
+      verifiedAt: '2026-10-13'
+      scope: Winnow publisher comparison of Laya English, FP32 weights with BF16 autocast, 400 cases / 2000 decisions. Context limits truncate some public inputs. Teacher agreement, not correctness or an official rank.
+      evaluations:
+        - {dataset: LocalLLaMA/typed-decisions, split: test, metric: Teacher agreement (%), score: 36.10}
+  qwen3.5:9b:
+    mmlu-pro:
+      status: reported
+      evaluatedModel: Qwen/Qwen3.5-9B
+      url: https://huggingface.co/Qwen/Qwen3.5-9B/blob/main/README.md#benchmark-results
+      verifiedAt: '2026-10-13'
+      scope: Publisher-reported Qwen3.5-9B column, Language evaluation. Not a local quantization result or independent rank.
+      evaluations:
+        - {dataset: MMLU-Pro, metric: Accuracy (%), score: 82.5}
+  gemma4:4b:
+    mmlu-pro:
+      status: reported
+      evaluatedModel: google/gemma-4-E4B-it
+      url: https://huggingface.co/google/gemma-4-E4B-it/blob/main/README.md#benchmark-results
+      verifiedAt: '2026-10-13'
+      scope: Publisher-reported instruction-tuned Gemma 4 E4B column. Not a local quantization result or independent rank.
+      evaluations:
+        - {dataset: MMLU-Pro, metric: Accuracy (%), score: 69.4}
+  gemma4:12b:
+    mmlu-pro:
+      status: reported
+      evaluatedModel: google/gemma-4-12B-it
+      url: https://huggingface.co/google/gemma-4-12B-it/blob/main/README.md#benchmark-results
+      verifiedAt: '2026-10-13'
+      scope: Publisher-reported instruction-tuned Gemma 4 12B Unified column. Not a local quantization result or independent rank.
+      evaluations:
+        - {dataset: MMLU-Pro, metric: Accuracy (%), score: 77.2}
+  laya-typed-decisions:421m:
+    typed-decisions:
+      status: reported
+      evaluatedModel: convaiinnovations/laya-typed-decisions
+      url: https://huggingface.co/convaiinnovations/laya-typed-decisions/blob/main/README.md#benchmark
+      verifiedAt: '2026-10-13'
+      scope: Publisher-reported specialist fine-tuned on train; official test split, 400 cases and 2000 decisions. Not comparable to zero-shot models. Measures synthetic teacher agreement, not correctness; not a local quantization result.
+      evaluations:
+        - {dataset: LocalLLaMA/typed-decisions, split: test, metric: Teacher agreement, score: 0.766}
+        - {dataset: LocalLLaMA/typed-decisions, split: test, metric: Brier, score: 0.062}
+        - {dataset: LocalLLaMA/typed-decisions, split: test, metric: ECE, score: 0.213}
+  qwen3-tts:1.7b:
+    seed-tts:
+      status: reported
+      evaluatedModel: Qwen/Qwen3-TTS-12Hz-1.7B-Base
+      url: https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base/blob/main/README.md#evaluation
+      verifiedAt: '2026-10-13'
+      scope: Publisher-reported BF16, max_new_tokens=2048, default checkpoint sampling, language=auto. Not local Q4 results or an independent leaderboard rank.
+      evaluations:
+        - {dataset: Seed-TTS test-zh, metric: WER (%), score: 0.77}
+        - {dataset: Seed-TTS test-en, metric: WER (%), score: 1.24}
+  embeddinggemma-2:740m:
+    mteb:
+      status: reported
+      evaluatedModel: google/embeddinggemma-2
+      url: https://huggingface.co/google/embeddinggemma-2/blob/main/README.md#benchmark-results
+      verifiedAt: '2026-10-13'
+      scope: Publisher-reported full-precision checkpoint, 768 dimensions. Not confirmed in the independent MTEB model index; no leaderboard rank.
+      evaluations:
+        - {dataset: 'MTEB multilingual v2', metric: 'Mean(Task), Multiple', score: 61.36}
+        - {dataset: 'MTEB code v1', metric: 'Mean(Task), NDCG@10', score: 78.68}

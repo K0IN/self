@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { withBase } from 'vitepress'
+import QualityBenchmarks from './QualityBenchmarks.vue'
 
 const props = defineProps({
     models: {
@@ -88,6 +89,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', focusSearch, true))
                 </div>
                 <h2><a :href="withBase(model.href)">{{ model.id }}</a></h2>
                 <p>{{ model.description }}</p>
+                <QualityBenchmarks :results="model.qualityBenchmarks || []" compact />
                 <div class="model-tags">
                     <span v-for="quant in model.quants" :key="quant" class="model-tag">{{ quant }}</span>
                 </div>

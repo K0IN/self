@@ -6,6 +6,8 @@
         "preview": "vitepress preview ."
     },
     "devDependencies": {
+        "hyparquet": "^1.31.4",
+        "hyparquet-compressors": "^1.1.2",
         "vitepress": "^1.6.4",
         "yaml": "^2.8.1"
     }
