@@ -25,9 +25,14 @@ the [API overview](/api/).
 <div class="api-label">Endpoints</div>
 
 ```text
+GET  /v1/images/generate?q=...
 POST /v1/images/generations
 POST /v1/images/edits
 ```
+
+The `GET` endpoint returns the generated image bytes directly, making it
+convenient to use in a browser. The `q` parameter is the prompt; optional
+`size` and `output_format` parameters work like their generation API fields.
 
 <div class="api-label">Models and quick start</div>
 
@@ -65,6 +70,18 @@ curl http://localhost:8080/v1/images/generations \
   }' \
   | jq -r '.data[0].b64_json' \
   | base64 --decode > output.png
+```
+
+<div class="api-label">Direct image response</div>
+
+```html
+<img src="http://localhost:8080/v1/images/generate?q=A%20red%20fox%20in%20a%20snowy%20forest" alt="Generated image">
+```
+
+```bash
+curl -G 'http://localhost:8080/v1/images/generate' \
+  --data-urlencode 'q=A red fox in a snowy forest' \
+  -o output.png
 ```
 
 <div class="api-label">Save the JSON response first</div>

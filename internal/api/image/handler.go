@@ -40,6 +40,7 @@ func New(svc Service, lim imageutil.Limits) *Handler {
 	return &Handler{svc: svc, limits: lim, fetcher: imageutil.NewFetcher(lim)}
 }
 func (h *Handler) Mount(r chi.Router) apiroot.ModelInfo {
+	r.Get("/v1/images/generate", h.generateDirect)
 	r.Post("/v1/images/generations", h.generate)
 	r.Post("/v1/images/edits", h.edit)
 	return apiroot.ModelInfo{ID: h.svc.ModelID(), Object: "model", Type: "image", Quant: h.svc.Quant(), Capabilities: map[string]any{"input": []string{"text", "image", "multi-image"}, "output": []string{"image", "image-edit"}}, Info: h.svc.Info(), Settings: h.svc.Settings()}
@@ -55,6 +56,45 @@ type generationRequest struct {
 	Compression    int            `json:"output_compression"`
 	Seed           *int64         `json:"seed"`
 	Extra          map[string]any `json:"sd_cpp_extra_args"`
+}
+
+func (h *Handler) generateDirect(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	prompt := query.Get("q")
+	if err := validatePrompt(prompt); err != nil {
+		apiroot.WriteError(w, err)
+		return
+	}
+	width, height, err := parseSize(query.Get("size"))
+	if err != nil {
+		apiroot.WriteError(w, err)
+		return
+	}
+	format := query.Get("output_format")
+	if format == "" {
+		format = "png"
+	}
+	if format != "png" && format != "jpeg" && format != "webp" {
+		apiroot.WriteError(w, errs.New(errs.InvalidRequest, "output_format must be png, jpeg or webp"))
+		return
+	}
+	resp, err := h.svc.Generate(r.Context(), dom.GenerateRequest{Prompt: prompt, N: 1, Width: width, Height: height, OutputFormat: format})
+	if err != nil {
+		apiroot.WriteError(w, err)
+		return
+	}
+	if len(resp.Images) == 0 {
+		apiroot.WriteError(w, errs.New(errs.Internal, "image generation returned no images"))
+		return
+	}
+
+	contentType := map[string]string{"png": "image/png", "jpeg": "image/jpeg", "webp": "image/webp"}[format]
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Length", strconv.Itoa(len(resp.Images[0].Bytes)))
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(resp.Images[0].Bytes)
 }
 
 func (h *Handler) generate(w http.ResponseWriter, r *http.Request) {

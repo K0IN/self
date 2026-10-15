@@ -20,14 +20,18 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type fakeService struct{ generated, edited bool }
+type fakeService struct {
+	generated, edited bool
+	generatedPrompt   string
+}
 
 func (s *fakeService) ModelID() string          { return "test:image" }
 func (s *fakeService) Quant() string            { return "q4" }
 func (s *fakeService) Info() any                { return nil }
 func (s *fakeService) Settings() map[string]any { return nil }
-func (s *fakeService) Generate(context.Context, dom.GenerateRequest) (dom.Response, error) {
+func (s *fakeService) Generate(_ context.Context, req dom.GenerateRequest) (dom.Response, error) {
 	s.generated = true
+	s.generatedPrompt = req.Prompt
 	return dom.Response{OutputFormat: "png", Images: []dom.OutputImage{{Bytes: []byte("png")}}}, nil
 }
 func (s *fakeService) Edit(_ context.Context, req dom.EditRequest) (dom.Response, error) {
@@ -48,7 +52,7 @@ func TestGenerationOpenAIShape(t *testing.T) {
 	resp := httptest.NewRecorder()
 	testHandler(svc).ServeHTTP(resp, req)
 	if resp.Code != http.StatusOK || !svc.generated {
-		t.Fatalf("status=%d generated=%v body=%s", resp.Code, svc.generated, resp.Body)
+		t.Fatalf("status=%d generated=%v prompt=%q body=%s", resp.Code, svc.generated, svc.generatedPrompt, resp.Body)
 	}
 	var body struct {
 		Data []struct {
@@ -60,6 +64,30 @@ func TestGenerationOpenAIShape(t *testing.T) {
 	}
 	if got, _ := base64.StdEncoding.DecodeString(body.Data[0].B64); string(got) != "png" {
 		t.Fatalf("decoded image = %q", got)
+	}
+}
+
+func TestDirectGenerationReturnsImageBytes(t *testing.T) {
+	svc := &fakeService{}
+	req := httptest.NewRequest(http.MethodGet, "/v1/images/generate?q=a+man+standing+on+a+hill", nil)
+	resp := httptest.NewRecorder()
+	testHandler(svc).ServeHTTP(resp, req)
+	if resp.Code != http.StatusOK || !svc.generated || svc.generatedPrompt != "a man standing on a hill" {
+		t.Fatalf("status=%d generated=%v prompt=%q body=%s", resp.Code, svc.generated, svc.generatedPrompt, resp.Body)
+	}
+	if got := resp.Header().Get("Content-Type"); got != "image/png" {
+		t.Fatalf("Content-Type = %q", got)
+	}
+	if got := resp.Body.String(); got != "png" {
+		t.Fatalf("body = %q, want raw image bytes", got)
+	}
+}
+
+func TestDirectGenerationRequiresQuery(t *testing.T) {
+	resp := httptest.NewRecorder()
+	testHandler(&fakeService{}).ServeHTTP(resp, httptest.NewRequest(http.MethodGet, "/v1/images/generate", nil))
+	if resp.Code != http.StatusBadRequest {
+		t.Fatalf("status=%d body=%s", resp.Code, resp.Body)
 	}
 }
 
