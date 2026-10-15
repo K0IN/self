@@ -105,7 +105,7 @@ models:
 | `qwen3.5:9b`, `gemma4:4b`, `gemma4:12b` | `llama-server` |
 | `clm-v0.1:8b`, `nomic-embed-text-v1.5:137m`, `nomic-embed-text-v2-moe:475m` | `llama-server` |
 | `qwen3-tts:1.7b` | `ggmlc-audio` |
-| `qwen-image-2.1:7b`, `flux2-klein:9b` | official upstream `sd-server` |
+| `qwen-image-2.1:7b`, `flux2-klein:9b`, `flux3-klein:5.6b` | upstream `sd-server` (FLUX.3 requires pinned experimental PR #2143) |
 | `pocket-tts-en:100m`, `-de`, `-es`, `-fr`, `-it`, `-pt` (each `:100m`) | `ggmlc-audio` (with a default `voice` file) |
 
 ## Acceptance criteria

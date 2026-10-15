@@ -1,8 +1,10 @@
 package runtime
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	goruntime "runtime"
 	"strings"
@@ -84,6 +86,25 @@ func Find(name string, dirs []string) (Engine, error) {
 	return Engine{}, errs.New(errs.RuntimeNotFound,
 		"engine %q was not found (looked in: %s). Release builds bundle it under %s next to the self binary; for development pass --runtime-dir or run `just runtime`",
 		name, strings.Join(dirs, ", "), BundleSubdir)
+}
+
+// ListDevices returns the backend devices reported by an engine binary.
+func ListDevices(ctx context.Context, engine Engine) ([]string, error) {
+	cmd := exec.CommandContext(ctx, engine.Path, "--list-devices")
+	if engine.LibDir != "" {
+		cmd.Env = withLibDir(append([]string(nil), os.Environ()...), engine.LibDir)
+	}
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+	var devices []string
+	for _, line := range strings.Split(string(output), "\n") {
+		if line = strings.TrimSpace(line); line != "" {
+			devices = append(devices, line)
+		}
+	}
+	return devices, nil
 }
 
 func isDir(p string) bool {

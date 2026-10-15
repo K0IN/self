@@ -67,7 +67,29 @@ func Args(cfg dom.RuntimeConfig, port int) []string {
 	return append(args, Settings.Args(cfg.Settings)...)
 }
 
+func resolveDevice(ctx context.Context, cfg dom.RuntimeConfig) string {
+	if cfg.Device != "auto" {
+		return cfg.Device
+	}
+	devices, err := runtime.ListDevices(ctx, runtime.Engine{Path: cfg.EnginePath, LibDir: cfg.LibDir})
+	if err == nil {
+		return selectAutoDevice(devices)
+	}
+	return "cpu"
+}
+
+func selectAutoDevice(devices []string) string {
+	for _, device := range devices {
+		fields := strings.Fields(device)
+		if len(fields) > 0 && strings.HasPrefix(strings.ToLower(fields[0]), "cuda") {
+			return "cuda"
+		}
+	}
+	return "cpu"
+}
+
 func (a *Adapter) Start(ctx context.Context, cfg dom.RuntimeConfig) error {
+	cfg.Device = resolveDevice(ctx, cfg)
 	port, err := freePort()
 	if err != nil {
 		return err

@@ -85,6 +85,25 @@ func TestOfficialServerEagerLoadAndDevice(t *testing.T) {
 	}
 }
 
+func TestAutoDeviceSelection(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		devices []string
+		want    string
+	}{
+		{name: "cuda", devices: []string{"CPU\tAMD Ryzen", "CUDA0\tRTX 5090"}, want: "cuda"},
+		{name: "cpu", devices: []string{"CPU\tAMD Ryzen"}, want: "cpu"},
+		{name: "empty", want: "cpu"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			got := selectAutoDevice(test.devices)
+			if got != test.want {
+				t.Fatalf("device = %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
 func TestCustomSigmaArgs(t *testing.T) {
 	values, err := Settings.Validate(map[string]any{"sigmas": "1.0,0.5,0.0"})
 	if err != nil {

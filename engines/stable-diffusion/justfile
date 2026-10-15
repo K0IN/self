@@ -1,20 +1,30 @@
 # Build stable-diffusion.cpp's sd-server example.
-# The source is kept outside this repository and fetched at a pinned tag.
+# The source is kept outside this repository and fetched at a pinned commit.
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 source_dir := "build/stable-diffusion.cpp"
 build_dir := "build/server"
 dest := "../../bin/libexec/ai-server"
-version := "master-929-3f8527a"
+# Upstream PR #2143 adds FLUX.3 Image Klein; replace with a release once merged.
+version := "6d6ff751882e80e8f3af0942c9d4eb4e07375b19"
 
 build variant="cpu" target=dest:
     #!/usr/bin/env bash
     set -euo pipefail
     mkdir -p build
     if [[ ! -d "{{source_dir}}/.git" ]]; then
-      git clone --depth 1 --branch "{{version}}" https://github.com/leejet/stable-diffusion.cpp.git "{{source_dir}}"
+      git init "{{source_dir}}"
+      git -C "{{source_dir}}" remote add origin https://github.com/leejet/stable-diffusion.cpp.git
     fi
-    test "$(git -C "{{source_dir}}" describe --tags --exact-match)" = "{{version}}"
+    if [[ "$(git -C "{{source_dir}}" rev-parse HEAD 2>/dev/null || true)" != "{{version}}" ]]; then
+      if [[ -n "$(git -C "{{source_dir}}" status --porcelain)" ]]; then
+        echo "Refusing to update modified engine source: {{source_dir}}" >&2
+        exit 1
+      fi
+      git -C "{{source_dir}}" fetch --depth 1 origin "{{version}}"
+      git -C "{{source_dir}}" checkout --detach "{{version}}"
+    fi
+    test "$(git -C "{{source_dir}}" rev-parse HEAD)" = "{{version}}"
     git -C "{{source_dir}}" submodule update --init --recursive --depth 1
     case "{{variant}}" in
       cpu) cuda=OFF ;;

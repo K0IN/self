@@ -42,16 +42,23 @@ with contain, cover or stretch resizing. Decider's bounded geometry is
 
 ## Image generation runtime
 
-`sd-server` is started once during `self serve` and owns the loaded diffusion model. The Go API forwards OpenAI-compatible generation and edit requests to the loopback-only server. Use `--device cpu` for CPU builds; CUDA support is provided by building stable-diffusion.cpp against CUDA 12 or CUDA 13.
+`sd-server` is started once during `self serve` and owns the loaded diffusion model. The Go API forwards OpenAI-compatible generation and edit requests to the loopback-only server. `--device auto` probes the selected engine's available backends and chooses CUDA when it exposes an NVIDIA CUDA device; use `--device cpu` to force CPU or `--device cuda` to require CUDA. CUDA support is provided by building stable-diffusion.cpp against CUDA 12 or CUDA 13.
 
 The executable is upstream's unmodified `examples/server` target, pinned at
-`master-929-3f8527a`, not a custom C++ engine. `--eager-load` preloads weights.
+`6d6ff751882e80e8f3af0942c9d4eb4e07375b19` from experimental upstream
+[FLUX.3 PR #2143](https://github.com/leejet/stable-diffusion.cpp/pull/2143),
+not a custom C++ engine. Rebuild existing engine binaries for FLUX.3 support.
+`--eager-load` preloads weights.
 The Go adapter drains stdout, supervises stderr and serializes HTTP calls.
 Readiness polling stops if the child exits; CPU maps to both compute and
 parameter CPU placement, and CUDA indices map to upstream device names.
 
 Registered models are `qwen-image-2.1:7b`, `qwen-image-2.1-turbo:7b` and
-`flux2-klein:9b`. Turbo uses eight steps, guidance scale 1 and its published
+`flux2-klein:9b` and `flux3-klein:5.6b`. FLUX.3 uses sixteen Euler steps,
+guidance scale 1, the FLUX.2 VAE and Qwen3-VL-4B text encoder without a vision
+projector. Its community Q4 GGUF and experimental runtime need inference smoke
+tests; see `models/readmes/flux3-klein/5.6b.md`.
+Turbo uses eight steps, guidance scale 1 and its published
 sigma schedule. Both Turbo quantizations passed local CUDA generation smoke
 tests on an RTX 5090; Q4 also passed single-reference editing. See
 `models/readmes/qwen-image-2.1-turbo/7b.md` for coverage and remaining limits.
