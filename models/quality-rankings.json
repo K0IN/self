@@ -3,12 +3,12 @@
   "sources": {
     "decision-index": {
       "status": "ok",
-      "fetchedAt": "2026-10-13T19:05:40.861Z",
+      "fetchedAt": "2026-10-26T07:59:15.234Z",
       "url": "https://huggingface.co/spaces/multimodalart/jev-decision-index/raw/main/data/index.json"
     },
     "jevbench": {
       "status": "ok",
-      "fetchedAt": "2026-10-13T19:05:41.187Z",
+      "fetchedAt": "2026-10-26T07:59:16.529Z",
       "url": "https://benchmarkheaven.com/api/jevbench/v1.6.1"
     },
     "typed-decisions": {
@@ -22,35 +22,35 @@
     },
     "arena-text": {
       "status": "ok",
-      "fetchedAt": "2026-10-13T19:05:44.728Z",
+      "fetchedAt": "2026-10-26T07:59:19.194Z",
       "dataset": "https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset",
       "subset": "text_style_control",
       "license": "CC-BY-4.0"
     },
     "arena-vision": {
       "status": "ok",
-      "fetchedAt": "2026-10-13T19:05:45.116Z",
+      "fetchedAt": "2026-10-26T07:59:19.482Z",
       "dataset": "https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset",
       "subset": "vision_style_control",
       "license": "CC-BY-4.0"
     },
     "arena-image": {
       "status": "ok",
-      "fetchedAt": "2026-10-13T19:05:45.509Z",
+      "fetchedAt": "2026-10-26T07:59:19.745Z",
       "dataset": "https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset",
       "subset": "text_to_image",
       "license": "CC-BY-4.0"
     },
     "arena-edit": {
       "status": "ok",
-      "fetchedAt": "2026-10-13T19:05:45.928Z",
+      "fetchedAt": "2026-10-26T07:59:20.036Z",
       "dataset": "https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset",
       "subset": "image_edit",
       "license": "CC-BY-4.0"
     },
     "mteb": {
       "status": "ok",
-      "fetchedAt": "2026-10-13T19:05:46.057Z",
+      "fetchedAt": "2026-10-26T07:59:20.134Z",
       "url": "https://huggingface.co/spaces/mteb/leaderboard/raw/main/models.py"
     },
     "mmlu-pro": {
@@ -61,13 +61,13 @@
     "winnow:12b": {
       "decision-index": {
         "status": "ranked",
-        "rank": 47,
-        "score": 49.27,
+        "rank": 95,
+        "score": 46.57,
         "evaluatedModel": "EldanRing/Winnow-12B",
         "evaluatedConfiguration": "winnow-12b-q8 (Q8_0)",
-        "edition": "Decision Index 0.3.2",
+        "edition": "Decision Index 0.4.1",
         "scope": "Published result for the named upstream model and evaluated configuration; checkpoint revision and local quantization equivalence are not guaranteed.",
-        "fetchedAt": "2026-10-13T19:05:40.861Z"
+        "fetchedAt": "2026-10-26T07:59:15.234Z"
       },
       "jevbench": {
         "status": "ranked",
@@ -78,7 +78,7 @@
         "modelPin": null,
         "edition": "v1.6.1",
         "scope": "Published result for the named upstream model and evaluated configuration; checkpoint revision and local quantization equivalence are not guaranteed.",
-        "fetchedAt": "2026-10-13T19:05:41.187Z"
+        "fetchedAt": "2026-10-26T07:59:16.529Z"
       },
       "typed-decisions": {
         "status": "reported",
@@ -102,23 +102,23 @@
         "url": "https://huggingface.co/EldanRing/Winnow-12B/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:41.319Z"
+        "fetchedAt": "2026-10-26T07:59:16.626Z"
       }
     },
     "winnow:4b": {
       "decision-index": {
         "status": "ranked",
-        "rank": 87,
-        "score": 38.73,
+        "rank": 146,
+        "score": 32.72,
         "evaluatedModel": "EldanRing/Winnow-E4B",
         "evaluatedConfiguration": "winnow-e4b-q8 (Q8_0)",
-        "edition": "Decision Index 0.3.2",
+        "edition": "Decision Index 0.4.1",
         "scope": "Published result for the named upstream model and evaluated configuration; checkpoint revision and local quantization equivalence are not guaranteed.",
-        "fetchedAt": "2026-10-13T19:05:40.861Z"
+        "fetchedAt": "2026-10-26T07:59:15.234Z"
       },
       "jevbench": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:41.187Z"
+        "fetchedAt": "2026-10-26T07:59:16.529Z"
       },
       "typed-decisions": {
         "status": "unverified"
@@ -129,19 +129,19 @@
         "url": "https://huggingface.co/EldanRing/Winnow-E4B/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:41.447Z"
+        "fetchedAt": "2026-10-26T07:59:16.720Z"
       }
     },
     "clef-flash:9b": {
       "decision-index": {
         "status": "ranked",
-        "rank": 54,
-        "score": 47.61,
+        "rank": 103,
+        "score": 44.43,
         "evaluatedModel": "Cloudflare/clef-flash",
         "evaluatedConfiguration": "clef-flash",
-        "edition": "Decision Index 0.3.2",
+        "edition": "Decision Index 0.4.1",
         "scope": "Published result for the named upstream model and evaluated configuration; checkpoint revision and local quantization equivalence are not guaranteed.",
-        "fetchedAt": "2026-10-13T19:05:40.861Z"
+        "fetchedAt": "2026-10-26T07:59:15.234Z"
       },
       "jevbench": {
         "status": "ranked",
@@ -152,7 +152,7 @@
         "modelPin": "Cloudflare/clef-flash@17f0b0ad64efb65d273590632833508766b2aae6",
         "edition": "v1.6.1",
         "scope": "Published result for the named upstream model and evaluated configuration; checkpoint revision and local quantization equivalence are not guaranteed.",
-        "fetchedAt": "2026-10-13T19:05:41.187Z"
+        "fetchedAt": "2026-10-26T07:59:16.529Z"
       },
       "typed-decisions": {
         "status": "unverified"
@@ -163,17 +163,17 @@
         "url": "https://huggingface.co/Cloudflare/clef-flash/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:42.847Z"
+        "fetchedAt": "2026-10-26T07:59:17.802Z"
       }
     },
     "kev:0.5b": {
       "decision-index": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:40.861Z"
+        "fetchedAt": "2026-10-26T07:59:15.234Z"
       },
       "jevbench": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:41.187Z"
+        "fetchedAt": "2026-10-26T07:59:16.529Z"
       },
       "typed-decisions": {
         "status": "unverified"
@@ -203,23 +203,23 @@
             "score": 0.031
           }
         ],
-        "fetchedAt": "2026-10-13T19:05:42.999Z"
+        "fetchedAt": "2026-10-26T07:59:17.905Z"
       }
     },
     "kev:0.8b": {
       "decision-index": {
         "status": "ranked",
-        "rank": 133,
-        "score": 13.66,
+        "rank": 197,
+        "score": 16.3,
         "evaluatedModel": "jaredpalmer/kev-0.8b",
         "evaluatedConfiguration": "kev-0.8b-r15",
-        "edition": "Decision Index 0.3.2",
+        "edition": "Decision Index 0.4.1",
         "scope": "Published result for the named upstream model and evaluated configuration; checkpoint revision and local quantization equivalence are not guaranteed.",
-        "fetchedAt": "2026-10-13T19:05:40.861Z"
+        "fetchedAt": "2026-10-26T07:59:15.234Z"
       },
       "jevbench": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:41.187Z"
+        "fetchedAt": "2026-10-26T07:59:16.529Z"
       },
       "typed-decisions": {
         "status": "unverified"
@@ -291,23 +291,23 @@
             "score": 0.442
           }
         ],
-        "fetchedAt": "2026-10-13T19:05:43.126Z"
+        "fetchedAt": "2026-10-26T07:59:18.008Z"
       }
     },
     "kev:4b": {
       "decision-index": {
         "status": "ranked",
-        "rank": 84,
-        "score": 39.5,
+        "rank": 137,
+        "score": 34.93,
         "evaluatedModel": "jaredpalmer/kev-4b",
         "evaluatedConfiguration": "kev-4b-r10",
-        "edition": "Decision Index 0.3.2",
+        "edition": "Decision Index 0.4.1",
         "scope": "Published result for the named upstream model and evaluated configuration; checkpoint revision and local quantization equivalence are not guaranteed.",
-        "fetchedAt": "2026-10-13T19:05:40.861Z"
+        "fetchedAt": "2026-10-26T07:59:15.234Z"
       },
       "jevbench": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:41.187Z"
+        "fetchedAt": "2026-10-26T07:59:16.529Z"
       },
       "typed-decisions": {
         "status": "reported",
@@ -380,19 +380,19 @@
             "score": 0.342
           }
         ],
-        "fetchedAt": "2026-10-13T19:05:43.260Z"
+        "fetchedAt": "2026-10-26T07:59:18.118Z"
       }
     },
     "laya-english:421m": {
       "decision-index": {
         "status": "ranked",
-        "rank": 150,
-        "score": 4.43,
+        "rank": 216,
+        "score": 9.21,
         "evaluatedModel": "convaiinnovations/laya",
         "evaluatedConfiguration": "laya-1e28ac20",
-        "edition": "Decision Index 0.3.2",
+        "edition": "Decision Index 0.4.1",
         "scope": "Published result for the named upstream model and evaluated configuration; checkpoint revision and local quantization equivalence are not guaranteed.",
-        "fetchedAt": "2026-10-13T19:05:40.861Z"
+        "fetchedAt": "2026-10-26T07:59:15.234Z"
       },
       "jevbench": {
         "status": "ranked",
@@ -403,7 +403,7 @@
         "modelPin": null,
         "edition": "v1.6.1",
         "scope": "Published result for the named upstream model and evaluated configuration; checkpoint revision and local quantization equivalence are not guaranteed.",
-        "fetchedAt": "2026-10-13T19:05:41.187Z"
+        "fetchedAt": "2026-10-26T07:59:16.529Z"
       },
       "typed-decisions": {
         "status": "reported",
@@ -427,17 +427,17 @@
         "url": "https://huggingface.co/convaiinnovations/laya/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:43.396Z"
+        "fetchedAt": "2026-10-26T07:59:18.214Z"
       }
     },
     "laya-multilingual:322m": {
       "decision-index": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:40.861Z"
+        "fetchedAt": "2026-10-26T07:59:15.234Z"
       },
       "jevbench": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:41.187Z"
+        "fetchedAt": "2026-10-26T07:59:16.529Z"
       },
       "typed-decisions": {
         "status": "unverified"
@@ -448,17 +448,17 @@
         "url": "https://huggingface.co/convaiinnovations/laya-multilingual/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:43.523Z"
+        "fetchedAt": "2026-10-26T07:59:18.313Z"
       }
     },
     "laya-typed-decisions:421m": {
       "decision-index": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:40.861Z"
+        "fetchedAt": "2026-10-26T07:59:15.234Z"
       },
       "jevbench": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:41.187Z"
+        "fetchedAt": "2026-10-26T07:59:16.529Z"
       },
       "typed-decisions": {
         "status": "reported",
@@ -494,17 +494,17 @@
         "url": "https://huggingface.co/convaiinnovations/laya-typed-decisions/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:43.646Z"
+        "fetchedAt": "2026-10-26T07:59:18.399Z"
       }
     },
     "decider:0.8b": {
       "decision-index": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:40.861Z"
+        "fetchedAt": "2026-10-26T07:59:15.234Z"
       },
       "jevbench": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:41.187Z"
+        "fetchedAt": "2026-10-26T07:59:16.529Z"
       },
       "typed-decisions": {
         "status": "unverified"
@@ -515,23 +515,23 @@
         "url": "https://huggingface.co/Mapika/decider-0.8b/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:43.776Z"
+        "fetchedAt": "2026-10-26T07:59:18.498Z"
       }
     },
     "decider:4b": {
       "decision-index": {
         "status": "ranked",
-        "rank": 80,
-        "score": 40.33,
+        "rank": 134,
+        "score": 36.3,
         "evaluatedModel": "Mapika/decider-4b",
         "evaluatedConfiguration": "decider-4b",
-        "edition": "Decision Index 0.3.2",
+        "edition": "Decision Index 0.4.1",
         "scope": "Published result for the named upstream model and evaluated configuration; checkpoint revision and local quantization equivalence are not guaranteed.",
-        "fetchedAt": "2026-10-13T19:05:40.861Z"
+        "fetchedAt": "2026-10-26T07:59:15.234Z"
       },
       "jevbench": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:41.187Z"
+        "fetchedAt": "2026-10-26T07:59:16.529Z"
       },
       "typed-decisions": {
         "status": "unverified"
@@ -542,17 +542,17 @@
         "url": "https://huggingface.co/Mapika/decider-4b/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:43.916Z"
+        "fetchedAt": "2026-10-26T07:59:18.596Z"
       }
     },
     "decider-vision:2b": {
       "decision-index": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:40.861Z"
+        "fetchedAt": "2026-10-26T07:59:15.234Z"
       },
       "jevbench": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:41.187Z"
+        "fetchedAt": "2026-10-26T07:59:16.529Z"
       },
       "typed-decisions": {
         "status": "unverified"
@@ -563,7 +563,7 @@
         "url": "https://huggingface.co/Mapika/decider-2b-vision/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:44.044Z"
+        "fetchedAt": "2026-10-26T07:59:18.695Z"
       }
     },
     "qwen3-tts:1.7b": {
@@ -593,7 +593,7 @@
         "url": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:42.565Z"
+        "fetchedAt": "2026-10-26T07:59:17.607Z"
       }
     },
     "pocket-tts-en:100m": {
@@ -663,15 +663,15 @@
         "url": "https://huggingface.co/Qwen/Qwen3.5-9B/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:41.576Z"
+        "fetchedAt": "2026-10-26T07:59:16.824Z"
       },
       "arena-text": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:44.728Z"
+        "fetchedAt": "2026-10-26T07:59:19.194Z"
       },
       "arena-vision": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:45.116Z"
+        "fetchedAt": "2026-10-26T07:59:19.482Z"
       },
       "mmlu-pro": {
         "status": "reported",
@@ -696,15 +696,15 @@
         "url": "https://huggingface.co/google/gemma-4-E4B-it/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:41.707Z"
+        "fetchedAt": "2026-10-26T07:59:16.923Z"
       },
       "arena-text": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:44.728Z"
+        "fetchedAt": "2026-10-26T07:59:19.194Z"
       },
       "arena-vision": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:45.116Z"
+        "fetchedAt": "2026-10-26T07:59:19.482Z"
       },
       "mmlu-pro": {
         "status": "reported",
@@ -729,15 +729,15 @@
         "url": "https://huggingface.co/google/gemma-4-12B-it/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:41.834Z"
+        "fetchedAt": "2026-10-26T07:59:17.021Z"
       },
       "arena-text": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:44.728Z"
+        "fetchedAt": "2026-10-26T07:59:19.194Z"
       },
       "arena-vision": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:45.116Z"
+        "fetchedAt": "2026-10-26T07:59:19.482Z"
       },
       "mmlu-pro": {
         "status": "reported",
@@ -762,11 +762,11 @@
         "url": "https://huggingface.co/Contrastive-LM/CLM-v0.1-8B/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:41.958Z"
+        "fetchedAt": "2026-10-26T07:59:17.121Z"
       },
       "mteb": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:46.057Z"
+        "fetchedAt": "2026-10-26T07:59:20.134Z"
       }
     },
     "nomic-embed-text-v1.5:137m": {
@@ -8697,13 +8697,13 @@
             "revision": "8b6510b0b1fa4e4c4f879467980e9be563ec1cdf"
           }
         ],
-        "fetchedAt": "2026-10-13T19:05:42.176Z"
+        "fetchedAt": "2026-10-26T07:59:17.319Z"
       },
       "mteb": {
         "status": "listed",
         "evaluatedModel": "nomic-ai/nomic-embed-text-v1.5",
         "scope": "Registered in MTEB; no suite-specific rank imported",
-        "fetchedAt": "2026-10-13T19:05:46.057Z"
+        "fetchedAt": "2026-10-26T07:59:20.134Z"
       }
     },
     "nomic-embed-text-v2-moe:475m": {
@@ -8713,13 +8713,13 @@
         "url": "https://huggingface.co/nomic-ai/nomic-embed-text-v2-moe/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:42.303Z"
+        "fetchedAt": "2026-10-26T07:59:17.414Z"
       },
       "mteb": {
         "status": "listed",
         "evaluatedModel": "nomic-ai/nomic-embed-text-v2-moe",
         "scope": "Registered in MTEB; no suite-specific rank imported",
-        "fetchedAt": "2026-10-13T19:05:46.057Z"
+        "fetchedAt": "2026-10-26T07:59:20.134Z"
       }
     },
     "embeddinggemma-2:740m": {
@@ -8729,7 +8729,7 @@
         "url": "https://huggingface.co/google/embeddinggemma-2/blob/main/README.md",
         "scope": "Publisher-reported upstream checkpoint; not an independent rank or local quantization",
         "evaluations": [],
-        "fetchedAt": "2026-10-13T19:05:42.437Z"
+        "fetchedAt": "2026-10-26T07:59:17.511Z"
       },
       "mteb": {
         "status": "reported",
@@ -8749,8 +8749,8 @@
             "score": 78.68
           }
         ],
-        "membershipStatus": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:46.057Z"
+        "membershipStatus": "listed",
+        "fetchedAt": "2026-10-26T07:59:20.134Z"
       }
     },
     "qwen-image-2.1:7b": {
@@ -8764,29 +8764,21 @@
         "votes": 11441,
         "publishedAt": "2026-10-07",
         "scope": "Upstream model; not this local quantization",
-        "fetchedAt": "2026-10-13T19:05:45.509Z"
+        "fetchedAt": "2026-10-26T07:59:19.745Z"
       },
       "arena-edit": {
-        "status": "ranked",
-        "evaluatedModel": "qwen-image-2.1",
-        "rank": 18,
-        "score": 1368.6922583812827,
-        "lower": 1362.7649671290208,
-        "upper": 1374.6195496335445,
-        "votes": 21941,
-        "publishedAt": "2026-10-06",
-        "scope": "Upstream model; not this local quantization",
-        "fetchedAt": "2026-10-13T19:05:45.928Z"
+        "status": "not-listed",
+        "fetchedAt": "2026-10-26T07:59:20.036Z"
       }
     },
     "qwen-image-2.1-turbo:7b": {
       "arena-image": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:45.509Z"
+        "fetchedAt": "2026-10-26T07:59:19.745Z"
       },
       "arena-edit": {
         "status": "not-listed",
-        "fetchedAt": "2026-10-13T19:05:45.928Z"
+        "fetchedAt": "2026-10-26T07:59:20.036Z"
       }
     },
     "flux2-klein:9b": {
@@ -8800,19 +8792,21 @@
         "votes": 150782,
         "publishedAt": "2026-10-07",
         "scope": "Upstream model; not this local quantization",
-        "fetchedAt": "2026-10-13T19:05:45.509Z"
+        "fetchedAt": "2026-10-26T07:59:19.745Z"
       },
       "arena-edit": {
-        "status": "ranked",
-        "evaluatedModel": "flux-2-klein-9b",
-        "rank": 42,
-        "score": 1224.744423437738,
-        "lower": 1221.9060616287995,
-        "upper": 1227.5827852466764,
-        "votes": 540742,
-        "publishedAt": "2026-10-06",
-        "scope": "Upstream model; not this local quantization",
-        "fetchedAt": "2026-10-13T19:05:45.928Z"
+        "status": "not-listed",
+        "fetchedAt": "2026-10-26T07:59:20.036Z"
+      }
+    },
+    "flux3-klein:5.6b": {
+      "arena-image": {
+        "status": "not-listed",
+        "fetchedAt": "2026-10-26T07:59:19.745Z"
+      },
+      "arena-edit": {
+        "status": "not-listed",
+        "fetchedAt": "2026-10-26T07:59:20.036Z"
       }
     }
   },
@@ -8831,6 +8825,11 @@
       "type": "image",
       "ranked": true,
       "publishedResults": true
+    },
+    "flux3-klein:5.6b": {
+      "type": "image",
+      "ranked": false,
+      "publishedResults": false
     },
     "winnow:12b": {
       "type": "decision",
